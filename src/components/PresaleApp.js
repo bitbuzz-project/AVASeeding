@@ -1,6 +1,8 @@
-// src/App.js
+// src/components/PresaleApp.js
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink } from 'lucide-react';
+import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { useWallet } from '../context/WalletContext';
 
 // Dynamically import ethers to avoid SSR issues
 let ethers;
@@ -39,21 +41,20 @@ const AVA_ABI = [
   "function balanceOf(address) external view returns (uint256)"
 ];
 
-const BASE_TESTNET = {
-  chainId: '0x14A34', // 84532
-  chainName: 'Base Testnet',
-  rpcUrls: ['https://sepolia.base.org'],
-  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-  blockExplorerUrls: ['https://sepolia.basescan.org/']
-};
-
-function App() {
-  // Wallet connection state
-  const [account, setAccount] = useState('');
-  const [provider, setProvider] = useState(null);
-  const [signer, setSigner] = useState(null);
-  const [isConnected, setIsConnected] = useState(false);
-  const [chainId, setChainId] = useState('');
+function PresaleApp() {
+  // Get wallet state from context
+  const { 
+    account, 
+    provider, 
+    signer, 
+    isConnected, 
+    connectWallet, 
+    isLoading: walletLoading, 
+    error: walletError, 
+    success: walletSuccess,
+    setError: setWalletError,
+    setSuccess: setWalletSuccess
+  } = useWallet();
 
   // Contract instances
   const [usdcContract, setUsdcContract] = useState(null);
@@ -78,94 +79,6 @@ function App() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Connect wallet with enhanced MetaMask detection
-  const connectWallet = async () => {
-    try {
-      // Check if MetaMask is installed
-      if (typeof window.ethereum === 'undefined') {
-        setError('MetaMask is not installed! Please install MetaMask browser extension.');
-        window.open('https://metamask.io/download/', '_blank');
-        return;
-      }
-
-      // Check if MetaMask is the active provider
-      if (!window.ethereum.isMetaMask) {
-        setError('Please use MetaMask as your wallet provider.');
-        return;
-      }
-
-      setIsLoading(true);
-      setError('');
-
-      // Request account access
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-
-      if (accounts.length === 0) {
-        throw new Error('No accounts found. Please unlock MetaMask.');
-      }
-
-      // Create provider and signer
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const network = await provider.getNetwork();
-
-      setAccount(accounts[0]);
-      setProvider(provider);
-      setSigner(signer);
-      setChainId(network.chainId.toString());
-      setIsConnected(true);
-      setError('');
-
-      // Check if on Base Testnet (84532)
-      if (network.chainId.toString() !== '84532') {
-        await switchToBaseTestnet();
-      } else {
-        setSuccess('Successfully connected to Base Testnet!');
-      }
-
-    } catch (error) {
-      console.error('Connection error:', error);
-      setError('Failed to connect: ' + (error.message || 'Unknown error'));
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Switch to Base Testnet with better error handling
-  const switchToBaseTestnet = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: BASE_TESTNET.chainId }]
-      });
-      
-      setSuccess('Switched to Base Testnet successfully!');
-      
-    } catch (error) {
-      if (error.code === 4902) {
-        // Chain not added to MetaMask, add it
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [BASE_TESTNET]
-          });
-          setSuccess('Base Testnet added and switched successfully!');
-        } catch (addError) {
-          setError('Failed to add Base Testnet: ' + addError.message);
-        }
-      } else {
-        setError('Failed to switch network: ' + error.message);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Initialize contracts with error handling
   useEffect(() => {
     if (signer && isConnected && ethers) {
@@ -177,8 +90,6 @@ function App() {
         setUsdcContract(usdc);
         setAvaContract(ava);
         setSeedingContract(seeding);
-        
-        setSuccess('Contracts initialized successfully!');
       } catch (error) {
         setError('Failed to initialize contracts: ' + error.message);
       }
@@ -341,69 +252,28 @@ function App() {
     }
   }, [txHash]);
 
-  // MetaMask event listeners
-  useEffect(() => {
-    if (window.ethereum) {
-      const handleAccountsChanged = (accounts) => {
-        if (accounts.length === 0) {
-          // User disconnected
-          setIsConnected(false);
-          setAccount('');
-          setSigner(null);
-          setProvider(null);
-          setUsdcContract(null);
-          setAvaContract(null);
-          setSeedingContract(null);
-        } else if (accounts[0] !== account) {
-          // User switched accounts
-          connectWallet();
-        }
-      };
-
-      const handleChainChanged = () => {
-        // Reload the page on chain change
-        window.location.reload();
-      };
-
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      window.ethereum.on('chainChanged', handleChainChanged);
-
-      return () => {
-        if (window.ethereum.removeListener) {
-          window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-          window.ethereum.removeListener('chainChanged', handleChainChanged);
-        }
-      };
-    }
-  }, [account]);
-
-  // Auto-connect if already connected
-  useEffect(() => {
-    const autoConnect = async () => {
-      if (window.ethereum && window.ethereum.selectedAddress) {
-        try {
-          const accounts = await window.ethereum.request({
-            method: 'eth_accounts'
-          });
-          if (accounts.length > 0) {
-            connectWallet();
-          }
-        } catch (error) {
-          console.log('Auto-connect failed:', error);
-        }
-      }
-    };
-
-    autoConnect();
-  }, []);
+  const displayError = error || walletError;
+  const displaySuccess = success || walletSuccess;
+  const displayLoading = isLoading || walletLoading;
 
   return (
     <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
+        {/* Back to Dashboard Link */}
+        <div className="mb-6">
+          <Link
+            to="/"
+            className="inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Link>
+        </div>
+
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-6xl font-bold mb-4 coinbase-title">
-            AVALON TOKEN
+            AVALON TOKEN PRESALE
           </h1>
           <p className="text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
           <p className="text-lg text-blue-600 font-medium">Presale on Base Testnet</p>
@@ -420,10 +290,10 @@ function App() {
               <p className="text-slate-600 mb-6 text-lg">Connect MetaMask to Base Testnet to participate in the presale</p>
               <button
                 onClick={connectWallet}
-                disabled={isLoading}
+                disabled={displayLoading}
                 className="coinbase-btn text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
               >
-                {isLoading ? (
+                {displayLoading ? (
                   <>
                     <Loader className="w-5 h-5 mr-3 animate-spin" />
                     Connecting...
@@ -496,7 +366,7 @@ function App() {
                   <p className="text-3xl font-bold text-green-600 mb-4">{formatNumber(usdcBalance)}</p>
                   <button
                     onClick={getTestUSDC}
-                    disabled={isLoading}
+                    disabled={displayLoading}
                     className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
                   >
                     Get Test USDC
@@ -535,7 +405,7 @@ function App() {
                       onChange={(e) => setUsdcAmount(e.target.value)}
                       placeholder="Enter USDC amount"
                       className="coinbase-input w-full rounded-xl px-4 py-4 text-slate-900 placeholder-slate-400 text-lg"
-                      disabled={!seedingActive || isLoading}
+                      disabled={!seedingActive || displayLoading}
                     />
                   </div>
 
@@ -562,10 +432,10 @@ function App() {
 
                   <button
                     onClick={purchaseTokens}
-                    disabled={!seedingActive || isLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
+                    disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
                     className="coinbase-btn w-full text-white py-5 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? (
+                    {displayLoading ? (
                       <span className="flex items-center justify-center">
                         <Loader className="w-5 h-5 mr-3 animate-spin" />
                         Processing...
@@ -579,20 +449,20 @@ function App() {
             </div>
 
             {/* Status Messages */}
-            {error && (
+            {displayError && (
               <div className="max-w-2xl mx-auto mb-4">
                 <div className="error-msg rounded-xl p-4 flex items-center">
                   <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="font-medium">{error}</span>
+                  <span className="font-medium">{displayError}</span>
                 </div>
               </div>
             )}
 
-            {success && (
+            {displaySuccess && (
               <div className="max-w-2xl mx-auto mb-4">
                 <div className="success-msg rounded-xl p-4 flex items-center">
                   <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="font-medium">{success}</span>
+                  <span className="font-medium">{displaySuccess}</span>
                 </div>
               </div>
             )}
@@ -637,8 +507,99 @@ function App() {
           </>
         )}
       </div>
+
+      {/* Custom Styles */}
+      <style jsx>{`
+        .coinbase-card {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(59, 130, 246, 0.1);
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .coinbase-bg {
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+          min-height: 100vh;
+        }
+
+        .coinbase-btn {
+          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+          transition: all 0.2s ease;
+          font-weight: 600;
+          letter-spacing: 0.025em;
+        }
+
+        .coinbase-btn:hover {
+          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          transform: translateY(-1px);
+          box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+        }
+
+        .coinbase-input {
+          background: #ffffff;
+          border: 2px solid #e5e7eb;
+          transition: all 0.2s ease;
+          font-weight: 500;
+        }
+
+        .coinbase-input:focus {
+          border-color: #3b82f6;
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .progress-bar {
+          background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
+          transition: width 0.5s ease;
+        }
+
+        .success-msg {
+          background: rgba(16, 185, 129, 0.1);
+          border: 1px solid rgba(16, 185, 129, 0.2);
+          color: #047857;
+        }
+
+        .error-msg {
+          background: rgba(239, 68, 68, 0.1);
+          border: 1px solid rgba(239, 68, 68, 0.2);
+          color: #dc2626;
+        }
+
+        .balance-card {
+          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+          border: 1px solid #e5e7eb;
+          transition: all 0.3s ease;
+        }
+
+        .balance-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+          border-color: #3b82f6;
+        }
+
+        .coinbase-title {
+          font-weight: 800;
+          letter-spacing: -0.025em;
+          background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .coinbase-subtitle {
+          font-weight: 500;
+          color: #64748b;
+          letter-spacing: 0.025em;
+        }
+
+        .font-inter {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+      `}</style>
     </div>
   );
 }
 
-export default App;
+export default PresaleApp;

@@ -1,10 +1,12 @@
 // src/components/Navigation.js
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, ShoppingCart, ExternalLink } from 'lucide-react';
+import { BarChart3, ShoppingCart, ExternalLink, Wallet, LogOut } from 'lucide-react';
+import { useWallet } from '../context/WalletContext';
 
 function Navigation() {
   const location = useLocation();
+  const { isConnected, account, connectWallet, disconnectWallet, isLoading } = useWallet();
 
   return (
     <nav className="bg-white/95 backdrop-blur-lg border-b border-slate-200 sticky top-0 z-50">
@@ -57,6 +59,36 @@ function Navigation() {
               <ExternalLink className="w-4 h-4" />
               <span className="font-medium">Explorer</span>
             </a>
+
+            {/* Wallet Connection */}
+            {isConnected ? (
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-sm font-medium">
+                    {account.slice(0, 6)}...{account.slice(-4)}
+                  </span>
+                </div>
+                <button
+                  onClick={disconnectWallet}
+                  className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="Disconnect Wallet"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={connectWallet}
+                disabled={isLoading}
+                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                <Wallet className="w-4 h-4" />
+                <span className="font-medium">
+                  {isLoading ? 'Connecting...' : 'Connect'}
+                </span>
+              </button>
+            )}
           </div>
         </div>
       </div>
