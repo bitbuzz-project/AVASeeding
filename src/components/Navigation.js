@@ -1,7 +1,7 @@
-// src/components/Navigation.js
+// src/components/Navigation.js - Updated for homepage
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, ShoppingCart, ExternalLink, Wallet, LogOut } from 'lucide-react';
+import { BarChart3, ShoppingCart, ExternalLink, Wallet, LogOut, Home } from 'lucide-react';
 import { useWallet } from '../context/WalletContext';
 
 function Navigation() {
@@ -33,6 +33,18 @@ function Navigation() {
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
+              <Home className="w-4 h-4" />
+              <span className="font-medium">Home</span>
+            </Link>
+
+            <Link
+              to="/dashboard"
+              className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
+                location.pathname === '/dashboard'
+                  ? 'bg-green-100 text-green-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
               <BarChart3 className="w-4 h-4" />
               <span className="font-medium">Dashboard</span>
             </Link>
@@ -41,7 +53,7 @@ function Navigation() {
               to="/presale"
               className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors ${
                 location.pathname === '/presale'
-                  ? 'bg-green-100 text-green-700'
+                  ? 'bg-purple-100 text-purple-700'
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >

@@ -239,11 +239,8 @@ return (
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold mb-4 coinbase-title">
-            AVALON INVESTOR DASHBOARD
-          </h1>
-          <p className="text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
-          <p className="text-lg text-blue-600 font-medium">Real-time Investment Analytics & Portfolio Management</p>
+     
+        
         </div>
 
         {/* Connection Status */}
