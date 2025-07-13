@@ -1,10 +1,11 @@
-// src/App.js - Updated with homepage as main route
+// src/App.js - Updated with swap route
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { WalletProvider } from './context/WalletContext';
 import HomePage from './components/HomePage';
 import InvestorDashboard from './components/InvestorDashboard';
 import PresaleApp from './components/PresaleApp';
+import SwapPage from './components/SwapPage';
 import Navigation from './components/Navigation';
 
 function App() {
@@ -22,6 +23,9 @@ function App() {
             
             {/* Presale route */}
             <Route path="/presale" element={<PresaleApp />} />
+            
+            {/* Swap route */}
+            <Route path="/swap" element={<SwapPage />} />
             
             {/* Redirect any unknown routes to homepage */}
             <Route path="*" element={<Navigate to="/" replace />} />
