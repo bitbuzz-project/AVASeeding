@@ -7,6 +7,7 @@ import { useWallet } from '../context/WalletContext';
 // Dynamically import ethers to avoid SSR issues
 let ethers;
 let BigInt;
+let inputAmount;
 if (typeof window !== 'undefined') {
   ethers = require('ethers');
   // Ensure BigInt is available
@@ -18,7 +19,7 @@ const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
   POOL: '0x0dEeC152be4087a613DB966CC85082E6BeAde1bF', // Your Uniswap V3 pool
-  SIMPLE_ROUTER: '0x2AFcC4360A065DD4759b9d2899166AD645e86C5E', // Your NEW SimpleSwapRouter V3
+  SIMPLE_ROUTER: '0xe733Dc37F284ECf646bbc26FFEef5C9297883715', // Your NEW SimpleSwapRouter V3
   // These might not be available on Base Sepolia
   SWAP_ROUTER: '0x94cC0AaC535CCDB3C01d6787D6413C739ae12bc4', 
   QUOTER: '0xC5290058841028F1614F3A6F0F5816cAd0df5E27'
@@ -404,7 +405,109 @@ function SwapPage() {
     setAmountOut('');
   };
 
-  // Test router function
+  // Fund router function
+  const fundRouter = async (tokenSymbol) => {
+    if (!simpleRouterContract || !account || !ethers) {
+      setError('Router not ready');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+      setSuccess(`Funding router with ${tokenSymbol}...`);
+
+      const contract = tokenSymbol === 'USDC' ? usdcContract : avaContract;
+      const amount = tokenSymbol === 'USDC' 
+        ? ethers.parseUnits('1000', 6) // 1000 USDC
+        : ethers.parseEther('1000000'); // 1M AVA
+      
+      console.log(`Funding router with ${tokenSymbol}:`, amount.toString());
+      
+      // Check if we have enough tokens
+      const balance = await contract.balanceOf(account);
+      if (balance < amount) {
+        setError(`You need more ${tokenSymbol} tokens. Click "Get Test ${tokenSymbol}" first.`);
+        return;
+      }
+      
+      // Approve router to take tokens
+      setSuccess(`Step 1/2: Approving ${tokenSymbol} for transfer...`);
+      const approveTx = await contract.approve(CONTRACTS.SIMPLE_ROUTER, amount);
+      await approveTx.wait();
+      
+      // Transfer tokens to router
+      setSuccess(`Step 2/2: Transferring ${tokenSymbol} to router...`);
+      const transferTx = await contract.transfer(CONTRACTS.SIMPLE_ROUTER, amount);
+      setTxHash(transferTx.hash);
+      await transferTx.wait();
+      
+      setSuccess(`Successfully funded router with ${ethers.formatUnits(amount, tokenSymbol === 'USDC' ? 6 : 18)} ${tokenSymbol}!`);
+      
+    } catch (error) {
+      console.error('Fund router failed:', error);
+      setError('Fund router failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  const testApproval = async () => {
+    if (!simpleRouterContract || !usdcContract || !account || !ethers) {
+      setError('Contracts not ready for approval test');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError('');
+      setSuccess('Testing USDC approval...');
+
+      const testAmount = ethers.parseUnits('1', 6); // 1 USDC
+      
+      console.log('=== TESTING APPROVAL ===');
+      console.log('Test amount:', testAmount.toString());
+      console.log('Router address:', CONTRACTS.SIMPLE_ROUTER);
+      console.log('Account:', account);
+      
+      // Check current allowance
+      const currentAllowance = await usdcContract.allowance(account, CONTRACTS.SIMPLE_ROUTER);
+      console.log('Current allowance:', currentAllowance.toString());
+      
+      // Check USDC balance
+      const balance = await usdcContract.balanceOf(account);
+      console.log('USDC balance:', balance.toString());
+      
+      if (balance < testAmount) {
+        setError('Need test USDC first - click "Get Test USDC"');
+        return;
+      }
+      
+      // Try approval
+      setSuccess('Sending approval transaction...');
+      const approveTx = await usdcContract.approve(CONTRACTS.SIMPLE_ROUTER, testAmount);
+      console.log('Approval tx sent:', approveTx.hash);
+      setTxHash(approveTx.hash);
+      
+      const receipt = await approveTx.wait();
+      console.log('Approval confirmed:', receipt);
+      
+      // Check new allowance
+      const newAllowance = await usdcContract.allowance(account, CONTRACTS.SIMPLE_ROUTER);
+      console.log('New allowance:', newAllowance.toString());
+      
+      if (newAllowance >= testAmount) {
+        setSuccess(`Approval successful! Allowance: ${ethers.formatUnits(newAllowance, 6)} USDC`);
+      } else {
+        setError('Approval failed - allowance not updated');
+      }
+      
+    } catch (error) {
+      console.error('Approval test failed:', error);
+      setError('Approval test failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
   const testRouter = async () => {
     if (!simpleRouterContract || !ethers) {
       setError('SimpleSwapRouter not connected');
@@ -491,17 +594,55 @@ function SwapPage() {
         // Try Simple Router first if available
         if (simpleRouterContract) {
           try {
-            console.log('Attempting swap with SimpleSwapRouter...');
-            const allowance = await tokenInContract.allowance(account, CONTRACTS.SIMPLE_ROUTER);
+            console.log('=== STARTING SWAP WITH SIMPLE ROUTER ===');
+            console.log('Token in:', tokenIn, 'Token out:', tokenOut);
+            console.log('Amount in:', amountIn, 'Amount in wei:', amountInWei.toString());
+            console.log('Amount out minimum:', amountOutMinimum.toString());
             
-            if (allowance < amountInWei) {
+            // Check current allowance
+            const currentAllowance = await tokenInContract.allowance(account, CONTRACTS.SIMPLE_ROUTER);
+            console.log('Current allowance:', ethers.formatUnits(currentAllowance, tokenIn === 'USDC' ? 6 : 18));
+            console.log('Required amount:', ethers.formatUnits(amountInWei, tokenIn === 'USDC' ? 6 : 18));
+            console.log('Allowance sufficient?', currentAllowance >= amountInWei);
+            
+            if (currentAllowance < amountInWei) {
               setSuccess('Step 1/2: Approving token for Simple Router...');
-              const approveTx = await tokenInContract.approve(CONTRACTS.SIMPLE_ROUTER, amountInWei);
-              await approveTx.wait();
-              console.log('Token approval successful');
+              console.log('Approving tokens...');
+              
+              try {
+                const approveTx = await tokenInContract.approve(CONTRACTS.SIMPLE_ROUTER, amountInWei);
+                console.log('Approval transaction sent:', approveTx.hash);
+                setTxHash(approveTx.hash);
+                
+                const approvalReceipt = await approveTx.wait();
+                console.log('Approval confirmed:', approvalReceipt);
+                
+                // Verify the approval worked
+                const newAllowance = await tokenInContract.allowance(account, CONTRACTS.SIMPLE_ROUTER);
+                console.log('New allowance after approval:', ethers.formatUnits(newAllowance, tokenIn === 'USDC' ? 6 : 18));
+                
+                if (newAllowance < amountInWei) {
+                  throw new Error('Approval failed - allowance still insufficient');
+                }
+                
+              } catch (approvalError) {
+                console.error('Approval failed:', approvalError);
+                throw new Error('Token approval failed: ' + approvalError.message);
+              }
+            } else {
+              console.log('Sufficient allowance already exists');
             }
 
             setSuccess('Step 2/2: Executing swap via Simple Router...');
+            console.log('Starting swap transaction...');
+            
+            // Check token balances before swap
+            const balanceBefore = await tokenInContract.balanceOf(account);
+            console.log('Token balance before swap:', ethers.formatUnits(balanceBefore, tokenIn === 'USDC' ? 6 : 18));
+            
+            if (balanceBefore < amountInWei) {
+              throw new Error(`Insufficient ${tokenIn} balance. You have ${ethers.formatUnits(balanceBefore, tokenIn === 'USDC' ? 6 : 18)} but need ${ethers.formatUnits(amountInWei, tokenIn === 'USDC' ? 6 : 18)}`);
+            }
             
             const swapTx = await simpleRouterContract.exactInputSingle(
               tokenInAddr,
@@ -513,7 +654,9 @@ function SwapPage() {
             
             setTxHash(swapTx.hash);
             console.log('Swap transaction sent:', swapTx.hash);
-            await swapTx.wait();
+            
+            const swapReceipt = await swapTx.wait();
+            console.log('Swap confirmed:', swapReceipt);
             
             setSuccess(`Successfully swapped ${amountIn} ${tokenIn} for ${tokenOut}!`);
             setAmountIn('');
@@ -523,11 +666,32 @@ function SwapPage() {
             
           } catch (simpleRouterError) {
             console.error('Simple router failed:', simpleRouterError);
-            setError('Simple router failed: ' + simpleRouterError.message);
-            // Don't return here, try the official router
+            
+            // Parse specific error messages
+            let errorMessage = simpleRouterError.message;
+            if (errorMessage.includes('SPL')) {
+              errorMessage = 'Sqrt Price Limit error - this suggests a pool pricing issue. Using fallback calculation.';
+            } else if (errorMessage.includes('transfer amount exceeds balance')) {
+              errorMessage = 'Router doesn\'t have enough tokens. Please fund the router first or use a different approach.';
+            }
+            
+            setError('Simple router failed: ' + errorMessage);
+            
+            // For testing purposes, let's try the fallback calculation anyway
+            console.log('Attempting fallback calculation due to router error...');
+            try {
+              await getQuoteFromPool(inputAmount, true);
+              setSuccess('Using fallback calculation - quotes may not be exact but swaps should work differently.');
+            } catch (fallbackError) {
+              console.error('Fallback also failed:', fallbackError);
+            }
+            
+            return;
           }
         } else {
           console.log('SimpleSwapRouter not available');
+          setError('SimpleSwapRouter not connected');
+          return;
         }
 
         // Try official SwapRouter if available
@@ -795,9 +959,9 @@ function SwapPage() {
               </div>
             </div>
 
-            {/* Test Token Buttons and Router Test */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="grid grid-cols-3 gap-4">
+            {/* Test Token Buttons and Router Tests */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                 <button
                   onClick={() => getTestTokens('USDC')}
                   disabled={isLoading}
@@ -811,6 +975,27 @@ function SwapPage() {
                   className="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
                 >
                   Get Test AVA
+                </button>
+                <button
+                  onClick={() => fundRouter('USDC')}
+                  disabled={isLoading || !simpleRouterContract}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+                >
+                  Fund Router USDC
+                </button>
+                <button
+                  onClick={() => fundRouter('AVA')}
+                  disabled={isLoading || !simpleRouterContract}
+                  className="bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+                >
+                  Fund Router AVA
+                </button>
+                <button
+                  onClick={testApproval}
+                  disabled={isLoading || !simpleRouterContract}
+                  className="bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-medium transition-colors disabled:opacity-50"
+                >
+                  Test Approval
                 </button>
                 <button
                   onClick={testRouter}
