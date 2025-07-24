@@ -256,350 +256,262 @@ function PresaleApp() {
   const displaySuccess = success || walletSuccess;
   const displayLoading = isLoading || walletLoading;
 
-  return (
-    <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Back to Dashboard Link */}
-        <div className="mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Link>
-        </div>
+ return (
+  <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
+      
+      {/* Back to Dashboard Link - Mobile Optimized */}
+      <div className="mb-4 sm:mb-6">
+        <Link
+          to="/"
+          className="inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors text-sm sm:text-base"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Dashboard
+        </Link>
+      </div>
 
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-6xl font-bold mb-4 coinbase-title">
-            AVALON TOKEN PRESALE
-          </h1>
-          <p className="text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
-          <p className="text-lg text-blue-600 font-medium">Presale on Base Testnet</p>
-        </div>
+      {/* Header - Mobile Optimized */}
+      <div className="text-center mb-8 sm:mb-12 px-2">
+        <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 coinbase-title leading-tight">
+          AVALON TOKEN PRESALE
+        </h1>
+        <p className="text-lg sm:text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
+        <p className="text-base sm:text-lg text-blue-600 font-medium">Presale on Base Testnet</p>
+      </div>
 
-        {/* Connection Status */}
-        <div className="max-w-4xl mx-auto mb-8">
-          {!isConnected ? (
-            <div className="coinbase-card rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
-                <Wallet className="w-8 h-8 text-blue-600" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3 text-slate-900">Connect Your Wallet</h3>
-              <p className="text-slate-600 mb-6 text-lg">Connect MetaMask to Base Testnet to participate in the presale</p>
-              <button
-                onClick={connectWallet}
-                disabled={displayLoading}
-                className="coinbase-btn text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
-              >
-                {displayLoading ? (
-                  <>
-                    <Loader className="w-5 h-5 mr-3 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="w-5 h-5 mr-3" />
-                    Connect MetaMask
-                  </>
-                )}
-              </button>
+      {/* Connection Status - Mobile Optimized */}
+      <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+        {!isConnected ? (
+          <div className="coinbase-card rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
+            <div className="w-12 sm:w-16 h-12 sm:h-16 mx-auto mb-4 sm:mb-6 bg-blue-100 rounded-full flex items-center justify-center">
+              <Wallet className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600" />
             </div>
-          ) : (
-            <div className="coinbase-card border-green-200 bg-green-50 rounded-2xl p-4 text-center">
-              <div className="flex items-center justify-center">
-                <CheckCircle className="w-6 h-6 mr-3 text-green-600" />
-                <span className="text-green-800 font-semibold">
-                  Connected: {account.slice(0, 6)}...{account.slice(-4)}
-                </span>
+            <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-slate-900">Connect Your Wallet</h3>
+            <p className="text-slate-600 mb-4 sm:mb-6 text-base sm:text-lg px-2">Connect MetaMask to Base Testnet to participate in the presale</p>
+            <button
+              onClick={connectWallet}
+              disabled={displayLoading}
+              className="coinbase-btn text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center w-full sm:w-auto justify-center min-h-[3rem] sm:min-h-[3.5rem]"
+            >
+              {displayLoading ? (
+                <>
+                  <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <Wallet className="w-4 sm:w-5 h-4 sm:h-5 mr-3" />
+                  Connect MetaMask
+                </>
+              )}
+            </button>
+          </div>
+        ) : (
+          <div className="coinbase-card border-green-200 bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center">
+            <div className="flex items-center justify-center">
+              <CheckCircle className="w-5 sm:w-6 h-5 sm:h-6 mr-3 text-green-600" />
+              <span className="text-green-800 font-semibold text-sm sm:text-base">
+                Connected: {account.slice(0, 6)}...{account.slice(-4)}
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {isConnected && (
+        <>
+          {/* Progress Section - Mobile Optimized */}
+          <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+            <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-slate-900">Presale Progress</h3>
+              <div className="bg-slate-200 rounded-full h-2 sm:h-3 mb-4 sm:mb-6">
+                <div
+                  className="progress-bar h-2 sm:h-3 rounded-full transition-all duration-500"
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="text-center">
+                  <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Sold</p>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">{formatNumber(totalSold)}</p>
+                  <p className="text-xs sm:text-sm text-slate-500">AVA</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Total</p>
+                  <p className="text-lg sm:text-xl font-bold text-slate-900">{formatNumber(maxAllocation)}</p>
+                  <p className="text-xs sm:text-sm text-slate-500">AVA</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Progress</p>
+                  <p className="text-lg sm:text-xl font-bold text-blue-600">{progressPercent}%</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Status</p>
+                  <p className={`text-lg sm:text-xl font-bold ${seedingActive ? 'text-green-600' : 'text-red-500'}`}>
+                    {seedingActive ? 'Active' : 'Inactive'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Balance Cards - Mobile Optimized */}
+          <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="balance-card rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 bg-green-100 rounded-full flex items-center justify-center">
+                  <span className="text-green-600 font-bold text-base sm:text-lg">$</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">Your USDC</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-green-600 mb-3 sm:mb-4">{formatNumber(usdcBalance)}</p>
+                <button
+                  onClick={getTestUSDC}
+                  disabled={displayLoading}
+                  className="bg-green-600 hover:bg-green-700 text-white px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto min-h-[2.5rem]"
+                >
+                  Get Test USDC
+                </button>
+              </div>
+              
+              <div className="balance-card rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-bold text-base sm:text-lg">A</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">Your AVA</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-blue-600">{formatNumber(avaBalance)}</p>
+              </div>
+              
+              <div className="balance-card rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center">
+                <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 bg-cyan-100 rounded-full flex items-center justify-center">
+                  <span className="text-cyan-600 font-bold text-base sm:text-lg">P</span>
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">You Purchased</h3>
+                <p className="text-2xl sm:text-3xl font-bold text-cyan-600">{formatNumber(userPurchased)}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Purchase Interface - Mobile Optimized */}
+          <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
+            <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
+              <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-slate-900">Purchase AVA Tokens</h3>
+              
+              <div className="space-y-4 sm:space-y-6">
+                <div>
+                  <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">USDC Amount</label>
+                  <input
+                    type="number"
+                    value={usdcAmount}
+                    onChange={(e) => setUsdcAmount(e.target.value)}
+                    placeholder="Enter USDC amount"
+                    className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem]"
+                    disabled={!seedingActive || displayLoading}
+                  />
+                </div>
+
+                <div className="flex items-center justify-center py-2 sm:py-4">
+                  <div className="w-8 sm:w-10 h-8 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                    <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 text-slate-600" />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
+                  <input
+                    type="text"
+                    value={formatNumber(avaAmount)}
+                    readOnly
+                    className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
+                  />
+                </div>
+
+                <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
+                  <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
+                  <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
+                </div>
+
+                <button
+                  onClick={purchaseTokens}
+                  disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
+                  className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
+                >
+                  {displayLoading ? (
+                    <span className="flex items-center justify-center">
+                      <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
+                      Processing...
+                    </span>
+                  ) : (
+                    'Purchase AVA Tokens'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Messages - Mobile Optimized */}
+          {displayError && (
+            <div className="max-w-2xl mx-auto mb-4">
+              <div className="error-msg rounded-xl p-3 sm:p-4 flex items-start">
+                <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 mr-3 flex-shrink-0 mt-0.5" />
+                <span className="font-medium text-sm sm:text-base">{displayError}</span>
               </div>
             </div>
           )}
-        </div>
 
-        {isConnected && (
-          <>
-            {/* Progress Section */}
-            <div className="max-w-4xl mx-auto mb-8">
-              <div className="coinbase-card rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-6 text-slate-900">Presale Progress</h3>
-                <div className="bg-slate-200 rounded-full h-3 mb-6">
-                  <div
-                    className="progress-bar h-3 rounded-full transition-all duration-500"
-                    style={{ width: `${progressPercent}%` }}
-                  ></div>
-                </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1">Sold</p>
-                    <p className="text-xl font-bold text-slate-900">{formatNumber(totalSold)}</p>
-                    <p className="text-sm text-slate-500">AVA</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1">Total</p>
-                    <p className="text-xl font-bold text-slate-900">{formatNumber(maxAllocation)}</p>
-                    <p className="text-sm text-slate-500">AVA</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1">Progress</p>
-                    <p className="text-xl font-bold text-blue-600">{progressPercent}%</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1">Status</p>
-                    <p className={`text-xl font-bold ${seedingActive ? 'text-green-600' : 'text-red-500'}`}>
-                      {seedingActive ? 'Active' : 'Inactive'}
-                    </p>
-                  </div>
-                </div>
+          {displaySuccess && (
+            <div className="max-w-2xl mx-auto mb-4">
+              <div className="success-msg rounded-xl p-3 sm:p-4 flex items-start">
+                <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 mr-3 flex-shrink-0 mt-0.5" />
+                <span className="font-medium text-sm sm:text-base">{displaySuccess}</span>
               </div>
             </div>
+          )}
 
-            {/* Balance Cards */}
-            <div className="max-w-4xl mx-auto mb-8">
-              <div className="grid md:grid-cols-3 gap-6">
-                <div className="balance-card rounded-2xl p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                    <span className="text-green-600 font-bold text-lg">$</span>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-slate-700">Your USDC</h3>
-                  <p className="text-3xl font-bold text-green-600 mb-4">{formatNumber(usdcBalance)}</p>
-                  <button
-                    onClick={getTestUSDC}
-                    disabled={displayLoading}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
-                  >
-                    Get Test USDC
-                  </button>
-                </div>
-                
-                <div className="balance-card rounded-2xl p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-bold text-lg">A</span>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-slate-700">Your AVA</h3>
-                  <p className="text-3xl font-bold text-blue-600">{formatNumber(avaBalance)}</p>
-                </div>
-                
-                <div className="balance-card rounded-2xl p-6 text-center">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-cyan-100 rounded-full flex items-center justify-center">
-                    <span className="text-cyan-600 font-bold text-lg">P</span>
-                  </div>
-                  <h3 className="text-lg font-semibold mb-2 text-slate-700">You Purchased</h3>
-                  <p className="text-3xl font-bold text-cyan-600">{formatNumber(userPurchased)}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Purchase Interface */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <div className="coinbase-card rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-8 text-slate-900">Purchase AVA Tokens</h3>
-                
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-3 text-slate-700">USDC Amount</label>
-                    <input
-                      type="number"
-                      value={usdcAmount}
-                      onChange={(e) => setUsdcAmount(e.target.value)}
-                      placeholder="Enter USDC amount"
-                      className="coinbase-input w-full rounded-xl px-4 py-4 text-slate-900 placeholder-slate-400 text-lg"
-                      disabled={!seedingActive || displayLoading}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-center py-4">
-                    <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                      <ArrowRight className="w-5 h-5 text-slate-600" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold mb-3 text-slate-700">AVA Tokens You'll Receive</label>
-                    <input
-                      type="text"
-                      value={formatNumber(avaAmount)}
-                      readOnly
-                      className="coinbase-input w-full rounded-xl px-4 py-4 text-slate-900 text-lg bg-slate-50"
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 rounded-xl p-4 text-center">
-                    <p className="text-blue-800 font-medium">Rate: 1 USDC = 1 AVA</p>
-                    <p className="text-blue-600 text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
-                  </div>
-
-                  <button
-                    onClick={purchaseTokens}
-                    disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
-                    className="coinbase-btn w-full text-white py-5 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {displayLoading ? (
-                      <span className="flex items-center justify-center">
-                        <Loader className="w-5 h-5 mr-3 animate-spin" />
-                        Processing...
-                      </span>
-                    ) : (
-                      'Purchase AVA Tokens'
-                    )}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Status Messages */}
-            {displayError && (
-              <div className="max-w-2xl mx-auto mb-4">
-                <div className="error-msg rounded-xl p-4 flex items-center">
-                  <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="font-medium">{displayError}</span>
-                </div>
-              </div>
-            )}
-
-            {displaySuccess && (
-              <div className="max-w-2xl mx-auto mb-4">
-                <div className="success-msg rounded-xl p-4 flex items-center">
-                  <CheckCircle className="w-5 h-5 mr-3 flex-shrink-0" />
-                  <span className="font-medium">{displaySuccess}</span>
-                </div>
-              </div>
-            )}
-
-            {txHash && (
-              <div className="max-w-2xl mx-auto mb-4">
-                <div className="coinbase-card rounded-xl p-4 flex items-center justify-between">
-                  <span className="font-medium text-slate-700">Transaction Hash:</span>
+          {txHash && (
+            <div className="max-w-2xl mx-auto mb-4">
+              <div className="coinbase-card rounded-xl p-3 sm:p-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                  <span className="font-medium text-slate-700 text-sm sm:text-base">Transaction Hash:</span>
                   <a
                     href={`https://sepolia.basescan.org/tx/${txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-blue-600 hover:text-blue-800 flex items-center font-medium"
+                    className="text-blue-600 hover:text-blue-800 flex items-center font-medium font-mono text-xs sm:text-sm break-all"
                   >
-                    {txHash.slice(0, 6)}...{txHash.slice(-4)}
-                    <ExternalLink className="w-4 h-4 ml-2" />
+                    {txHash.slice(0, 8)}...{txHash.slice(-6)}
+                    <ExternalLink className="w-3 sm:w-4 h-3 sm:h-4 ml-2 flex-shrink-0" />
                   </a>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Contract Addresses */}
-            <div className="max-w-4xl mx-auto">
-              <div className="coinbase-card rounded-2xl p-8">
-                <h3 className="text-xl font-bold mb-6 text-slate-900">Contract Addresses (Base Testnet)</h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-slate-600 font-medium mb-2">AVA Token:</p>
-                    <p className="font-mono text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.AVA}</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-slate-600 font-medium mb-2">USDC Token:</p>
-                    <p className="font-mono text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.USDC}</p>
-                  </div>
-                  <div className="bg-slate-50 rounded-xl p-4">
-                    <p className="text-slate-600 font-medium mb-2">Seeding Contract:</p>
-                    <p className="font-mono text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.SEEDING}</p>
-                  </div>
+          {/* Contract Addresses - Mobile Optimized */}
+          <div className="max-w-4xl mx-auto">
+            <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
+              <h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-slate-900">Contract Addresses (Base Testnet)</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                  <p className="text-slate-600 font-medium mb-2 text-sm sm:text-base">AVA Token:</p>
+                  <p className="font-mono text-xs sm:text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.AVA}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                  <p className="text-slate-600 font-medium mb-2 text-sm sm:text-base">USDC Token:</p>
+                  <p className="font-mono text-xs sm:text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.USDC}</p>
+                </div>
+                <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
+                  <p className="text-slate-600 font-medium mb-2 text-sm sm:text-base">Seeding Contract:</p>
+                  <p className="font-mono text-xs sm:text-sm text-slate-900 break-all bg-white p-2 rounded border">{CONTRACTS.SEEDING}</p>
                 </div>
               </div>
             </div>
-          </>
-        )}
-      </div>
-
-      {/* Custom Styles */}
-      <style jsx>{`
-        .coinbase-card {
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(20px);
-          border: 1px solid rgba(59, 130, 246, 0.1);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
-
-        .coinbase-bg {
-          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
-          min-height: 100vh;
-        }
-
-        .coinbase-btn {
-          background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-          transition: all 0.2s ease;
-          font-weight: 600;
-          letter-spacing: 0.025em;
-        }
-
-        .coinbase-btn:hover {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-          transform: translateY(-1px);
-          box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
-        }
-
-        .coinbase-input {
-          background: #ffffff;
-          border: 2px solid #e5e7eb;
-          transition: all 0.2s ease;
-          font-weight: 500;
-        }
-
-        .coinbase-input:focus {
-          border-color: #3b82f6;
-          outline: none;
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-
-        .progress-bar {
-          background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
-          transition: width 0.5s ease;
-        }
-
-        .success-msg {
-          background: rgba(16, 185, 129, 0.1);
-          border: 1px solid rgba(16, 185, 129, 0.2);
-          color: #047857;
-        }
-
-        .error-msg {
-          background: rgba(239, 68, 68, 0.1);
-          border: 1px solid rgba(239, 68, 68, 0.2);
-          color: #dc2626;
-        }
-
-        .balance-card {
-          background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-          border: 1px solid #e5e7eb;
-          transition: all 0.3s ease;
-        }
-
-        .balance-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-          border-color: #3b82f6;
-        }
-
-        .coinbase-title {
-          font-weight: 800;
-          letter-spacing: -0.025em;
-          background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .coinbase-subtitle {
-          font-weight: 500;
-          color: #64748b;
-          letter-spacing: 0.025em;
-        }
-
-        .font-inter {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-        }
-
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-      `}</style>
+          </div>
+        </>
+      )}
     </div>
-  );
+  </div>
+);
 }
 
 export default PresaleApp;
