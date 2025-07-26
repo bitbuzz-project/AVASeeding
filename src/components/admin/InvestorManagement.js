@@ -1,4 +1,4 @@
-// src/components/admin/InvestorManagement.js - COMPLETE FIXED VERSION
+// src/components/admin/InvestorManagement.js - COMPLETE FIXED VERSION with batched event fetching
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
@@ -93,6 +93,31 @@ const useRealInvestorData = () => {
     }
   };
 
+  // Helper function to fetch events in batches
+  const fetchEventsInBatches = async (contract, filter, fromBlock, toBlock, batchSize = 2000) => {
+    let allEvents = [];
+    let currentBlock = fromBlock;
+    const latestBlock = await contract.runner.getBlockNumber(); // Use runner for provider methods
+
+    while (currentBlock <= toBlock) {
+      const endBlock = Math.min(currentBlock + batchSize - 1, toBlock, latestBlock);
+      console.log(`Fetching events from block ${currentBlock} to ${endBlock}`);
+      
+      try {
+        const events = await contract.queryFilter(filter, currentBlock, endBlock);
+        allEvents = allEvents.concat(events);
+      } catch (e) {
+        console.warn(`Error fetching events in block range ${currentBlock}-${endBlock}:`, e);
+        // Implement exponential backoff or retry logic here if needed
+        // For now, we'll just skip this batch or re-throw if it's a critical error
+        throw e; // Re-throw to propagate the error
+      }
+      currentBlock = endBlock + 1;
+      await new Promise(resolve => setTimeout(resolve, 50)); // Small delay between batches
+    }
+    return allEvents;
+  };
+
   // Fetch all investor addresses from TokensPurchased events
   const fetchInvestorAddresses = async (contractInstances) => {
     const { seeding, provider } = contractInstances;
@@ -101,10 +126,12 @@ const useRealInvestorData = () => {
     try {
       console.log('Fetching investor addresses...');
       
-      // Get TokensPurchased events from contract deployment
       const filter = seeding.filters.TokensPurchased();
-      const events = await seeding.queryFilter(filter, 0, 'latest');
+      const latestBlock = await provider.getBlockNumber();
+      const deploymentBlock = 0; // Assuming contract deployed at block 0, adjust if known
       
+      const events = await fetchEventsInBatches(seeding, filter, deploymentBlock, latestBlock, 50000); // Increased batch size for initial attempt, can be adjusted
+
       console.log('Found events:', events.length);
 
       // Extract unique investor addresses
@@ -131,6 +158,12 @@ const useRealInvestorData = () => {
       return { addresses: Array.from(addressSet), details: addressDetails };
     } catch (error) {
       console.error('Error fetching investor addresses:', error);
+      // More specific error handling for circuit breaker
+      if (error.code === -32603 && error.data && error.data.cause && error.data.cause.isBrokenCircuitError) {
+        setError('Blockchain service is currently overloaded. Please try again in a moment or reduce the block range batch size.');
+      } else {
+        setError('Failed to fetch investor addresses from blockchain: ' + error.message);
+      }
       return { addresses: [], details: new Map() };
     }
   };
@@ -151,10 +184,13 @@ const useRealInvestorData = () => {
       ]);
 
       // Get transaction history
-      const [purchaseEvents, transferEvents] = await Promise.all([
-        seeding.queryFilter(seeding.filters.TokensPurchased(address), 0, 'latest'),
-        ava.queryFilter(ava.filters.Transfer(null, address), 0, 'latest')
-      ]);
+      const [purchaseEvents, transferEvents] = await Promise(resolve => setTimeout(resolve, 100)).then(async () => {
+         const latestBlock = await provider.getBlockNumber();
+         return await Promise.all([
+             fetchEventsInBatches(seeding, seeding.filters.TokensPurchased(address), 0, latestBlock, 10000), // Smaller batch for specific address
+             fetchEventsInBatches(ava, ava.filters.Transfer(null, address), 0, latestBlock, 10000)
+         ]);
+      });
 
       // Process transactions with timestamps
       const transactions = [];
@@ -308,7 +344,433 @@ const InvestorCard = ({ investor, onViewProfile, onFlag, onStar }) => {
               {investor.status === 'flagged' && <Flag className="w-4 h-4 text-red-500 fill-current" />}
             </div>
             <div className="flex items-center space-x-2 mt-1">
-              <p className="text-slate-600 font-medium">Total Invested</p>
+              <p className="text-sm text-slate-600 font-mono">{investor.address}</p>
+              <button
+                onClick={copyAddress}
+                className="p-1 hover:bg-slate-100 rounded transition-colors"
+                title="Copy full address"
+              >
+                <Copy className="w-3 h-3 text-slate-400" />
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => onStar(investor.id)}
+            className={`p-2 rounded-lg transition-colors ${
+              investor.status === 'vip' 
+                ? 'bg-yellow-100 text-yellow-600' 
+                : 'hover:bg-slate-100 text-slate-400'
+            }`}
+          >
+            <Star className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onFlag(investor.id)}
+            className={`p-2 rounded-lg transition-colors ${
+              investor.status === 'flagged' 
+                ? 'bg-red-100 text-red-600' 
+                : 'hover:bg-slate-100 text-slate-400'
+            }`}
+          >
+            <Flag className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => onViewProfile(investor)}
+            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className="bg-green-50 rounded-lg p-3">
+          <p className="text-green-600 text-xs font-medium mb-1">Total Invested</p>
+          <p className="text-lg font-bold text-green-700">${formatNumber(investor.totalInvested)}</p>
+        </div>
+        <div className="bg-blue-50 rounded-lg p-3">
+          <p className="text-blue-600 text-xs font-medium mb-1">AVA Balance</p>
+          <p className="text-lg font-bold text-blue-700">{formatNumber(investor.avaBalance)}</p>
+        </div>
+        <div className="bg-purple-50 rounded-lg p-3">
+          <p className="text-purple-600 text-xs font-medium mb-1">Current Value</p>
+          <p className="text-lg font-bold text-purple-700">${formatNumber(investor.currentValue)}</p>
+        </div>
+        <div className={`rounded-lg p-3 ${investor.profitLoss >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+          <p className={`text-xs font-medium mb-1 ${investor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            P&L
+          </p>
+          <p className={`text-lg font-bold ${investor.profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            {investor.profitLoss >= 0 ? '+' : ''}${formatNumber(investor.profitLoss)}
+          </p>
+          <p className={`text-xs ${investor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            ({profitLossPercent}%)
+          </p>
+        </div>
+      </div>
+
+      {/* Tags */}
+      {investor.tags && investor.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {investor.tags.map((tag, index) => (
+            <span
+              key={index}
+              className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1">
+            <Calendar className="w-3 h-3" />
+            <span>Joined {new Date(investor.joinDate).toLocaleDateString()}</span>
+          </div>
+          <div className="flex items-center space-x-1">
+            <Activity className="w-3 h-3" />
+            <span>{investor.transactionCount} txs</span>
+          </div>
+        </div>
+        <div className="flex items-center space-x-1">
+          <ExternalLink className="w-3 h-3" />
+          <a 
+            href={`https://sepolia.basescan.org/address/${investor.fullAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800"
+          >
+            Explorer
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Search and Filter Component
+const InvestorSearch = ({ onSearch, onFilter, filters, onExport }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const handleSearch = (value) => {
+    setSearchTerm(value);
+    onSearch(value);
+  };
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200 mb-6">
+      <div className="flex flex-col lg:flex-row gap-4">
+        {/* Search Bar */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="Search by name, address..."
+            className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-3">
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <Filter className="w-4 h-4" />
+            Filters
+          </button>
+          <button
+            onClick={onExport}
+            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+        </div>
+      </div>
+
+      {/* Expandable Filters */}
+      {showFilters && (
+        <div className="mt-6 pt-6 border-t border-slate-200">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+              <select
+                value={filters.status}
+                onChange={(e) => onFilter({ ...filters, status: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="vip">VIP</option>
+                <option value="flagged">Flagged</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Investment Range</label>
+              <select
+                value={filters.investmentRange}
+                onChange={(e) => onFilter({ ...filters, investmentRange: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Amounts</option>
+                <option value="0-1000">$0 - $1,000</option>
+                <option value="1000-5000">$1,000 - $5,000</option>
+                <option value="5000-25000">$5,000 - $25,000</option>
+                <option value="25000+">$25,000+</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Join Date</label>
+              <select
+                value={filters.joinDate}
+                onChange={(e) => onFilter({ ...filters, joinDate: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">All Time</option>
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="1y">Last year</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">Transaction Count</label>
+              <select
+                value={filters.transactionCount}
+                onChange={(e) => onFilter({ ...filters, transactionCount: e.target.value })}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Any Count</option>
+                <option value="1">Single Purchase</option>
+                <option value="2-5">2-5 Transactions</option>
+                <option value="5+">5+ Transactions</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Main InvestorManagement Component
+const InvestorManagement = () => {
+  const { investors, isLoading, error, loadAllInvestors, refreshData } = useRealInvestorData();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    investmentRange: '',
+    joinDate: '',
+    transactionCount: ''
+  });
+  const [selectedInvestor, setSelectedInvestor] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'totalInvested', direction: 'desc' });
+
+  // Handle sorting logic
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Load investors on mount
+  useEffect(() => {
+    loadAllInvestors();
+  }, [loadAllInvestors]);
+
+  // Filter and search investors
+  const filteredInvestors = useMemo(() => {
+    return investors.filter(investor => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        if (!investor.name.toLowerCase().includes(searchLower) &&
+            !investor.address.toLowerCase().includes(searchLower) &&
+            !investor.fullAddress.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filters.status && investor.status !== filters.status) {
+        return false;
+      }
+
+      // Investment range filter
+      if (filters.investmentRange) {
+        const amount = investor.totalInvested;
+        switch (filters.investmentRange) {
+          case '0-1000':
+            if (amount >= 1000) return false;
+            break;
+          case '1000-5000':
+            if (amount < 1000 || amount >= 5000) return false;
+            break;
+          case '5000-25000':
+            if (amount < 5000 || amount >= 25000) return false;
+            break;
+          case '25000+':
+            if (amount < 25000) return false;
+            break;
+        }
+      }
+
+      // Join date filter
+      if (filters.joinDate) {
+        const joinDate = new Date(investor.joinDate);
+        const now = new Date();
+        const diffDays = (now - joinDate) / (1000 * 60 * 60 * 24);
+        
+        switch (filters.joinDate) {
+          case '7d':
+            if (diffDays > 7) return false;
+            break;
+          case '30d':
+            if (diffDays > 30) return false;
+            break;
+          case '90d':
+            if (diffDays > 90) return false;
+            break;
+          case '1y':
+            if (diffDays > 365) return false;
+            break;
+        }
+      }
+
+      // Transaction count filter
+      if (filters.transactionCount) {
+        const count = investor.transactionCount;
+        switch (filters.transactionCount) {
+          case '1':
+            if (count !== 1) return false;
+            break;
+          case '2-5':
+            if (count < 2 || count > 5) return false;
+            break;
+          case '5+':
+            if (count <= 5) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [investors, searchTerm, filters]);
+
+  // Sort investors
+  const sortedInvestors = useMemo(() => {
+    const sorted = [...filteredInvestors];
+    sorted.sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [filteredInvestors, sortConfig]);
+
+  // Handle investor actions
+  const handleViewProfile = (investor) => {
+    setSelectedInvestor(investor);
+  };
+
+  const handleFlag = (investorId) => {
+    // Implement flagging logic
+    console.log('Flag investor:', investorId);
+  };
+
+  const handleStar = (investorId) => {
+    // Implement starring logic  
+    console.log('Star investor:', investorId);
+  };
+
+  const exportData = () => {
+    // Export filtered investors to CSV
+    const csvContent = [
+      'Address,Total Invested,AVA Balance,Current Value,Profit/Loss,Status,Join Date',
+      ...sortedInvestors.map(inv => [
+        inv.fullAddress,
+        inv.totalInvested,
+        inv.avaBalance,
+        inv.currentValue,
+        inv.profitLoss,
+        inv.status,
+        new Date(inv.joinDate).toLocaleDateString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `avalon-investors-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Investor Management</h1>
+          <p className="text-slate-600 mt-1">Monitor and manage Avalon token investors</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refreshData}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <Users className="w-8 h-8 text-blue-600" />
+            <span className="text-2xl font-bold text-slate-900">{investors.length}</span>
+          </div>
+          <p className="text-slate-600 font-medium">Total Investors</p>
+        </div>
+        
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <DollarSign className="w-8 h-8 text-green-600" />
+            <span className="text-2xl font-bold text-slate-900">
+              ${new Intl.NumberFormat().format(
+                investors.reduce((sum, inv) => sum + inv.totalInvested, 0).toFixed(0)
+              )}
+            </span>
+          </div>
+          <p className="text-slate-600 font-medium">Total Invested</p>
         </div>
         
         <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
@@ -562,429 +1024,4 @@ const InvestorCard = ({ investor, onViewProfile, onFlag, onStar }) => {
   );
 };
 
-export default InvestorManagement;="text-sm text-slate-600 font-mono">{investor.address}</p>
-              <button
-                onClick={copyAddress}
-                className="p-1 hover:bg-slate-100 rounded transition-colors"
-                title="Copy full address"
-              >
-                <Copy className="w-3 h-3 text-slate-400" />
-              </button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={() => onStar(investor.id)}
-            className={`p-2 rounded-lg transition-colors ${
-              investor.status === 'vip' 
-                ? 'bg-yellow-100 text-yellow-600' 
-                : 'hover:bg-slate-100 text-slate-400'
-            }`}
-          >
-            <Star className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onFlag(investor.id)}
-            className={`p-2 rounded-lg transition-colors ${
-              investor.status === 'flagged' 
-                ? 'bg-red-100 text-red-600' 
-                : 'hover:bg-slate-100 text-slate-400'
-            }`}
-          >
-            <Flag className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onViewProfile(investor)}
-            className="p-2 bg-blue-100 text-blue-600 rounded-lg hover:bg-blue-200 transition-colors"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="bg-green-50 rounded-lg p-3">
-          <p className="text-green-600 text-xs font-medium mb-1">Total Invested</p>
-          <p className="text-lg font-bold text-green-700">${formatNumber(investor.totalInvested)}</p>
-        </div>
-        <div className="bg-blue-50 rounded-lg p-3">
-          <p className="text-blue-600 text-xs font-medium mb-1">AVA Balance</p>
-          <p className="text-lg font-bold text-blue-700">{formatNumber(investor.avaBalance)}</p>
-        </div>
-        <div className="bg-purple-50 rounded-lg p-3">
-          <p className="text-purple-600 text-xs font-medium mb-1">Current Value</p>
-          <p className="text-lg font-bold text-purple-700">${formatNumber(investor.currentValue)}</p>
-        </div>
-        <div className={`rounded-lg p-3 ${investor.profitLoss >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
-          <p className={`text-xs font-medium mb-1 ${investor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            P&L
-          </p>
-          <p className={`text-lg font-bold ${investor.profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-            {investor.profitLoss >= 0 ? '+' : ''}${formatNumber(investor.profitLoss)}
-          </p>
-          <p className={`text-xs ${investor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            ({profitLossPercent}%)
-          </p>
-        </div>
-      </div>
-
-      {/* Tags */}
-      {investor.tags && investor.tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          {investor.tags.map((tag, index) => (
-            <span
-              key={index}
-              className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* Footer */}
-      <div className="flex items-center justify-between text-sm text-slate-500 border-t border-slate-100 pt-3">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-3 h-3" />
-            <span>Joined {new Date(investor.joinDate).toLocaleDateString()}</span>
-          </div>
-          <div className="flex items-center space-x-1">
-            <Activity className="w-3 h-3" />
-            <span>{investor.transactionCount} txs</span>
-          </div>
-        </div>
-        <div className="flex items-center space-x-1">
-          <ExternalLink className="w-3 h-3" />
-          <a 
-            href={`https://sepolia.basescan.org/address/${investor.fullAddress}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-blue-600 hover:text-blue-800"
-          >
-            Explorer
-          </a>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Search and Filter Component
-const InvestorSearch = ({ onSearch, onFilter, filters, onExport }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
-
-  const handleSearch = (value) => {
-    setSearchTerm(value);
-    onSearch(value);
-  };
-
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200 mb-6">
-      <div className="flex flex-col lg:flex-row gap-4">
-        {/* Search Bar */}
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search by name, address..."
-            className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-3 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <Filter className="w-4 h-4" />
-            Filters
-          </button>
-          <button
-            onClick={onExport}
-            className="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-        </div>
-      </div>
-
-      {/* Expandable Filters */}
-      {showFilters && (
-        <div className="mt-6 pt-6 border-t border-slate-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
-              <select
-                value={filters.status}
-                onChange={(e) => onFilter({ ...filters, status: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="vip">VIP</option>
-                <option value="flagged">Flagged</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Investment Range</label>
-              <select
-                value={filters.investmentRange}
-                onChange={(e) => onFilter({ ...filters, investmentRange: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Amounts</option>
-                <option value="0-1000">$0 - $1,000</option>
-                <option value="1000-5000">$1,000 - $5,000</option>
-                <option value="5000-25000">$5,000 - $25,000</option>
-                <option value="25000+">$25,000+</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Join Date</label>
-              <select
-                value={filters.joinDate}
-                onChange={(e) => onFilter({ ...filters, joinDate: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">All Time</option>
-                <option value="7d">Last 7 days</option>
-                <option value="30d">Last 30 days</option>
-                <option value="90d">Last 90 days</option>
-                <option value="1y">Last year</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Transaction Count</label>
-              <select
-                value={filters.transactionCount}
-                onChange={(e) => onFilter({ ...filters, transactionCount: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Any Count</option>
-                <option value="1">Single Purchase</option>
-                <option value="2-5">2-5 Transactions</option>
-                <option value="5+">5+ Transactions</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// Main InvestorManagement Component
-const InvestorManagement = () => {
-  const { investors, isLoading, error, loadAllInvestors, refreshData } = useRealInvestorData();
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filters, setFilters] = useState({
-    status: '',
-    investmentRange: '',
-    joinDate: '',
-    transactionCount: ''
-  });
-  const [selectedInvestor, setSelectedInvestor] = useState(null);
-  const [sortConfig, setSortConfig] = useState({ key: 'totalInvested', direction: 'desc' });
-
-  // Load investors on mount
-  useEffect(() => {
-    loadAllInvestors();
-  }, [loadAllInvestors]);
-
-  // Filter and search investors
-  const filteredInvestors = useMemo(() => {
-    return investors.filter(investor => {
-      // Search filter
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        if (!investor.name.toLowerCase().includes(searchLower) &&
-            !investor.address.toLowerCase().includes(searchLower) &&
-            !investor.fullAddress.toLowerCase().includes(searchLower)) {
-          return false;
-        }
-      }
-
-      // Status filter
-      if (filters.status && investor.status !== filters.status) {
-        return false;
-      }
-
-      // Investment range filter
-      if (filters.investmentRange) {
-        const amount = investor.totalInvested;
-        switch (filters.investmentRange) {
-          case '0-1000':
-            if (amount >= 1000) return false;
-            break;
-          case '1000-5000':
-            if (amount < 1000 || amount >= 5000) return false;
-            break;
-          case '5000-25000':
-            if (amount < 5000 || amount >= 25000) return false;
-            break;
-          case '25000+':
-            if (amount < 25000) return false;
-            break;
-        }
-      }
-
-      // Join date filter
-      if (filters.joinDate) {
-        const joinDate = new Date(investor.joinDate);
-        const now = new Date();
-        const diffDays = (now - joinDate) / (1000 * 60 * 60 * 24);
-        
-        switch (filters.joinDate) {
-          case '7d':
-            if (diffDays > 7) return false;
-            break;
-          case '30d':
-            if (diffDays > 30) return false;
-            break;
-          case '90d':
-            if (diffDays > 90) return false;
-            break;
-          case '1y':
-            if (diffDays > 365) return false;
-            break;
-        }
-      }
-
-      // Transaction count filter
-      if (filters.transactionCount) {
-        const count = investor.transactionCount;
-        switch (filters.transactionCount) {
-          case '1':
-            if (count !== 1) return false;
-            break;
-          case '2-5':
-            if (count < 2 || count > 5) return false;
-            break;
-          case '5+':
-            if (count <= 5) return false;
-            break;
-        }
-      }
-
-      return true;
-    });
-  }, [investors, searchTerm, filters]);
-
-  // Sort investors
-  const sortedInvestors = useMemo(() => {
-    const sorted = [...filteredInvestors];
-    sorted.sort((a, b) => {
-      const aValue = a[sortConfig.key];
-      const bValue = b[sortConfig.key];
-      
-      if (aValue < bValue) {
-        return sortConfig.direction === 'asc' ? -1 : 1;
-      }
-      if (aValue > bValue) {
-        return sortConfig.direction === 'asc' ? 1 : -1;
-      }
-      return 0;
-    });
-    return sorted;
-  }, [filteredInvestors, sortConfig]);
-
-  // Handle sorting
-  const handleSort = (key) => {
-    setSortConfig(prev => ({
-      key,
-      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
-    }));
-  };
-
-  // Handle investor actions
-  const handleViewProfile = (investor) => {
-    setSelectedInvestor(investor);
-  };
-
-  const handleFlag = (investorId) => {
-    // Implement flagging logic
-    console.log('Flag investor:', investorId);
-  };
-
-  const handleStar = (investorId) => {
-    // Implement starring logic  
-    console.log('Star investor:', investorId);
-  };
-
-  const exportData = () => {
-    // Export filtered investors to CSV
-    const csvContent = [
-      'Address,Total Invested,AVA Balance,Current Value,Profit/Loss,Status,Join Date',
-      ...sortedInvestors.map(inv => [
-        inv.fullAddress,
-        inv.totalInvested,
-        inv.avaBalance,
-        inv.currentValue,
-        inv.profitLoss,
-        inv.status,
-        new Date(inv.joinDate).toLocaleDateString()
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `avalon-investors-${Date.now()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">Investor Management</h1>
-          <p className="text-slate-600 mt-1">Monitor and manage Avalon token investors</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={refreshData}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-          <div className="flex items-center justify-between mb-2">
-            <Users className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold text-slate-900">{investors.length}</span>
-          </div>
-          <p className="text-slate-600 font-medium">Total Investors</p>
-        </div>
-        
-        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-          <div className="flex items-center justify-between mb-2">
-            <DollarSign className="w-8 h-8 text-green-600" />
-            <span className="text-2xl font-bold text-slate-900">
-              ${new Intl.NumberFormat().format(
-                investors.reduce((sum, inv) => sum + inv.totalInvested, 0).toFixed(0)
-              )}
-            </span>
-          </div>
-          <p className
+export default InvestorManagement;
