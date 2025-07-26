@@ -1,4 +1,4 @@
-// src/components/admin/InvestorManagement.js - REAL DATA VERSION
+// src/components/admin/InvestorManagement.js - COMPLETE FIXED VERSION
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Search, 
@@ -284,7 +284,7 @@ const useRealInvestorData = () => {
   };
 };
 
-// Individual Investor Card Component (same as before)
+// Individual Investor Card Component
 const InvestorCard = ({ investor, onViewProfile, onFlag, onStar }) => {
   const formatNumber = (num) => new Intl.NumberFormat().format(parseFloat(num).toFixed(2));
   const profitLossPercent = investor.profitLossPercent?.toFixed(2) || '0.00';
@@ -308,7 +308,261 @@ const InvestorCard = ({ investor, onViewProfile, onFlag, onStar }) => {
               {investor.status === 'flagged' && <Flag className="w-4 h-4 text-red-500 fill-current" />}
             </div>
             <div className="flex items-center space-x-2 mt-1">
-              <p className="text-sm text-slate-600 font-mono">{investor.address}</p>
+              <p className="text-slate-600 font-medium">Total Invested</p>
+        </div>
+        
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <TrendingUp className="w-8 h-8 text-purple-600" />
+            <span className="text-2xl font-bold text-slate-900">
+              ${new Intl.NumberFormat().format(
+                investors.reduce((sum, inv) => sum + inv.currentValue, 0).toFixed(0)
+              )}
+            </span>
+          </div>
+          <p className="text-slate-600 font-medium">Current Value</p>
+        </div>
+        
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <BarChart3 className="w-8 h-8 text-cyan-600" />
+            <span className="text-2xl font-bold text-slate-900">
+              {investors.filter(inv => inv.status === 'vip').length}
+            </span>
+          </div>
+          <p className="text-slate-600 font-medium">VIP Investors</p>
+        </div>
+      </div>
+
+      {/* Search and Filter */}
+      <InvestorSearch
+        onSearch={setSearchTerm}
+        onFilter={setFilters}
+        filters={filters}
+        onExport={exportData}
+      />
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center">
+          <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-red-800">Error Loading Investors</p>
+            <p className="text-red-700 text-sm mt-1">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-4" />
+            <p className="text-slate-600">Loading investor data from blockchain...</p>
+            <p className="text-slate-500 text-sm mt-1">This may take a few moments</p>
+          </div>
+        </div>
+      )}
+
+      {/* Investors Grid */}
+      {!isLoading && !error && (
+        <>
+          {sortedInvestors.length === 0 ? (
+            <div className="text-center py-12">
+              <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-slate-900 mb-2">No Investors Found</h3>
+              <p className="text-slate-600 mb-4">
+                {investors.length === 0 
+                  ? 'No investors have participated in the presale yet.' 
+                  : 'No investors match your current filters.'}
+              </p>
+              {investors.length === 0 && (
+                <button
+                  onClick={refreshData}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Refresh Data
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Results Summary */}
+              <div className="flex items-center justify-between mb-4">
+                <p className="text-slate-600">
+                  Showing {sortedInvestors.length} of {investors.length} investors
+                </p>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-slate-500">Sort by:</span>
+                  <select
+                    value={sortConfig.key}
+                    onChange={(e) => handleSort(e.target.value)}
+                    className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="totalInvested">Total Invested</option>
+                    <option value="currentValue">Current Value</option>
+                    <option value="profitLoss">Profit/Loss</option>
+                    <option value="joinDate">Join Date</option>
+                    <option value="transactionCount">Transaction Count</option>
+                  </select>
+                  <button
+                    onClick={() => handleSort(sortConfig.key)}
+                    className="p-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
+                  >
+                    {sortConfig.direction === 'desc' ? 
+                      <SortDesc className="w-4 h-4" /> : 
+                      <SortAsc className="w-4 h-4" />
+                    }
+                  </button>
+                </div>
+              </div>
+
+              {/* Investors Grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+                {sortedInvestors.map((investor) => (
+                  <InvestorCard
+                    key={investor.id}
+                    investor={investor}
+                    onViewProfile={handleViewProfile}
+                    onFlag={handleFlag}
+                    onStar={handleStar}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* Investor Profile Modal */}
+      {selectedInvestor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                    {selectedInvestor.name.split(' ').map(n => n[0]).join('')}
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-slate-900">{selectedInvestor.name}</h2>
+                    <p className="text-slate-600 font-mono">{selectedInvestor.fullAddress}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      {selectedInvestor.status === 'vip' && (
+                        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">VIP</span>
+                      )}
+                      {selectedInvestor.tags.map((tag, index) => (
+                        <span key={index} className="px-2 py-1 bg-slate-100 text-slate-600 text-xs rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedInvestor(null)}
+                  className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6 text-slate-600" />
+                </button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* Investment Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <div className="bg-green-50 rounded-lg p-4">
+                  <p className="text-green-600 text-sm font-medium mb-1">Total Invested</p>
+                  <p className="text-2xl font-bold text-green-700">
+                    ${new Intl.NumberFormat().format(selectedInvestor.totalInvested)}
+                  </p>
+                </div>
+                <div className="bg-blue-50 rounded-lg p-4">
+                  <p className="text-blue-600 text-sm font-medium mb-1">AVA Balance</p>
+                  <p className="text-2xl font-bold text-blue-700">
+                    {new Intl.NumberFormat().format(selectedInvestor.avaBalance)}
+                  </p>
+                </div>
+                <div className="bg-purple-50 rounded-lg p-4">
+                  <p className="text-purple-600 text-sm font-medium mb-1">Current Value</p>
+                  <p className="text-2xl font-bold text-purple-700">
+                    ${new Intl.NumberFormat().format(selectedInvestor.currentValue)}
+                  </p>
+                </div>
+                <div className={`rounded-lg p-4 ${selectedInvestor.profitLoss >= 0 ? 'bg-green-50' : 'bg-red-50'}`}>
+                  <p className={`text-sm font-medium mb-1 ${selectedInvestor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    Profit/Loss
+                  </p>
+                  <p className={`text-2xl font-bold ${selectedInvestor.profitLoss >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+                    {selectedInvestor.profitLoss >= 0 ? '+' : ''}${new Intl.NumberFormat().format(selectedInvestor.profitLoss)}
+                  </p>
+                  <p className={`text-xs ${selectedInvestor.profitLoss >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ({selectedInvestor.profitLossPercent.toFixed(2)}%)
+                  </p>
+                </div>
+              </div>
+
+              {/* Transaction History */}
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Transaction History</h3>
+                {selectedInvestor.transactions.length === 0 ? (
+                  <p className="text-slate-500 text-center py-8">No transactions found</p>
+                ) : (
+                  <div className="space-y-3">
+                    {selectedInvestor.transactions.slice(0, 10).map((tx, index) => (
+                      <div key={index} className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            tx.type === 'purchase' ? 'bg-green-100' : 'bg-blue-100'
+                          }`}>
+                            {tx.type === 'purchase' ? (
+                              <DollarSign className="w-4 h-4 text-green-600" />
+                            ) : (
+                              <Activity className="w-4 h-4 text-blue-600" />
+                            )}
+                          </div>
+                          <div>
+                            <p className="font-medium text-slate-900 capitalize">{tx.type}</p>
+                            <p className="text-sm text-slate-500">
+                              {new Date(tx.date).toLocaleDateString()} {new Date(tx.date).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {tx.type === 'purchase' && (
+                            <p className="font-bold text-slate-900">${new Intl.NumberFormat().format(tx.amount)}</p>
+                          )}
+                          <p className="text-sm text-slate-600">
+                            {new Intl.NumberFormat().format(Math.abs(tx.tokens))} AVA
+                          </p>
+                          <a
+                            href={`https://sepolia.basescan.org/tx/${tx.txHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 text-xs flex items-center mt-1"
+                          >
+                            View TX <ExternalLink className="w-3 h-3 ml-1" />
+                          </a>
+                        </div>
+                      </div>
+                    ))}
+                    {selectedInvestor.transactions.length > 10 && (
+                      <p className="text-center text-slate-500 text-sm">
+                        Showing 10 of {selectedInvestor.transactions.length} transactions
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default InvestorManagement;="text-sm text-slate-600 font-mono">{investor.address}</p>
               <button
                 onClick={copyAddress}
                 className="p-1 hover:bg-slate-100 rounded transition-colors"
@@ -419,7 +673,7 @@ const InvestorCard = ({ investor, onViewProfile, onFlag, onStar }) => {
   );
 };
 
-// Search and Filter Component (same as before)
+// Search and Filter Component
 const InvestorSearch = ({ onSearch, onFilter, filters, onExport }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -530,3 +784,207 @@ const InvestorSearch = ({ onSearch, onFilter, filters, onExport }) => {
     </div>
   );
 };
+
+// Main InvestorManagement Component
+const InvestorManagement = () => {
+  const { investors, isLoading, error, loadAllInvestors, refreshData } = useRealInvestorData();
+  
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filters, setFilters] = useState({
+    status: '',
+    investmentRange: '',
+    joinDate: '',
+    transactionCount: ''
+  });
+  const [selectedInvestor, setSelectedInvestor] = useState(null);
+  const [sortConfig, setSortConfig] = useState({ key: 'totalInvested', direction: 'desc' });
+
+  // Load investors on mount
+  useEffect(() => {
+    loadAllInvestors();
+  }, [loadAllInvestors]);
+
+  // Filter and search investors
+  const filteredInvestors = useMemo(() => {
+    return investors.filter(investor => {
+      // Search filter
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase();
+        if (!investor.name.toLowerCase().includes(searchLower) &&
+            !investor.address.toLowerCase().includes(searchLower) &&
+            !investor.fullAddress.toLowerCase().includes(searchLower)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if (filters.status && investor.status !== filters.status) {
+        return false;
+      }
+
+      // Investment range filter
+      if (filters.investmentRange) {
+        const amount = investor.totalInvested;
+        switch (filters.investmentRange) {
+          case '0-1000':
+            if (amount >= 1000) return false;
+            break;
+          case '1000-5000':
+            if (amount < 1000 || amount >= 5000) return false;
+            break;
+          case '5000-25000':
+            if (amount < 5000 || amount >= 25000) return false;
+            break;
+          case '25000+':
+            if (amount < 25000) return false;
+            break;
+        }
+      }
+
+      // Join date filter
+      if (filters.joinDate) {
+        const joinDate = new Date(investor.joinDate);
+        const now = new Date();
+        const diffDays = (now - joinDate) / (1000 * 60 * 60 * 24);
+        
+        switch (filters.joinDate) {
+          case '7d':
+            if (diffDays > 7) return false;
+            break;
+          case '30d':
+            if (diffDays > 30) return false;
+            break;
+          case '90d':
+            if (diffDays > 90) return false;
+            break;
+          case '1y':
+            if (diffDays > 365) return false;
+            break;
+        }
+      }
+
+      // Transaction count filter
+      if (filters.transactionCount) {
+        const count = investor.transactionCount;
+        switch (filters.transactionCount) {
+          case '1':
+            if (count !== 1) return false;
+            break;
+          case '2-5':
+            if (count < 2 || count > 5) return false;
+            break;
+          case '5+':
+            if (count <= 5) return false;
+            break;
+        }
+      }
+
+      return true;
+    });
+  }, [investors, searchTerm, filters]);
+
+  // Sort investors
+  const sortedInvestors = useMemo(() => {
+    const sorted = [...filteredInvestors];
+    sorted.sort((a, b) => {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
+    return sorted;
+  }, [filteredInvestors, sortConfig]);
+
+  // Handle sorting
+  const handleSort = (key) => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  // Handle investor actions
+  const handleViewProfile = (investor) => {
+    setSelectedInvestor(investor);
+  };
+
+  const handleFlag = (investorId) => {
+    // Implement flagging logic
+    console.log('Flag investor:', investorId);
+  };
+
+  const handleStar = (investorId) => {
+    // Implement starring logic  
+    console.log('Star investor:', investorId);
+  };
+
+  const exportData = () => {
+    // Export filtered investors to CSV
+    const csvContent = [
+      'Address,Total Invested,AVA Balance,Current Value,Profit/Loss,Status,Join Date',
+      ...sortedInvestors.map(inv => [
+        inv.fullAddress,
+        inv.totalInvested,
+        inv.avaBalance,
+        inv.currentValue,
+        inv.profitLoss,
+        inv.status,
+        new Date(inv.joinDate).toLocaleDateString()
+      ].join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `avalon-investors-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">Investor Management</h1>
+          <p className="text-slate-600 mt-1">Monitor and manage Avalon token investors</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={refreshData}
+            disabled={isLoading}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Summary Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <Users className="w-8 h-8 text-blue-600" />
+            <span className="text-2xl font-bold text-slate-900">{investors.length}</span>
+          </div>
+          <p className="text-slate-600 font-medium">Total Investors</p>
+        </div>
+        
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+          <div className="flex items-center justify-between mb-2">
+            <DollarSign className="w-8 h-8 text-green-600" />
+            <span className="text-2xl font-bold text-slate-900">
+              ${new Intl.NumberFormat().format(
+                investors.reduce((sum, inv) => sum + inv.totalInvested, 0).toFixed(0)
+              )}
+            </span>
+          </div>
+          <p className
