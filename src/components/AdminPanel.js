@@ -16,7 +16,6 @@ import {
 import InvestmentDashboard from './admin/InvestmentDashboard';
 import InvestorManagement from './admin/InvestorManagement';
 import StrategyMonitor from './admin/StrategyMonitor';
-
 // Admin authentication utility
 const AdminAuth = {
   login: (password) => {

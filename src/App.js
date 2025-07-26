@@ -7,6 +7,7 @@ import InvestorDashboard from './components/InvestorDashboard';
 import PresaleApp from './components/PresaleApp';
 import SwapPage from './components/SwapPage';
 import Navigation from './components/Navigation';
+import AdminPanel from './components/AdminPanel';
 
 function App() {
   return (
@@ -27,6 +28,9 @@ function App() {
             {/* Swap route */}
             <Route path="/swap" element={<SwapPage />} />
             
+            {/* Swap route */}
+            <Route path="/admin" element={<AdminPanel />} />
+
             {/* Redirect any unknown routes to homepage */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
