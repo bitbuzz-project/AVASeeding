@@ -1,12 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* CRITICAL: Prevent horizontal scroll and ensure proper mobile behavior */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+html {
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
 }
 
 body {
@@ -14,9 +21,46 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f8fafc;
+  overflow-x: hidden;
+  width: 100%;
 }
 
-/* Coinbase-style glass cards */
+/* Ensure all elements respect container bounds */
+*, *::before, *::after {
+  max-width: 100%;
+}
+
+/* MOBILE-FIRST RESPONSIVE CONTAINERS */
+.container {
+  width: 100%;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+/* COINBASE-STYLE COMPONENTS */
 .coinbase-card {
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(20px);
@@ -24,23 +68,24 @@ body {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-/* Coinbase-style gradient background */
 .coinbase-bg {
   background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
   min-height: 100vh;
 }
 
-/* Blue gradient for headers */
 .blue-gradient {
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
 }
 
-/* Coinbase button style */
 .coinbase-btn {
   background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   transition: all 0.2s ease;
   font-weight: 600;
   letter-spacing: 0.025em;
+  min-height: 44px; /* Touch-friendly minimum */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .coinbase-btn:hover {
@@ -49,12 +94,13 @@ body {
   box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
 }
 
-/* Input styling */
 .coinbase-input {
   background: #ffffff;
   border: 2px solid #e5e7eb;
   transition: all 0.2s ease;
   font-weight: 500;
+  min-height: 44px; /* Touch-friendly */
+  font-size: 16px; /* Prevent iOS zoom */
 }
 
 .coinbase-input:focus {
@@ -63,13 +109,11 @@ body {
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Progress bar */
 .progress-bar {
   background: linear-gradient(90deg, #3b82f6 0%, #06b6d4 100%);
   transition: width 0.5s ease;
 }
 
-/* Success/Error messages */
 .success-msg {
   background: rgba(16, 185, 129, 0.1);
   border: 1px solid rgba(16, 185, 129, 0.2);
@@ -82,7 +126,6 @@ body {
   color: #dc2626;
 }
 
-/* Balance cards */
 .balance-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
   border: 1px solid #e5e7eb;
@@ -95,7 +138,6 @@ body {
   border-color: #3b82f6;
 }
 
-/* Typography */
 .coinbase-title {
   font-weight: 800;
   letter-spacing: -0.025em;
@@ -111,105 +153,269 @@ body {
   letter-spacing: 0.025em;
 }
 
-/* Add these styles to src/index.css for better mobile responsiveness */
+/* HOMEPAGE SPECIFIC STYLES */
+.homepage-bg {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+}
 
-/* Ensure viewport meta tag is set correctly in public/index.html */
-/* <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"> */
+.hero-title {
+  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
 
-/* Base mobile-first responsive styles */
+.hero-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.1);
+}
+
+.hero-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  min-height: 48px;
+}
+
+.hero-btn-primary:hover {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+}
+
+.hero-btn-secondary {
+  background: rgba(255, 255, 255, 0.9);
+  color: #1e293b;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  transition: all 0.3s ease;
+  min-height: 48px;
+}
+
+.hero-btn-secondary:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.feature-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.feature-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.strategy-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.strategy-visual {
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.tokenomics-card {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.tokenomics-card:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.cta-btn-primary {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  transition: all 0.3s ease;
+  min-height: 48px;
+}
+
+.cta-btn-primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.cta-btn-secondary {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white;
+  transition: all 0.3s ease;
+  min-height: 48px;
+}
+
+.cta-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* MOBILE RESPONSIVE ADJUSTMENTS */
 @media (max-width: 640px) {
-  /* Container and spacing fixes */
+  /* Ensure proper spacing on mobile */
   .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   
-  /* Typography scaling */
-  .text-6xl, .text-7xl {
-    font-size: 2.5rem !important;
-    line-height: 1.2 !important;
+  /* Adjust card margins to prevent edge touching */
+  .coinbase-card {
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 1rem;
+  }
+  
+  /* Typography scaling for mobile */
+  .text-7xl {
+    font-size: 2.5rem;
+    line-height: 1.1;
+  }
+  
+  .text-6xl {
+    font-size: 2.25rem;
+    line-height: 1.1;
   }
   
   .text-5xl {
-    font-size: 2rem !important;
-    line-height: 1.3 !important;
+    font-size: 2rem;
+    line-height: 1.2;
   }
   
   .text-4xl {
-    font-size: 1.75rem !important;
-    line-height: 1.3 !important;
+    font-size: 1.75rem;
+    line-height: 1.3;
   }
   
   .text-3xl {
-    font-size: 1.5rem !important;
-    line-height: 1.4 !important;
+    font-size: 1.5rem;
+    line-height: 1.4;
   }
   
   .text-2xl {
-    font-size: 1.25rem !important;
-    line-height: 1.4 !important;
+    font-size: 1.25rem;
+    line-height: 1.4;
   }
   
-  /* Card and component spacing */
-  .coinbase-card {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-    border-radius: 1rem !important;
+  .text-xl {
+    font-size: 1.125rem;
+    line-height: 1.5;
   }
   
-  /* Button improvements */
+  .text-lg {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  /* Button improvements for mobile */
   .coinbase-btn {
-    padding: 0.875rem 1.5rem !important;
-    font-size: 1rem !important;
-    min-height: 3rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+    min-height: 48px;
   }
   
-  /* Input field improvements */
+  .hero-btn-primary,
+  .hero-btn-secondary {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    min-height: 52px;
+  }
+  
+  .cta-btn-primary,
+  .cta-btn-secondary {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+    min-height: 52px;
+  }
+  
+  /* Input improvements for mobile */
   .coinbase-input {
-    padding: 1rem !important;
-    font-size: 1rem !important;
-    min-height: 3rem;
+    padding: 1rem;
+    font-size: 16px; /* Prevent iOS zoom */
+    min-height: 48px;
   }
   
-  /* Navigation improvements */
-  nav .container {
-    padding-left: 1rem !important;
-    padding-right: 1rem !important;
-  }
-  
-  /* Grid improvements for mobile */
-  .grid-cols-2 {
-    gap: 0.75rem !important;
+  /* Grid adjustments for mobile */
+  .grid-cols-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
   }
   
   .grid-cols-3 {
-    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
-    gap: 1rem !important;
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 1rem;
   }
   
-  .grid-cols-4 {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.75rem !important;
+  .grid-cols-2 {
+    gap: 0.75rem;
   }
   
-  /* Balance cards mobile fix */
+  /* Balance cards mobile optimization */
   .balance-card {
-    padding: 1rem !important;
-    min-height: auto !important;
+    padding: 1rem;
+    min-height: auto;
   }
   
-  /* Stats grid mobile optimization */
-  .stats-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.5rem !important;
+  /* Font mono text wrapping for addresses */
+  .font-mono {
+    word-break: break-all;
+    font-size: 0.75rem;
+    line-height: 1.4;
   }
   
-  /* Progress section mobile */
-  .progress-section {
-    padding: 1rem !important;
+  /* Hero section mobile adjustments */
+  .hero-section {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+    min-height: auto;
   }
   
-  /* Tab navigation mobile */
+  /* Feature cards mobile */
+  .feature-card {
+    padding: 1.5rem;
+  }
+  
+  /* Strategy cards mobile */
+  .strategy-card {
+    padding: 1rem;
+  }
+  
+  /* Tokenomics cards mobile */
+  .tokenomics-card {
+    padding: 1.5rem;
+  }
+  
+  /* Performance metrics carousel mobile */
+  .hero-card {
+    padding: 1rem;
+  }
+  
+  /* CTA section mobile */
+  .cta-section {
+    padding: 2rem 0;
+  }
+  
+  /* Footer mobile */
+  .footer-content {
+    flex-direction: column;
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  /* Tab navigation mobile - prevent overflow */
   .tab-container {
     overflow-x: auto;
     scrollbar-width: none;
@@ -220,148 +426,119 @@ body {
     display: none;
   }
   
-  /* Modal and overlay improvements */
-  .modal-content {
-    margin: 1rem !important;
-    max-width: calc(100vw - 2rem) !important;
+  /* Error/Success messages mobile */
+  .error-msg, .success-msg {
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    margin: 0.5rem 0;
   }
   
-  /* Font mono text wrapping */
-  .font-mono {
-    word-break: break-all !important;
-    font-size: 0.75rem !important;
+  /* Navigation improvements */
+  nav .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
   
-  /* Contract address cards */
-  .contract-card {
-    padding: 0.75rem !important;
+  /* Prevent text from being too small */
+  p, span, div {
+    line-height: 1.6;
   }
   
-  .contract-card p {
-    font-size: 0.75rem !important;
+  .text-sm {
+    font-size: 0.875rem;
+    line-height: 1.5;
   }
   
-  /* Hero section mobile */
-  .hero-section {
-    padding-top: 2rem !important;
-    padding-bottom: 2rem !important;
-    min-height: auto !important;
-  }
-  
-  /* Feature cards mobile */
-  .feature-card {
-    padding: 1.5rem !important;
-  }
-  
-  /* Strategy cards mobile */
-  .strategy-card {
-    padding: 1rem !important;
-  }
-  
-  /* Tokenomics cards mobile */
-  .tokenomics-card {
-    padding: 1.5rem !important;
-  }
-  
-  /* Swap interface mobile */
-  .swap-container {
-    padding: 1rem !important;
-  }
-  
-  /* Performance metrics carousel mobile */
-  .performance-metrics {
-    height: auto !important;
-    padding: 1.5rem !important;
-  }
-  
-  /* CTA section mobile */
-  .cta-section {
-    padding: 2rem 0 !important;
-  }
-  
-  /* Footer mobile */
-  .footer-content {
-    flex-direction: column !important;
-    gap: 2rem !important;
-    text-align: center !important;
+  .text-xs {
+    font-size: 0.75rem;
+    line-height: 1.4;
   }
 }
 
-/* Additional mobile landscape fixes */
+/* Tablet adjustments */
+@media (min-width: 641px) and (max-width: 1023px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+/* Mobile landscape fixes */
 @media (max-width: 768px) and (orientation: landscape) {
   .hero-section {
-    min-height: auto !important;
-    padding: 1rem 0 !important;
+    min-height: auto;
+    padding: 1rem 0;
   }
   
-  .text-6xl, .text-7xl {
-    font-size: 2rem !important;
+  .text-7xl, .text-6xl {
+    font-size: 2rem;
   }
 }
 
 /* Touch-friendly improvements */
 @media (hover: none) and (pointer: coarse) {
-  button, .button, .btn {
-    min-height: 44px !important;
-    min-width: 44px !important;
+  button, .button, .btn, .coinbase-btn {
+    min-height: 44px;
+    min-width: 44px;
   }
   
+  /* Ensure proper touch targets */
+  a, button, input, select, textarea {
+    min-height: 44px;
+  }
+  
+  /* Remove hover effects on touch devices */
   .hover\:bg-slate-100:hover {
-    background-color: rgb(241 245 249) !important;
+    background-color: rgb(241 245 249);
   }
   
   .hover\:text-slate-900:hover {
-    color: rgb(15 23 42) !important;
+    color: rgb(15 23 42);
   }
 }
 
-/* Prevent horizontal scroll */
-html, body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-}
-
+/* Improve scrolling on iOS */
 * {
-  max-width: 100% !important;
+  -webkit-overflow-scrolling: touch;
 }
 
-/* Improve text readability on mobile */
-@media (max-width: 640px) {
-  p, span, div {
-    line-height: 1.6 !important;
-  }
-  
-  .text-sm {
-    font-size: 0.875rem !important;
-    line-height: 1.5 !important;
-  }
-  
-  .text-xs {
-    font-size: 0.75rem !important;
-    line-height: 1.4 !important;
+/* Prevent zoom on form focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px;
   }
 }
 
-/* Loading states mobile */
+/* Loading spinner mobile */
 .loading-spinner {
-  width: 1.25rem !important;
-  height: 1.25rem !important;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
-/* Error/Success messages mobile */
-.error-msg, .success-msg {
-  padding: 0.75rem !important;
-  font-size: 0.875rem !important;
-  margin: 0.5rem !important;
+/* Ensure proper text contrast */
+@media (prefers-color-scheme: light) {
+  .coinbase-title {
+    color: #1e293b;
+  }
 }
 
 /* Table responsiveness */
 @media (max-width: 640px) {
   table {
-    font-size: 0.75rem !important;
+    font-size: 0.75rem;
   }
   
   th, td {
-    padding: 0.5rem 0.25rem !important;
+    padding: 0.5rem 0.25rem;
   }
+}
+
+/* Final safety net - prevent any horizontal overflow */
+html, body, #root {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+.font-inter {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
