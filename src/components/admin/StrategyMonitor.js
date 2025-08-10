@@ -1,8 +1,8 @@
 // src/components/admin/StrategyMonitor.js - UPDATED VERSION
 import React, { useState, useEffect } from 'react';
-import { 
-  Activity, 
-  TrendingUp, 
+import {
+  Activity,
+  TrendingUp,
   TrendingDown,
   RefreshCw,
   AlertCircle,
@@ -365,8 +365,8 @@ const StrategyMonitor = () => {
               <div className="bg-slate-200 rounded-full h-2">
                 <div
                   className="bg-purple-600 h-2 rounded-full transition-all duration-500"
-                  style={{ 
-                    width: `${(strategies.tokenLiquidity.currentPrice / strategies.tokenLiquidity.nextTarget) * 100}%` 
+                  style={{
+                    width: `${(strategies.tokenLiquidity.currentPrice / strategies.tokenLiquidity.nextTarget) * 100}%`
                   }}
                 ></div>
               </div>

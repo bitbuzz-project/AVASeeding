@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
@@ -413,7 +414,7 @@ function InvestorDashboard() {
                         </div>
                         <div className="flex items-center">
                           <Target className="w-5 h-5 text-purple-600 mr-3" />
-                          <span className="text-slate-700">18-27% APY target</span>
+                          <span className="text-slate-700">20-40% APY target</span>
                         </div>
                       </div>
                     </div>
@@ -449,7 +450,7 @@ function InvestorDashboard() {
                       <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                         <PieChart className="w-6 h-6 text-purple-600" />
                       </div>
-                      <p className="text-3xl font-bold text-purple-600 mb-2">5%</p>
+                      <p className="text-3xl font-bold text-purple-600 mb-2">8%</p>
                       <p className="text-slate-700 font-medium">Sell Tax Rate</p>
                       <p className="text-sm text-slate-500 mt-2">Supports buyback program</p>
                     </div>
@@ -704,14 +705,14 @@ function InvestorDashboard() {
                         <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                           <div>
                             <p className="font-bold text-blue-900">Seeding Allocation</p>
-                            <p className="text-blue-700 text-sm">7,777,777 AVA (87.5%)</p>
+                            <p className="text-blue-700 text-sm">4,375,000 AVA (87.5%)</p>
                           </div>
                           <p className="text-2xl font-bold text-blue-600">87.5%</p>
                         </div>
                         <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
                           <div>
                             <p className="font-bold text-green-900">Liquidity Pool</p>
-                            <p className="text-green-700 text-sm">1,111,111 AVA (12.5%)</p>
+                            <p className="text-green-700 text-sm">625,000 AVA (12.5%)</p>
                           </div>
                           <p className="text-2xl font-bold text-green-600">12.5%</p>
                         </div>
@@ -744,7 +745,7 @@ function InvestorDashboard() {
                           <Activity className="w-5 h-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
                           <div>
                             <p className="font-medium text-purple-800">Sell Tax</p>
-                            <p className="text-purple-700 text-sm">5% to discourage speculation</p>
+                            <p className="text-purple-700 text-sm">8% to discourage speculation</p>
                           </div>
                         </div>
                         <div className="flex items-start p-3 bg-yellow-50 rounded-lg">
@@ -790,7 +791,7 @@ function InvestorDashboard() {
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                 <div>
                                   <p className="font-medium text-slate-900">Sell Tax Mechanism</p>
-                                  <p className="text-slate-600 text-sm">5% tax discourages frequent trading</p>
+                                  <p className="text-slate-600 text-sm">8% tax discourages frequent trading</p>
                                 </div>
                               </li>
                               <li className="flex items-start">
@@ -1078,7 +1079,7 @@ function InvestorDashboard() {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
 
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)');
       `}</style>
     </div>
   );

@@ -279,44 +279,44 @@ body {
     border-radius: 1rem;
   }
   
-  /* Typography scaling for mobile */
+  /* FIXED: Typography scaling for mobile - MUCH LARGER TITLE */
   .text-7xl {
-    font-size: 2.5rem;
-    line-height: 1.1;
+    font-size: 4rem; /* Increased from 2.5rem */
+    line-height: 0.8; /* Even tighter */
   }
   
   .text-6xl {
-    font-size: 2.25rem;
-    line-height: 1.1;
+    font-size: 3.75rem; /* Increased from 3.75rem */
+    line-height: 0.8; /* Even tighter */
   }
   
   .text-5xl {
-    font-size: 2rem;
-    line-height: 1.2;
+    font-size: 3rem; /* Increased from 2rem */
+    line-height: 1;
   }
   
   .text-4xl {
-    font-size: 1.75rem;
-    line-height: 1.3;
+    font-size: 2.25rem; /* Increased from 1.75rem */
+    line-height: 1.1;
   }
   
   .text-3xl {
-    font-size: 1.5rem;
-    line-height: 1.4;
+    font-size: 1.875rem; /* Increased from 1.5rem */
+    line-height: 1.2;
   }
   
   .text-2xl {
-    font-size: 1.25rem;
-    line-height: 1.4;
+    font-size: 1.5rem; /* Increased from 1.25rem */
+    line-height: 1.3;
   }
   
   .text-xl {
-    font-size: 1.125rem;
-    line-height: 1.5;
+    font-size: 1.25rem; /* Increased from 1.125rem */
+    line-height: 1.4;
   }
   
   .text-lg {
-    font-size: 1rem;
+    font-size: 1.125rem; /* Increased from 1rem */
     line-height: 1.5;
   }
   
@@ -471,7 +471,7 @@ body {
   }
   
   .text-7xl, .text-6xl {
-    font-size: 2rem;
+    font-size: 3rem;
   }
 }
 

@@ -1,11 +1,11 @@
 // src/components/admin/InvestmentDashboard.js
 import React from 'react';
 import { useAdminData } from '../../hooks/useAdminData';
-import { 
-  DollarSign, 
-  Users, 
-  TrendingUp, 
-  Activity, 
+import {
+  DollarSign,
+  Users,
+  TrendingUp,
+  Activity,
   RefreshCw,
   AlertCircle,
   CheckCircle,
@@ -18,13 +18,13 @@ import {
 } from 'lucide-react';
 
 function AdminInvestmentDashboard() {
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    lastUpdate, 
-    refreshData, 
-    exportData 
+  const {
+    data,
+    isLoading,
+    error,
+    lastUpdate,
+    refreshData,
+    exportData
   } = useAdminData();
 
   const formatNumber = (num) => {
@@ -146,7 +146,7 @@ function AdminInvestmentDashboard() {
           change={15.2}
           icon={Activity}
           color="purple"
-          subtitle="Total supply: 8.8M"
+          subtitle="Total supply: 5M"
         />
         <MetricCard
           title="Current AVA Price"
@@ -169,8 +169,8 @@ function AdminInvestmentDashboard() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <StrategyCard
-            name="Ethereum Strategy (E-MERS)"
-            data={data.strategiesPerformance.ethereum}
+            name="Bitcoin Strategy (B-MERS)"
+            data={data.strategiesPerformance.bitcoin}
             color="blue"
           />
           <StrategyCard
@@ -304,19 +304,19 @@ function AdminInvestmentDashboard() {
           </div>
           
           <div className={`flex items-center justify-between p-4 rounded-lg ${
-            data.systemHealth.tradingBots === 'healthy' ? 'bg-green-50' : 
+            data.systemHealth.tradingBots === 'healthy' ? 'bg-green-50' :
             data.systemHealth.tradingBots === 'warning' ? 'bg-yellow-50' : 'bg-red-50'
           }`}>
             <div>
               <p className={`font-medium ${
-                data.systemHealth.tradingBots === 'healthy' ? 'text-green-800' : 
+                data.systemHealth.tradingBots === 'healthy' ? 'text-green-800' :
                 data.systemHealth.tradingBots === 'warning' ? 'text-yellow-800' : 'text-red-800'
               }`}>Trading Bots</p>
               <p className={`text-sm ${
-                data.systemHealth.tradingBots === 'healthy' ? 'text-green-600' : 
+                data.systemHealth.tradingBots === 'healthy' ? 'text-green-600' :
                 data.systemHealth.tradingBots === 'warning' ? 'text-yellow-600' : 'text-red-600'
               }`}>
-                {data.systemHealth.tradingBots === 'healthy' ? 'All Strategies Running' : 
+                {data.systemHealth.tradingBots === 'healthy' ? 'All Strategies Running' :
                  data.systemHealth.tradingBots === 'warning' ? 'Some Issues Detected' : 'Error Detected'}
               </p>
             </div>
@@ -350,12 +350,12 @@ function AdminInvestmentDashboard() {
           </div>
           <div>
             <p className="text-slate-500 font-medium mb-1 text-sm">Target</p>
-            <p className="text-lg font-bold text-slate-900">7,777,777</p>
+            <p className="text-lg font-bold text-slate-900">5,000,000</p>
           </div>
           <div>
             <p className="text-slate-500 font-medium mb-1 text-sm">Remaining</p>
             <p className="text-lg font-bold text-slate-900">
-              {formatNumber(7777777 - parseFloat(data.totalAvaIssued))}
+              {formatNumber(5000000 - parseFloat(data.totalAvaIssued))}
             </p>
           </div>
           <div>

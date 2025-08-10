@@ -4,17 +4,17 @@ import { useState, useCallback, useEffect } from 'react';
 // Contract addresses and strategy configurations - UPDATED
 const STRATEGY_CONFIG = {
   bitcoin: {
-    allocation: 0.35, // 35% of total funds (was ethereum 50%)
+    allocation: 0.35, // 35% of total funds
     targetExposure: 0.70, // 70% BTC, 30% USDC
-    rebalanceThreshold: 0.09, // 9% deviation triggers rebalance (was 10%)
+    rebalanceThreshold: 0.09, // 9% deviation triggers rebalance
     name: 'Bitcoin Maximum Exposure Rebalancing System'
   },
   baseLP: {
-    allocation: 0.45, // 45% of total funds (was 35%)
+    allocation: 0.45, // 45% of total funds
     name: 'Base Ecosystem Liquidity Provisioning'
   },
   tokenLiquidity: {
-    allocation: 0.20, // 20% of total funds (was 15%)
+    allocation: 0.20, // 20% of total funds
     name: 'AVA Token Liquidity Management'
   }
 };
@@ -149,7 +149,7 @@ export const useStrategyData = () => {
           currentExposure,
           rebalanceThreshold: STRATEGY_CONFIG.bitcoin.rebalanceThreshold,
           isRebalanceNeeded,
-          nextRebalanceEstimate: isRebalanceNeeded ? 
+          nextRebalanceEstimate: isRebalanceNeeded ?
             new Date(Date.now() + 30 * 60 * 1000) : // 30 minutes if needed
             new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours if not needed
           apy: apy * 100,
@@ -220,8 +220,8 @@ export const useStrategyData = () => {
           slippage10k: 0.95 + Math.random() * 0.4,
           ratchetLevel: 7, // Higher ratchet level
           nextRatchetTarget: 1.35,
-          sellTaxRate: 5, // Updated 5% sell tax from whitepaper
-          totalSupply: 8888888, // Updated total supply from whitepaper
+          sellTaxRate: 8, // Updated 8% sell tax from whitepaper
+          totalSupply: 5000000, // Updated total supply from whitepaper
           alerts: []
         };
       }
@@ -233,11 +233,11 @@ export const useStrategyData = () => {
 
   // Calculate system-wide metrics
   const calculateSystemMetrics = useCallback((strategies) => {
-    const totalAllocation = Object.values(strategies).reduce((sum, strategy) => 
+    const totalAllocation = Object.values(strategies).reduce((sum, strategy) =>
       sum + (strategy?.allocation || 0), 0
     );
 
-    const totalProfit = Object.values(strategies).reduce((sum, strategy) => 
+    const totalProfit = Object.values(strategies).reduce((sum, strategy) =>
       sum + (strategy?.totalProfit || strategy?.netProfit || 0), 0
     );
 
@@ -252,7 +252,7 @@ export const useStrategyData = () => {
       totalAllocation,
       totalProfit,
       combinedAPY: weightedAPY,
-      targetAPYRange: '18-27%', // From whitepaper
+      targetAPYRange: '20-40%', // From whitepaper
       systemUptime: 99.96 + Math.random() * 0.04,
       lastSystemUpdate: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
       activeBots: 5,

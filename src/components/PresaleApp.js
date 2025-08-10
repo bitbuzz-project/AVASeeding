@@ -60,14 +60,14 @@ const AVA_ABI = [
 
 function PresaleApp() {
   // Get wallet state from context
-  const { 
-    account, 
-    provider, 
-    signer, 
-    isConnected, 
-    connectWallet, 
-    isLoading: walletLoading, 
-    error: walletError, 
+  const {
+    account,
+    provider,
+    signer,
+    isConnected,
+    connectWallet,
+    isLoading: walletLoading,
+    error: walletError,
     success: walletSuccess,
     setError: setWalletError,
     setSuccess: setWalletSuccess
@@ -528,7 +528,7 @@ function PresaleApp() {
                         onChange={handleReferralCodeChange}
                         placeholder="Enter referral code"
                         className={`coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem] ${
-                          isValidCode ? 'border-green-500 bg-green-50' : 
+                          isValidCode ? 'border-green-500 bg-green-50' :
                           referralCode && !isValidCode ? 'border-red-500 bg-red-50' : ''
                         }`}
                         disabled={displayLoading}

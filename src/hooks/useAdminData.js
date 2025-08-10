@@ -55,7 +55,7 @@ export const useAdminData = () => {
     progressPercent: 0,
     seedingActive: false,
     strategiesPerformance: {
-      ethereum: { allocated: '0', apy: 0, status: 'inactive' },
+      bitcoin: { allocated: '0', apy: 0, status: 'inactive' },
       baseEcosystem: { allocated: '0', apy: 0, status: 'inactive' },
       tokenLiquidity: { allocated: '0', apy: 0, status: 'inactive' }
     },
@@ -179,18 +179,18 @@ export const useAdminData = () => {
   const calculateStrategyPerformance = useCallback((totalInvestments) => {
     const total = parseFloat(totalInvestments);
     return {
-      ethereum: {
-        allocated: (total * 0.5).toString(),
-        apy: 27.3,
+      bitcoin: {
+        allocated: (total * 0.35).toString(),
+        apy: 21.1,
         status: 'active'
       },
       baseEcosystem: {
-        allocated: (total * 0.35).toString(),
+        allocated: (total * 0.45).toString(),
         apy: 45.7,
         status: 'active'
       },
       tokenLiquidity: {
-        allocated: (total * 0.15).toString(),
+        allocated: (total * 0.20).toString(),
         apy: 12.1,
         status: 'active'
       }
@@ -327,7 +327,7 @@ export const useAdminData = () => {
       // Convert to CSV format
       const csvContent = [
         'Address,Investment Amount,AVA Tokens,Date',
-        ...data.recentInvestors.map(inv => 
+        ...data.recentInvestors.map(inv =>
           `${inv.address},${inv.amount},${inv.tokens},${inv.date}`
         )
       ].join('\n');

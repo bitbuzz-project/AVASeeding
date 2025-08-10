@@ -1,12 +1,12 @@
 // src/components/HomePage.js - UPDATED TO MATCH WHITEPAPER
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  TrendingUp, 
-  Activity, 
-  Shield, 
-  Target, 
-  ArrowRight, 
+import {
+  TrendingUp,
+  Activity,
+  Shield,
+  Target,
+  ArrowRight,
   DollarSign,
   BarChart3,
   Zap,
@@ -100,51 +100,51 @@ function HomePage() {
           <div className="absolute -bottom-10 sm:-bottom-20 lg:-bottom-40 -left-10 sm:-left-20 lg:-left-40 w-20 sm:w-40 lg:w-80 h-20 sm:h-40 lg:h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
         </div>
 
-        <div className="container mx-auto px-4 py-6 sm:py-12 lg:py-20 relative z-10">
+        <div className="container mx-auto px-6 py-8 sm:py-12 lg:py-20 relative z-10">
           <div className="max-w-6xl mx-auto">
-            <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
-              <div className="text-center lg:text-left order-2 lg:order-1">
-                <div className="inline-flex items-center px-3 py-2 bg-blue-100 rounded-full text-blue-700 font-medium mb-4 sm:mb-6 lg:mb-8 text-xs sm:text-sm lg:text-base">
-                  <Zap className="w-3 sm:w-4 h-3 sm:h-4 mr-2" />
+            <div className="grid lg:grid-cols-2 gap-12 sm:gap-8 lg:gap-12 items-center">
+              <div className="text-center lg:text-left order-1 lg:order-1">
+                <div className="inline-flex items-center px-4 py-3 bg-blue-100 rounded-full text-blue-700 font-medium mb-8 sm:mb-6 lg:mb-8 text-base sm:text-sm lg:text-base">
+                  <Zap className="w-5 sm:w-4 h-5 sm:h-4 mr-2" />
                   Now Live on Base Testnet
                 </div>
                 
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-3 sm:mb-4 lg:mb-6 hero-title leading-tight">
-                  <span className="block">AVALON</span>
+                <h1 className="text-6xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-8 sm:mb-4 lg:mb-6 hero-title leading-none">
+                  <span className="block text-slate-800">AVALON</span>
                   <span className="block text-blue-600">TOKEN</span>
                 </h1>
                 
-                <p className="text-base sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl font-bold text-slate-700 mb-2 sm:mb-3 lg:mb-4">
+                <p className="text-xl sm:text-lg lg:text-xl xl:text-2xl 2xl:text-3xl font-bold text-slate-700 mb-6 sm:mb-3 lg:mb-4">
                   Harnessing Volatility for Steady Returns
                 </p>
                 
-                <p className="text-sm sm:text-base lg:text-lg xl:text-xl text-slate-600 mb-4 sm:mb-6 lg:mb-8 leading-relaxed px-2 sm:px-0">
-                  Systematic cryptocurrency trading strategies that generate 
-                  <span className="font-bold text-blue-600"> 18-27% APY</span> through 
+                <p className="text-lg sm:text-base lg:text-lg xl:text-xl text-slate-600 mb-8 sm:mb-6 lg:mb-8 leading-relaxed px-2 sm:px-0 max-w-2xl mx-auto lg:mx-0">
+                  Systematic cryptocurrency trading strategies that generate
+                  <span className="font-bold text-blue-600"> 20-40% APY</span> through
                   proven volatility harvesting techniques.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start px-2 sm:px-0">
+                <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 justify-center lg:justify-start px-2 sm:px-0">
                   <Link
                     to="/presale"
-                    className="hero-btn-primary px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-base lg:text-lg text-white inline-flex items-center justify-center group min-h-[44px] sm:min-h-[48px] lg:min-h-[52px]"
+                    className="hero-btn-primary px-8 sm:px-6 lg:px-8 py-4 sm:py-4 rounded-2xl font-bold text-lg sm:text-base lg:text-lg text-white inline-flex items-center justify-center group min-h-[56px] sm:min-h-[48px] lg:min-h-[52px]"
                   >
                     Join Presale
-                    <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   
                   <Link
                     to="/dashboard"
-                    className="hero-btn-secondary px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-base lg:text-lg inline-flex items-center justify-center min-h-[44px] sm:min-h-[48px] lg:min-h-[52px]"
+                    className="hero-btn-secondary px-8 sm:px-6 lg:px-8 py-4 sm:py-4 rounded-2xl font-bold text-lg sm:text-base lg:text-lg inline-flex items-center justify-center min-h-[56px] sm:min-h-[48px] lg:min-h-[52px]"
                   >
-                    <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    <BarChart3 className="w-5 h-5 sm:w-5 sm:h-5 mr-2" />
                     View Dashboard
                   </Link>
                 </div>
               </div>
 
               {/* Performance Metrics Carousel - MOBILE OPTIMIZED */}
-              <div className="hero-card rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 xl:p-8 backdrop-blur-lg order-1 lg:order-2">
+              <div className="hero-card rounded-xl sm:rounded-2xl lg:rounded-3xl p-3 sm:p-4 lg:p-6 xl:p-8 backdrop-blur-lg order-2 lg:order-2">
                 <h3 className="text-base sm:text-lg lg:text-xl xl:text-2xl font-bold mb-3 sm:mb-4 lg:mb-6 text-center text-slate-900">
                   Proven Performance
                 </h3>
@@ -201,7 +201,7 @@ function HomePage() {
                 Why Choose Avalon?
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
-                The only variable that never changes in crypto is volatility. 
+                The only variable that never changes in crypto is volatility.
                 We've built a systematic approach to profit from this constant.
               </p>
             </div>
@@ -240,7 +240,7 @@ function HomePage() {
                 Three-Pillar Strategy
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
-                Diversified approach combining systematic Bitcoin trading, Base ecosystem LP, 
+                Diversified approach combining systematic Bitcoin trading, Base ecosystem LP,
                 and liquidity provisioning for maximum risk-adjusted returns.
               </p>
             </div>
@@ -266,18 +266,18 @@ function HomePage() {
                     <div className="bg-slate-200 rounded-full h-2 sm:h-2 lg:h-3 mb-2 sm:mb-3 lg:mb-4">
                       <div
                         className={`${allocation.color} h-2 sm:h-2 lg:h-3 rounded-full transition-all duration-1000`}
-                        style={{ 
+                        style={{
                           width: isVisible['section-strategy'] ? `${allocation.percentage}%` : '0%',
                           transitionDelay: `${index * 200 + 300}ms`
                         }}
                       ></div>
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      {allocation.name === 'Bitcoin Strategy (B-MERS)' && 
+                      {allocation.name === 'Bitcoin Strategy (B-MERS)' &&
                         'Bitcoin Maximum Exposure Rebalancing System - 9% rebalancing threshold for optimal profit capture'}
-                      {allocation.name === 'Base Ecosystem LP' && 
+                      {allocation.name === 'Base Ecosystem LP' &&
                         'Active liquidity provisioning in high-yield Base ecosystem tokens with 25-75% APY target'}
-                      {allocation.name === 'Token Liquidity' && 
+                      {allocation.name === 'Token Liquidity' &&
                         'Market support through ratcheting liquidity system starting at $1.00 with price stability'}
                     </p>
                   </div>
@@ -456,9 +456,9 @@ function HomePage() {
                 <Link to="/presale" className="text-slate-300 hover:text-white transition-colors text-sm sm:text-base">
                   Presale
                 </Link>
-                <a 
-                  href="https://sepolia.basescan.org" 
-                  target="_blank" 
+                <a
+                  href="https://sepolia.basescan.org"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-slate-300 hover:text-white transition-colors inline-flex items-center justify-center sm:justify-start text-sm sm:text-base"
                 >
