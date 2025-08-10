@@ -234,13 +234,16 @@ function InvestorDashboard() {
   const formatPercent = (num) => {
     return `${parseFloat(num).toFixed(2)}%`;
   };
-return (
+
+  return (
     <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
         <div className="text-center mb-8">
-     
-        
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-4 coinbase-title">
+            AVALON INVESTOR DASHBOARD
+          </h1>
+          <p className="text-xl coinbase-subtitle">Track Your Investment Performance</p>
         </div>
 
         {/* Connection Status */}
@@ -430,23 +433,23 @@ return (
                       <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
                         <TrendingUp className="w-6 h-6 text-green-600" />
                       </div>
-                      <p className="text-3xl font-bold text-green-600 mb-2">18-27%</p>
-                      <p className="text-slate-700 font-medium">Target APY Range</p>
+                      <p className="text-3xl font-bold text-green-600 mb-2">21.1%</p>
+                      <p className="text-slate-700 font-medium">Bitcoin Strategy APY</p>
                       <p className="text-sm text-slate-500 mt-2">Based on backtested data</p>
                     </div>
                     <div className="bg-blue-50 rounded-xl p-6 text-center">
                       <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
                         <Activity className="w-6 h-6 text-blue-600" />
                       </div>
-                      <p className="text-3xl font-bold text-blue-600 mb-2">10%</p>
-                      <p className="text-slate-700 font-medium">Rebalancing Threshold</p>
-                      <p className="text-sm text-slate-500 mt-2">Optimal profit capture</p>
+                      <p className="text-3xl font-bold text-blue-600 mb-2">25-75%</p>
+                      <p className="text-slate-700 font-medium">Base LP APY Range</p>
+                      <p className="text-sm text-slate-500 mt-2">Target performance</p>
                     </div>
                     <div className="bg-purple-50 rounded-xl p-6 text-center">
                       <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                         <PieChart className="w-6 h-6 text-purple-600" />
                       </div>
-                      <p className="text-3xl font-bold text-purple-600 mb-2">{formatPercent(projectData.sellTaxRate)}</p>
+                      <p className="text-3xl font-bold text-purple-600 mb-2">5%</p>
                       <p className="text-slate-700 font-medium">Sell Tax Rate</p>
                       <p className="text-sm text-slate-500 mt-2">Supports buyback program</p>
                     </div>
@@ -458,28 +461,28 @@ return (
                   <h3 className="text-2xl font-bold mb-6 text-slate-900">Asset Allocation Strategy</h3>
                   <div className="grid md:grid-cols-3 gap-6">
                     <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-blue-900 mb-3">Ethereum Strategy</h4>
-                      <p className="text-4xl font-bold text-blue-600 mb-2">50%</p>
-                      <p className="text-blue-800 font-medium mb-3">Maximum Exposure Rebalancing System (E-MERS)</p>
+                      <h4 className="text-lg font-bold text-blue-900 mb-3">Bitcoin Strategy</h4>
+                      <p className="text-4xl font-bold text-blue-600 mb-2">35%</p>
+                      <p className="text-blue-800 font-medium mb-3">Bitcoin Maximum Exposure Rebalancing System (B-MERS)</p>
                       <ul className="text-sm text-blue-700 space-y-1">
                         <li>• Systematic buying and selling</li>
-                        <li>• 10% rebalancing threshold</li>
+                        <li>• 9% rebalancing threshold</li>
                         <li>• Fixed exposure target</li>
                       </ul>
                     </div>
                     <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
                       <h4 className="text-lg font-bold text-green-900 mb-3">Base Ecosystem LP</h4>
-                      <p className="text-4xl font-bold text-green-600 mb-2">35%</p>
+                      <p className="text-4xl font-bold text-green-600 mb-2">45%</p>
                       <p className="text-green-800 font-medium mb-3">Liquidity Provisioning</p>
                       <ul className="text-sm text-green-700 space-y-1">
                         <li>• Active yield generation</li>
-                        <li>• 25-50% APY target</li>
+                        <li>• 25-75% APY target</li>
                         <li>• Beta exposure to Base ecosystem</li>
                       </ul>
                     </div>
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
                       <h4 className="text-lg font-bold text-purple-900 mb-3">Token Liquidity</h4>
-                      <p className="text-4xl font-bold text-purple-600 mb-2">15%</p>
+                      <p className="text-4xl font-bold text-purple-600 mb-2">20%</p>
                       <p className="text-purple-800 font-medium mb-3">Market Support</p>
                       <ul className="text-sm text-purple-700 space-y-1">
                         <li>• Single-sided LP at $1.00</li>
@@ -532,6 +535,7 @@ return (
                 </div>
               </div>
             )}
+
             {/* Strategy Details Tab */}
             {activeTab === 'strategy' && (
               <div className="max-w-6xl mx-auto space-y-8">
@@ -548,15 +552,15 @@ return (
 
                   {/* Expandable Strategy Sections */}
                   <div className="space-y-4">
-                    {/* Maximum Exposure Rebalancing System */}
+                    {/* Bitcoin Maximum Exposure Rebalancing System */}
                     <div className="border border-slate-200 rounded-xl">
                       <button
                         onClick={() => toggleSection('strategy')}
                         className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
                       >
                         <div>
-                          <h4 className="text-xl font-bold text-slate-900">Maximum Exposure Rebalancing System (E-MERS)</h4>
-                          <p className="text-slate-600 mt-1">Core systematic trading strategy for Ethereum</p>
+                          <h4 className="text-xl font-bold text-slate-900">Bitcoin Maximum Exposure Rebalancing System (B-MERS)</h4>
+                          <p className="text-slate-600 mt-1">Core systematic trading strategy for Bitcoin</p>
                         </div>
                         {expandedSections.strategy ? 
                           <ChevronUp className="w-6 h-6 text-slate-400" /> : 
@@ -575,11 +579,11 @@ return (
                                 </li>
                                 <li className="flex items-start">
                                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Maintain 67% asset exposure, 33% USDC reserves</span>
+                                  <span>Maintain 70% Bitcoin exposure, 30% USDC reserves</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Rebalance at 10% price movements</span>
+                                  <span>Rebalance at 9% price movements</span>
                                 </li>
                                 <li className="flex items-start">
                                   <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -591,12 +595,12 @@ return (
                               <h5 className="font-bold text-slate-900 mb-3">Expected Performance</h5>
                               <div className="space-y-3">
                                 <div className="bg-green-50 rounded-lg p-4">
-                                  <p className="font-bold text-green-600 text-lg">Ethereum: 27% APY</p>
+                                  <p className="font-bold text-green-600 text-lg">Bitcoin: 21.1% APY</p>
                                   <p className="text-green-700 text-sm">Based on 2021-2025 backtesting</p>
                                 </div>
                                 <div className="bg-blue-50 rounded-lg p-4">
-                                  <p className="font-bold text-blue-600 text-lg">Bitcoin: 18% APY</p>
-                                  <p className="text-blue-700 text-sm">Proven strategy performance</p>
+                                  <p className="font-bold text-blue-600 text-lg">Strategy: B-MERS</p>
+                                  <p className="text-blue-700 text-sm">Proven systematic approach</p>
                                 </div>
                               </div>
                             </div>
@@ -660,20 +664,20 @@ return (
                               <h5 className="font-bold text-slate-900 mb-3">Target LP Pairs</h5>
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">ETH-USDC</span>
-                                  <span className="text-green-600 font-bold">44% APR</span>
+                                  <span className="font-medium">WETH-USDC</span>
+                                  <span className="text-green-600 font-bold">78% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">WETH/REI</span>
-                                  <span className="text-green-600 font-bold">43% APR</span>
+                                  <span className="text-green-600 font-bold">124% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">CLANKER/WETH</span>
-                                  <span className="text-green-600 font-bold">40% APR</span>
+                                  <span className="text-green-600 font-bold">68% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">USDC/MOCHI</span>
-                                  <span className="text-green-600 font-bold">37% APR</span>
+                                  <span className="text-green-600 font-bold">135% APR</span>
                                 </div>
                               </div>
                             </div>
@@ -714,7 +718,7 @@ return (
                       </div>
                       <div className="mt-6 p-4 bg-slate-50 rounded-lg">
                         <p className="font-bold text-slate-900">Maximum Supply</p>
-                        <p className="text-3xl font-bold text-slate-900">{formatNumber(projectData.totalSupply)}</p>
+                        <p className="text-3xl font-bold text-slate-900">8,888,888</p>
                         <p className="text-slate-600 text-sm">Fixed supply - no inflation</p>
                       </div>
                     </div>
@@ -740,7 +744,7 @@ return (
                           <Activity className="w-5 h-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
                           <div>
                             <p className="font-medium text-purple-800">Sell Tax</p>
-                            <p className="text-purple-700 text-sm">{formatPercent(projectData.sellTaxRate)} to discourage speculation</p>
+                            <p className="text-purple-700 text-sm">5% to discourage speculation</p>
                           </div>
                         </div>
                         <div className="flex items-start p-3 bg-yellow-50 rounded-lg">
@@ -786,7 +790,7 @@ return (
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                 <div>
                                   <p className="font-medium text-slate-900">Sell Tax Mechanism</p>
-                                  <p className="text-slate-600 text-sm">Discourages frequent trading</p>
+                                  <p className="text-slate-600 text-sm">5% tax discourages frequent trading</p>
                                 </div>
                               </li>
                               <li className="flex items-start">

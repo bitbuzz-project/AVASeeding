@@ -1,4 +1,4 @@
-// src/components/HomePage.js - MOBILE-OPTIMIZED VERSION
+// src/components/HomePage.js - UPDATED TO MATCH WHITEPAPER
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
@@ -52,9 +52,9 @@ function HomePage() {
   }, []);
 
   const performanceMetrics = [
-    { label: 'Bitcoin Strategy APY', value: '18%', period: '2021-2025 Avg' },
-    { label: 'Ethereum Strategy APY', value: '27%', period: '2021-2025 Avg' },
-    { label: 'Base LP Provisioning APY', value: '25-50%', period: 'Target Range' }
+    { label: 'Bitcoin Strategy APY', value: '21.1%', period: '2021-2025 Avg' },
+    { label: 'Base LP Provisioning APY', value: '25-75%', period: 'Target Range' },
+    { label: 'Combined Target APY', value: '18-27%', period: 'Portfolio Average' }
   ];
 
   const features = [
@@ -73,7 +73,7 @@ function HomePage() {
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 18-27% APY across market cycles.',
+      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy.',
       gradient: 'from-purple-500 to-pink-500'
     },
     {
@@ -85,9 +85,9 @@ function HomePage() {
   ];
 
   const allocations = [
-    { name: 'Ethereum Strategy (E-MERS)', percentage: 50, color: 'bg-blue-500' },
-    { name: 'Base Ecosystem LP', percentage: 35, color: 'bg-green-500' },
-    { name: 'Token Liquidity', percentage: 15, color: 'bg-purple-500' }
+    { name: 'Base Ecosystem LP', percentage: 45, color: 'bg-green-500' },
+    { name: 'Bitcoin Strategy (B-MERS)', percentage: 35, color: 'bg-blue-500' },
+    { name: 'Token Liquidity', percentage: 20, color: 'bg-purple-500' }
   ];
 
   return (
@@ -192,7 +192,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Features Section - MOBILE OPTIMIZED */}
+      {/* Features Section - Same as before */}
       <section id="section-features" className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -231,7 +231,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Strategy Section - MOBILE OPTIMIZED */}
+      {/* Strategy Section - UPDATED ALLOCATIONS */}
       <section id="section-strategy" className="py-8 sm:py-12 lg:py-16 xl:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -240,7 +240,7 @@ function HomePage() {
                 Three-Pillar Strategy
               </h2>
               <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
-                Diversified approach combining systematic trading, DeFi yield farming, 
+                Diversified approach combining systematic Bitcoin trading, Base ecosystem LP, 
                 and liquidity provisioning for maximum risk-adjusted returns.
               </p>
             </div>
@@ -273,12 +273,12 @@ function HomePage() {
                       ></div>
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      {allocation.name === 'Ethereum Strategy (E-MERS)' && 
-                        'Maximum Exposure Rebalancing System - 10% rebalancing threshold for optimal profit capture'}
+                      {allocation.name === 'Bitcoin Strategy (B-MERS)' && 
+                        'Bitcoin Maximum Exposure Rebalancing System - 9% rebalancing threshold for optimal profit capture'}
                       {allocation.name === 'Base Ecosystem LP' && 
-                        'Active liquidity provisioning in high-yield Base ecosystem tokens'}
+                        'Active liquidity provisioning in high-yield Base ecosystem tokens with 25-75% APY target'}
                       {allocation.name === 'Token Liquidity' && 
-                        'Market support through ratcheting liquidity system and price stability'}
+                        'Market support through ratcheting liquidity system starting at $1.00 with price stability'}
                     </p>
                   </div>
                 ))}
@@ -307,7 +307,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* Tokenomics Section - MOBILE OPTIMIZED */}
+      {/* Tokenomics Section - UPDATED */}
       <section id="section-tokenomics" className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -369,17 +369,17 @@ function HomePage() {
                 <div className="w-10 sm:w-12 lg:w-16 h-10 sm:h-12 lg:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 lg:mb-6">
                   <TrendingUp className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
                 </div>
-                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Flywheel Effect</h3>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">Long-term</p>
-                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Value accrual for patient holders.</p>
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Referral Program</h3>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">5% + 3%</p>
+                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Referrer earns 5%, referee gets 3% bonus.</p>
                 <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
                   <li className="flex items-center">
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Revenue scales with AUM</span>
+                    <span>Network growth incentives</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Weak hands filtered out</span>
+                    <span>Quality investor focus</span>
                   </li>
                 </ul>
               </div>
@@ -388,7 +388,7 @@ function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section - MOBILE OPTIMIZED */}
+      {/* CTA Section - Same as before */}
       <section className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">

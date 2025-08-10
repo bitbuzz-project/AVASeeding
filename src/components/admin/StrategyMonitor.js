@@ -1,517 +1,474 @@
-// src/components/admin/StrategyMonitor.js
+// src/components/admin/StrategyMonitor.js - UPDATED VERSION
 import React, { useState, useEffect } from 'react';
-// import { useStrategyData } from '../../hooks/useStrategyData';
-import {
-  Activity,
-  TrendingUp,
+import { 
+  Activity, 
+  TrendingUp, 
   TrendingDown,
-  BarChart3,
-  PieChart,
-  Settings,
   RefreshCw,
-  AlertTriangle,
+  AlertCircle,
   CheckCircle,
-  Zap,
-  Target,
+  BarChart3,
   DollarSign,
-  Percent,
-  Clock,
-  Play,
-  Pause,
-  RotateCcw,
-  Eye,
-  Download,
-  Filter,
-  Calendar
+  Target,
+  Zap,
+  Timer,
+  Settings
 } from 'lucide-react';
 
-function StrategyMonitor() {
-  // Mock data since the hook is not working yet
-  const mockStrategyData = {
-    systemMetrics: {
-      totalAllocation: 5000000,
-      combinedAPY: 24.5,
-      systemUptime: 99.8,
-      activeBots: 5,
-      totalBots: 5
-    },
-    ethereumStrategy: {
-      allocation: 2500000,
-      apy: 27.3,
-      dailyReturn: 0.08,
+const StrategyMonitor = () => {
+  const [strategies, setStrategies] = useState({
+    bitcoin: {
+      name: 'Bitcoin Strategy (B-MERS)',
+      allocation: 35,
+      currentExposure: 68.5,
+      targetExposure: 70,
+      rebalanceThreshold: 9,
+      apy: 21.1,
       status: 'active',
-      currentExposure: 0.65,
-      targetExposure: 0.67,
-      isRebalanceNeeded: true,
-      sharpeRatio: 1.8
+      health: 'excellent',
+      lastRebalance: '2 hours ago',
+      totalTrades: 847,
+      successRate: 92.3,
+      isRebalanceNeeded: false
     },
-    baseEcosystemLP: {
-      allocation: 1750000,
-      averageAPR: 45.7,
+    baseLP: {
+      name: 'Base Ecosystem LP',
+      allocation: 45,
+      activePairs: 8,
+      averageAPR: 42.7,
+      topPair: 'WETH/REI - 78.2%',
+      totalTVL: 1250000,
+      fees24h: 3850,
       status: 'active',
-      totalTVL: 12500000,
-      activePositions: 8,
-      topPerformingPair: 'ETH-USDC',
-      topPerformingAPR: 78.2
+      health: 'excellent'
     },
     tokenLiquidity: {
-      allocation: 750000,
-      status: 'active',
+      name: 'Token Liquidity Management',
+      allocation: 20,
       currentPrice: 1.23,
+      liquidityDepth: 125000,
       ratchetLevel: 6,
-      volume24h: 125000,
-      liquidityDepth: 450000
+      nextTarget: 1.30,
+      volume24h: 89000,
+      status: 'active',
+      health: 'good'
     }
-  };
+  });
 
-  const strategyData = mockStrategyData;
-  const isLoading = false;
-  const error = null;
-  const lastUpdate = new Date();
-  
-  const refreshData = () => {
-    console.log('Refreshing data...');
-  };
-  
-  const getStrategyHistory = async (strategyId, timeframe) => {
-    return [];
-  };
-  
-  const triggerRebalance = async (strategyId) => {
-    console.log('Triggering rebalance for:', strategyId);
-    return { success: true, txHash: '0x123...' };
-  };
-  
-  const exportStrategyData = (format) => {
-    console.log('Exporting data in format:', format);
-  };
+  const [systemMetrics, setSystemMetrics] = useState({
+    totalAllocation: 5000000,
+    combinedAPY: 31.4,
+    totalProfit: 156780,
+    activeBots: 5,
+    systemUptime: 99.97,
+    lastUpdate: new Date()
+  });
 
-  const [selectedStrategy, setSelectedStrategy] = useState('ethereum');
-  const [timeframe, setTimeframe] = useState('24h');
-  const [historyData, setHistoryData] = useState([]);
-  const [showSettings, setShowSettings] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Load strategy history when selection changes
-  useEffect(() => {
-    const loadHistory = async () => {
-      if (selectedStrategy) {
-        const history = await getStrategyHistory(selectedStrategy, timeframe);
-        setHistoryData(history);
+  // Simulate data refresh
+  const refreshData = async () => {
+    setRefreshing(true);
+    
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    // Update with slight variations to simulate real data
+    setStrategies(prev => ({
+      ...prev,
+      bitcoin: {
+        ...prev.bitcoin,
+        currentExposure: 70 + (Math.random() - 0.5) * 4,
+        apy: 21.1 + (Math.random() - 0.5) * 2,
+        totalTrades: prev.bitcoin.totalTrades + Math.floor(Math.random() * 3),
+        isRebalanceNeeded: Math.random() > 0.8
+      },
+      baseLP: {
+        ...prev.baseLP,
+        averageAPR: 42.7 + (Math.random() - 0.5) * 10,
+        fees24h: 3850 + Math.floor((Math.random() - 0.5) * 1000)
+      },
+      tokenLiquidity: {
+        ...prev.tokenLiquidity,
+        currentPrice: 1.23 + (Math.random() - 0.5) * 0.1,
+        volume24h: 89000 + Math.floor((Math.random() - 0.5) * 20000)
       }
-    };
-    loadHistory();
-  }, [selectedStrategy, timeframe, getStrategyHistory]);
+    }));
+
+    setSystemMetrics(prev => ({
+      ...prev,
+      combinedAPY: 31.4 + (Math.random() - 0.5) * 3,
+      totalProfit: prev.totalProfit + Math.floor(Math.random() * 1000),
+      lastUpdate: new Date()
+    }));
+
+    setRefreshing(false);
+  };
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(refreshData, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const formatNumber = (num, decimals = 2) => {
-    if (typeof num !== 'number') return '0';
-    return new Intl.NumberFormat().format(parseFloat(num.toFixed(decimals)));
+    return new Intl.NumberFormat().format(parseFloat(num).toFixed(decimals));
   };
 
-  const formatPercent = (num) => {
-    if (typeof num !== 'number') return '0%';
-    return `${parseFloat(num.toFixed(2))}%`;
+  const formatCurrency = (num) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(num);
   };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'active': return 'text-green-600 bg-green-100';
-      case 'warning': return 'text-yellow-600 bg-yellow-100';
-      case 'error': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
-    }
-  };
-
-  const StrategyCard = ({ strategy, name, isSelected, onClick }) => {
-    if (!strategy) return null;
-
-    return (
-      <div 
-        onClick={onClick}
-        className={`p-6 rounded-xl border-2 cursor-pointer transition-all ${
-          isSelected 
-            ? 'border-blue-500 bg-blue-50' 
-            : 'border-slate-200 hover:border-slate-300 bg-white'
-        }`}
-      >
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-bold text-slate-900">{name}</h3>
-          <div className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(strategy.status)}`}>
-            {strategy.status}
-          </div>
-        </div>
-        
-        <div className="space-y-3">
-          <div className="flex justify-between">
-            <span className="text-slate-600">Allocation:</span>
-            <span className="font-bold">${formatNumber(strategy.allocation)}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600">APY:</span>
-            <span className="font-bold text-green-600">
-              {formatPercent(strategy.apy || strategy.averageAPR)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-slate-600">Daily Return:</span>
-            <span className={`font-bold ${
-              (strategy.dailyReturn || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-            }`}>
-              {strategy.dailyReturn >= 0 ? '+' : ''}{formatPercent(strategy.dailyReturn || 0)}
-            </span>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  const MetricCard = ({ title, value, change, icon: Icon, color = 'blue' }) => (
-    <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-      <div className="flex items-center justify-between mb-4">
-        <div className={`w-12 h-12 bg-${color}-100 rounded-xl flex items-center justify-center`}>
-          <Icon className={`w-6 h-6 text-${color}-600`} />
-        </div>
-        {change !== undefined && (
-          <div className={`flex items-center ${change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {change >= 0 ? <TrendingUp className="w-4 h-4 mr-1" /> : <TrendingDown className="w-4 h-4 mr-1" />}
-            <span className="text-sm font-medium">{change >= 0 ? '+' : ''}{change}%</span>
-          </div>
-        )}
-      </div>
-      <h3 className="text-slate-600 font-medium text-sm mb-1">{title}</h3>
-      <p className="text-2xl font-bold text-slate-900">{value}</p>
-    </div>
-  );
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-slate-900 mb-2">Error Loading Strategy Data</h3>
-          <p className="text-slate-600 mb-4">{error}</p>
-          <button
-            onClick={refreshData}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-slate-900">Strategy Monitor</h1>
-          <p className="text-slate-600 mt-1">Real-time monitoring and control of Avalon trading strategies</p>
+          <h2 className="text-3xl font-bold text-slate-900">Strategy Monitor</h2>
+          <p className="text-slate-600 mt-1">Real-time performance tracking and system health</p>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Calendar className="w-4 h-4" />
-            Last updated: {lastUpdate ? lastUpdate.toLocaleTimeString() : 'Never'}
-          </div>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            <Settings className="w-4 h-4" />
-            Settings
-          </button>
-          <button
-            onClick={refreshData}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-            Refresh
-          </button>
-        </div>
+        <button
+          onClick={refreshData}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+          Refresh
+        </button>
       </div>
 
       {/* System Overview */}
-      {strategyData.systemMetrics && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <MetricCard
-            title="Total Allocation"
-            value={`$${formatNumber(strategyData.systemMetrics.totalAllocation)}`}
-            icon={DollarSign}
-            color="green"
-          />
-          <MetricCard
-            title="Combined APY"
-            value={formatPercent(strategyData.systemMetrics.combinedAPY)}
-            change={2.3}
-            icon={TrendingUp}
-            color="blue"
-          />
-          <MetricCard
-            title="System Uptime"
-            value={formatPercent(strategyData.systemMetrics.systemUptime)}
-            icon={CheckCircle}
-            color="green"
-          />
-          <MetricCard
-            title="Active Bots"
-            value={`${strategyData.systemMetrics.activeBots}/${strategyData.systemMetrics.totalBots}`}
-            icon={Activity}
-            color="purple"
-          />
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <DollarSign className="w-5 h-5 text-green-600" />
+            </div>
+            <TrendingUp className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{formatCurrency(systemMetrics.totalAllocation)}</p>
+          <p className="text-slate-600 font-medium">Total AUM</p>
         </div>
-      )}
 
-      {/* Strategy Selection */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Active Strategies</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <StrategyCard
-            strategy={strategyData.ethereumStrategy}
-            name="Ethereum Strategy"
-            isSelected={selectedStrategy === 'ethereum'}
-            onClick={() => setSelectedStrategy('ethereum')}
-          />
-          <StrategyCard
-            strategy={strategyData.baseEcosystemLP}
-            name="Base Ecosystem LP"
-            isSelected={selectedStrategy === 'baseLP'}
-            onClick={() => setSelectedStrategy('baseLP')}
-          />
-          <StrategyCard
-            strategy={strategyData.tokenLiquidity}
-            name="Token Liquidity"
-            isSelected={selectedStrategy === 'tokenLiquidity'}
-            onClick={() => setSelectedStrategy('tokenLiquidity')}
-          />
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+            </div>
+            <TrendingUp className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{formatNumber(systemMetrics.combinedAPY)}%</p>
+          <p className="text-slate-600 font-medium">Combined APY</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Target className="w-5 h-5 text-purple-600" />
+            </div>
+            <TrendingUp className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{formatCurrency(systemMetrics.totalProfit)}</p>
+          <p className="text-slate-600 font-medium">Total Profit</p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 shadow-lg">
+          <div className="flex items-center justify-between mb-3">
+            <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+              <Activity className="w-5 h-5 text-cyan-600" />
+            </div>
+            <CheckCircle className="w-4 h-4 text-green-500" />
+          </div>
+          <p className="text-2xl font-bold text-slate-900">{systemMetrics.activeBots}/5</p>
+          <p className="text-slate-600 font-medium">Active Bots</p>
         </div>
       </div>
 
-      {/* Selected Strategy Details */}
-      {selectedStrategy && strategyData[selectedStrategy + 'Strategy'] || strategyData[selectedStrategy] && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Strategy Performance */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-900">
-                {selectedStrategy === 'ethereum' ? 'Ethereum Strategy (E-MERS)' :
-                 selectedStrategy === 'baseLP' ? 'Base Ecosystem LP' :
-                 'Token Liquidity Management'}
-              </h3>
-              <div className="flex items-center gap-2">
-                <select
-                  value={timeframe}
-                  onChange={(e) => setTimeframe(e.target.value)}
-                  className="px-3 py-2 border border-slate-300 rounded-lg text-sm"
-                >
-                  <option value="24h">24 Hours</option>
-                  <option value="7d">7 Days</option>
-                  <option value="30d">30 Days</option>
-                </select>
+      {/* Strategy Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Bitcoin Strategy (B-MERS) */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Bitcoin Strategy</h3>
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                strategies.bitcoin.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {strategies.bitcoin.status.toUpperCase()}
               </div>
             </div>
-
-            {/* Performance Metrics */}
-            <div className="space-y-4">
-              {selectedStrategy === 'ethereum' && strategyData.ethereumStrategy && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-blue-50 rounded-lg">
-                      <p className="text-blue-600 text-sm font-medium">Current Exposure</p>
-                      <p className="text-2xl font-bold text-blue-700">
-                        {formatPercent(strategyData.ethereumStrategy.currentExposure * 100)}
-                      </p>
-                      <p className="text-blue-600 text-xs">
-                        Target: {formatPercent(strategyData.ethereumStrategy.targetExposure * 100)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-green-600 text-sm font-medium">Sharpe Ratio</p>
-                      <p className="text-2xl font-bold text-green-700">
-                        {strategyData.ethereumStrategy.sharpeRatio?.toFixed(2) || '0.00'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 border border-slate-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-600">Rebalance Needed:</span>
-                      <span className={`font-bold ${
-                        strategyData.ethereumStrategy.isRebalanceNeeded ? 'text-red-600' : 'text-green-600'
-                      }`}>
-                        {strategyData.ethereumStrategy.isRebalanceNeeded ? 'Yes' : 'No'}
-                      </span>
-                    </div>
-                    {strategyData.ethereumStrategy.isRebalanceNeeded && (
-                      <button
-                        onClick={() => triggerRebalance('ethereum')}
-                        disabled={isLoading}
-                        className="w-full mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                      >
-                        <RotateCcw className="w-4 h-4 mr-2 inline" />
-                        Trigger Rebalance
-                      </button>
-                    )}
-                  </div>
-                </>
-              )}
-
-              {selectedStrategy === 'baseLP' && strategyData.baseEcosystemLP && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-green-50 rounded-lg">
-                      <p className="text-green-600 text-sm font-medium">Total TVL</p>
-                      <p className="text-2xl font-bold text-green-700">
-                        ${formatNumber(strategyData.baseEcosystemLP.totalTVL)}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-purple-50 rounded-lg">
-                      <p className="text-purple-600 text-sm font-medium">Active Positions</p>
-                      <p className="text-2xl font-bold text-purple-700">
-                        {strategyData.baseEcosystemLP.activePositions || 0}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 border border-slate-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-600">Top Performing Pair:</span>
-                      <span className="font-bold text-blue-600">
-                        {strategyData.baseEcosystemLP.topPerformingPair}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">APR:</span>
-                      <span className="font-bold text-green-600">
-                        {formatPercent(strategyData.baseEcosystemLP.topPerformingAPR)}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {selectedStrategy === 'tokenLiquidity' && strategyData.tokenLiquidity && (
-                <>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-cyan-50 rounded-lg">
-                      <p className="text-cyan-600 text-sm font-medium">Current Price</p>
-                      <p className="text-2xl font-bold text-cyan-700">
-                        ${strategyData.tokenLiquidity.currentPrice?.toFixed(3) || '0.000'}
-                      </p>
-                    </div>
-                    <div className="p-4 bg-orange-50 rounded-lg">
-                      <p className="text-orange-600 text-sm font-medium">Ratchet Level</p>
-                      <p className="text-2xl font-bold text-orange-700">
-                        {strategyData.tokenLiquidity.ratchetLevel || 0}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="p-4 border border-slate-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-slate-600">24h Volume:</span>
-                      <span className="font-bold text-slate-900">
-                        ${formatNumber(strategyData.tokenLiquidity.volume24h)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-600">Liquidity Depth:</span>
-                      <span className="font-bold text-blue-600">
-                        ${formatNumber(strategyData.tokenLiquidity.liquidityDepth)}
-                      </span>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+            <p className="text-blue-100 text-sm">B-MERS • {strategies.bitcoin.allocation}% Allocation</p>
           </div>
 
-          {/* Strategy Controls */}
-          <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-            <h3 className="text-xl font-bold text-slate-900 mb-6">Strategy Controls</h3>
-            
-            <div className="space-y-4">
-              <div className="p-4 border border-slate-200 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-medium text-slate-900">Bot Status</span>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                    <span className="text-green-600 font-medium">Running</span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <button className="flex-1 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors">
-                    <Pause className="w-4 h-4 mr-2 inline" />
-                    Pause
-                  </button>
-                  <button className="flex-1 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors">
-                    <Play className="w-4 h-4 mr-2 inline" />
-                    Start
-                  </button>
-                </div>
+          <div className="p-6 space-y-4">
+            {/* Performance Metrics */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{formatNumber(strategies.bitcoin.apy)}%</p>
+                <p className="text-green-800 text-sm font-medium">Current APY</p>
               </div>
-
-              <div className="p-4 border border-slate-200 rounded-lg">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-medium text-slate-900">Data Export</span>
-                </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => exportStrategyData('csv')}
-                    className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                  >
-                    <Download className="w-4 h-4 mr-2 inline" />
-                    CSV
-                  </button>
-                  <button 
-                    onClick={() => exportStrategyData('json')}
-                    className="flex-1 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
-                  >
-                    <Download className="w-4 h-4 mr-2 inline" />
-                    JSON
-                  </button>
-                </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{formatNumber(strategies.bitcoin.successRate)}%</p>
+                <p className="text-blue-800 text-sm font-medium">Success Rate</p>
               </div>
+            </div>
 
-              {/* Recent Alerts */}
-              <div className="p-4 border border-slate-200 rounded-lg">
-                <h4 className="font-medium text-slate-900 mb-3">Recent Alerts</h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 p-2 bg-blue-50 rounded">
-                    <CheckCircle className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-blue-800">Strategy rebalanced at 14:30</span>
-                  </div>
-                  <div className="flex items-center gap-2 p-2 bg-green-50 rounded">
-                    <CheckCircle className="w-4 h-4 text-green-600" />
-                    <span className="text-sm text-green-800">High yield opportunity detected</span>
-                  </div>
+            {/* Exposure Tracking */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-slate-700">Current Exposure</span>
+                <span className="text-sm font-bold text-slate-900">
+                  {formatNumber(strategies.bitcoin.currentExposure)}% / {strategies.bitcoin.targetExposure}%
+                </span>
+              </div>
+              <div className="bg-slate-200 rounded-full h-2">
+                <div
+                  className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                  style={{ width: `${(strategies.bitcoin.currentExposure / strategies.bitcoin.targetExposure) * 100}%` }}
+                ></div>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Rebalance threshold: ±{strategies.bitcoin.rebalanceThreshold}%
+              </p>
+            </div>
+
+            {/* Status Indicators */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Total Trades</span>
+                <span className="font-medium">{formatNumber(strategies.bitcoin.totalTrades, 0)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Last Rebalance</span>
+                <span className="font-medium">{strategies.bitcoin.lastRebalance}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Rebalance Needed</span>
+                <div className="flex items-center">
+                  {strategies.bitcoin.isRebalanceNeeded ? (
+                    <>
+                      <AlertCircle className="w-4 h-4 text-yellow-500 mr-1" />
+                      <span className="text-yellow-600 font-medium">Yes</span>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                      <span className="text-green-600 font-medium">No</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
+
+            {strategies.bitcoin.isRebalanceNeeded && (
+              <button className="w-full bg-yellow-100 text-yellow-800 py-2 px-4 rounded-lg font-medium hover:bg-yellow-200 transition-colors">
+                Trigger Manual Rebalance
+              </button>
+            )}
           </div>
         </div>
-      )}
 
-      {/* Quick Actions */}
-      <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
-        <h3 className="text-xl font-bold text-slate-900 mb-6">System Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="flex items-center justify-center gap-2 p-4 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-            <Zap className="w-5 h-5 text-yellow-600" />
-            Emergency Stop All
-          </button>
-          <button className="flex items-center justify-center gap-2 p-4 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-            <RotateCcw className="w-5 h-5 text-blue-600" />
-            Rebalance All
-          </button>
-          <button className="flex items-center justify-center gap-2 p-4 border border-slate-300 rounded-lg hover:bg-slate-50 transition-colors">
-            <Eye className="w-5 h-5 text-purple-600" />
-            View Logs
-          </button>
+        {/* Base Ecosystem LP */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Base Ecosystem LP</h3>
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                strategies.baseLP.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {strategies.baseLP.status.toUpperCase()}
+              </div>
+            </div>
+            <p className="text-green-100 text-sm">Liquidity Provision • {strategies.baseLP.allocation}% Allocation</p>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {/* Performance Metrics */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-green-50 rounded-lg">
+                <p className="text-2xl font-bold text-green-600">{formatNumber(strategies.baseLP.averageAPR)}%</p>
+                <p className="text-green-800 text-sm font-medium">Average APR</p>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{strategies.baseLP.activePairs}</p>
+                <p className="text-blue-800 text-sm font-medium">Active Pairs</p>
+              </div>
+            </div>
+
+            {/* Top Performing Pair */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg p-4">
+              <h4 className="font-medium text-green-800 mb-2">🏆 Top Performing Pair</h4>
+              <p className="text-green-900 font-bold">{strategies.baseLP.topPair}</p>
+            </div>
+
+            {/* Status Indicators */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Total TVL</span>
+                <span className="font-medium">{formatCurrency(strategies.baseLP.totalTVL)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Fees (24h)</span>
+                <span className="font-medium text-green-600">{formatCurrency(strategies.baseLP.fees24h)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Health Status</span>
+                <div className="flex items-center">
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                  <span className="text-green-600 font-medium capitalize">{strategies.baseLP.health}</span>
+                </div>
+              </div>
+            </div>
+
+            <button className="w-full bg-green-100 text-green-800 py-2 px-4 rounded-lg font-medium hover:bg-green-200 transition-colors">
+              View Detailed Positions
+            </button>
+          </div>
+        </div>
+
+        {/* Token Liquidity Management */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Token Liquidity</h3>
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                strategies.tokenLiquidity.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+              }`}>
+                {strategies.tokenLiquidity.status.toUpperCase()}
+              </div>
+            </div>
+            <p className="text-purple-100 text-sm">AVA Market Support • {strategies.tokenLiquidity.allocation}% Allocation</p>
+          </div>
+
+          <div className="p-6 space-y-4">
+            {/* Current Metrics */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-3 bg-purple-50 rounded-lg">
+                <p className="text-2xl font-bold text-purple-600">${formatNumber(strategies.tokenLiquidity.currentPrice)}</p>
+                <p className="text-purple-800 text-sm font-medium">Current Price</p>
+              </div>
+              <div className="text-center p-3 bg-blue-50 rounded-lg">
+                <p className="text-2xl font-bold text-blue-600">{strategies.tokenLiquidity.ratchetLevel}</p>
+                <p className="text-blue-800 text-sm font-medium">Ratchet Level</p>
+              </div>
+            </div>
+
+            {/* Progress to Next Ratchet */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-slate-700">Next Ratchet Target</span>
+                <span className="text-sm font-bold text-slate-900">${strategies.tokenLiquidity.nextTarget}</span>
+              </div>
+              <div className="bg-slate-200 rounded-full h-2">
+                <div
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-500"
+                  style={{ 
+                    width: `${(strategies.tokenLiquidity.currentPrice / strategies.tokenLiquidity.nextTarget) * 100}%` 
+                  }}
+                ></div>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Progress: {formatNumber((strategies.tokenLiquidity.currentPrice / strategies.tokenLiquidity.nextTarget) * 100)}%
+              </p>
+            </div>
+
+            {/* Status Indicators */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Liquidity Depth</span>
+                <span className="font-medium">{formatCurrency(strategies.tokenLiquidity.liquidityDepth)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Volume (24h)</span>
+                <span className="font-medium">{formatCurrency(strategies.tokenLiquidity.volume24h)}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">Health Status</span>
+                <div className="flex items-center">
+                  <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                  <span className="text-green-600 font-medium capitalize">{strategies.tokenLiquidity.health}</span>
+                </div>
+              </div>
+            </div>
+
+            <button className="w-full bg-purple-100 text-purple-800 py-2 px-4 rounded-lg font-medium hover:bg-purple-200 transition-colors">
+              Manage Liquidity Levels
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* System Health Status */}
+      <div className="bg-white rounded-xl p-6 shadow-lg">
+        <h3 className="text-xl font-bold text-slate-900 mb-6">System Health & Performance</h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="space-y-4">
+            <h4 className="font-medium text-slate-700">Bot Status</h4>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <span className="text-sm font-medium">B-MERS Trading Bot</span>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-green-700 text-xs font-medium">ACTIVE</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <span className="text-sm font-medium">LP Management Bot</span>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-green-700 text-xs font-medium">ACTIVE</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                <span className="text-sm font-medium">Buyback Bot</span>
+                <div className="flex items-center">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  <span className="text-green-700 text-xs font-medium">ACTIVE</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-medium text-slate-700">Performance Metrics</h4>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">System Uptime</span>
+                <span className="font-bold text-green-600">{formatNumber(systemMetrics.systemUptime)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Combined APY</span>
+                <span className="font-bold text-blue-600">{formatNumber(systemMetrics.combinedAPY)}%</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-slate-600">Error Rate</span>
+                <span className="font-bold text-green-600">0.03%</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-medium text-slate-700">Last Update</h4>
+            <div className="bg-slate-50 rounded-lg p-4">
+              <div className="flex items-center mb-2">
+                <Timer className="w-4 h-4 text-slate-500 mr-2" />
+                <span className="text-sm font-medium text-slate-700">
+                  {systemMetrics.lastUpdate.toLocaleTimeString()}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500">
+                Next auto-refresh in {30 - new Date().getSeconds() % 30} seconds
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default StrategyMonitor;
