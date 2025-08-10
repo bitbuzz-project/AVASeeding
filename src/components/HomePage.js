@@ -94,11 +94,11 @@ function HomePage() {
     <div className="homepage-bg text-slate-900 font-inter">
       {/* Hero Section - MOBILE OPTIMIZED */}
       <section className="relative overflow-hidden min-h-screen flex items-center py-4 sm:py-8 lg:py-16">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-10 sm:-top-20 lg:-top-40 -right-10 sm:-right-20 lg:-right-40 w-20 sm:w-40 lg:w-80 h-20 sm:h-40 lg:h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-          <div className="absolute -bottom-10 sm:-bottom-20 lg:-bottom-40 -left-10 sm:-left-20 lg:-left-40 w-20 sm:w-40 lg:w-80 h-20 sm:h-40 lg:h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
-        </div>
+     {/* Animated background elements */}
+<div className="absolute inset-0 overflow-hidden">
+  <div className="absolute -top-10 sm:-top-20 lg:-top-40 -right-10 sm:-right-20 lg:-right-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+  <div className="absolute -bottom-10 sm:-bottom-20 lg:-bottom-40 -left-10 sm:-left-20 lg:-left-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+</div>
 
         <div className="container mx-auto px-6 py-8 sm:py-12 lg:py-20 relative z-10">
           <div className="max-w-6xl mx-auto">
@@ -108,9 +108,8 @@ function HomePage() {
                   <Zap className="w-5 sm:w-4 h-5 sm:h-4 mr-2" />
                   Now Live on Base Testnet
                 </div>
-                
-                <h1 className="text-6xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-8 sm:mb-4 lg:mb-6 hero-title leading-none">
-                  <span className="block text-slate-800">AVALON</span>
+                    <h1 className="text-6xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-8 sm:mb-4 lg:mb-6 hero-title leading-none">
+                  <span className="block text-slate-800 -mb-6 sm:-mb-2 lg:-mb-1 xl:mb-0">AVALON</span>
                   <span className="block text-blue-600">TOKEN</span>
                 </h1>
                 
