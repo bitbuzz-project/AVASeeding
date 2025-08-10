@@ -54,7 +54,7 @@ function HomePage() {
   const performanceMetrics = [
     { label: 'Bitcoin Strategy APY', value: '21.1%', period: '2021-2025 Avg' },
     { label: 'Base LP Provisioning APY', value: '25-75%', period: 'Target Range' },
-    { label: 'Combined Target APY', value: '18-27%', period: 'Portfolio Average' }
+    { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' }
   ];
 
   const features = [
@@ -73,13 +73,13 @@ function HomePage() {
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy.',
+      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy. and 25-75% with DeFi LP on Base Ecosystem.',
       gradient: 'from-purple-500 to-pink-500'
     },
     {
       icon: Zap,
       title: 'Automated Revenue',
-      description: '90% of profits go to buybacks, creating deflationary pressure.',
+      description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
       gradient: 'from-yellow-500 to-orange-500'
     }
   ];
@@ -328,7 +328,7 @@ function HomePage() {
                   <Users className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
                 </div>
                 <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Fixed Supply</h3>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600 mb-2">8,888,888</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-600 mb-2">5,000,000</p>
                 <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Total AVA tokens. No inflation, no dilution.</p>
                 <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
                   <li className="flex items-center">
@@ -349,7 +349,7 @@ function HomePage() {
                   <Shield className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
                 </div>
                 <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Deflationary Mechanics</h3>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600 mb-2">5%</p>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600 mb-2">8%</p>
                 <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Sell tax discourages speculation.</p>
                 <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
                   <li className="flex items-center">
@@ -404,7 +404,7 @@ function HomePage() {
                 to="/presale"
                 className="cta-btn-primary w-full sm:w-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-base lg:text-lg inline-flex items-center justify-center group min-h-[44px] sm:min-h-[48px] lg:min-h-[52px]"
               >
-                Join Presale Now
+                Join Ongoing Token Sale
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
               </Link>
               
@@ -419,11 +419,11 @@ function HomePage() {
 
             <div className="mt-6 sm:mt-8 lg:mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-8 px-2">
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">18-27%</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">20-40%</div>
                 <div className="text-xs sm:text-sm opacity-75">Target APY</div>
               </div>
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">90%</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">85%</div>
                 <div className="text-xs sm:text-sm opacity-75">Revenue to Buybacks</div>
               </div>
               <div className="text-center">

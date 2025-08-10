@@ -32,7 +32,7 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x507c0270c251C875CB350E6c1E806cb60a9a9970'
+  SEEDING: '0xF9566De2e8697afa09fE2a5a08152561715d217E'
 };
 
 // ABIs for the contracts
@@ -718,7 +718,7 @@ function InvestorDashboard() {
                       </div>
                       <div className="mt-6 p-4 bg-slate-50 rounded-lg">
                         <p className="font-bold text-slate-900">Maximum Supply</p>
-                        <p className="text-3xl font-bold text-slate-900">8,888,888</p>
+                        <p className="text-3xl font-bold text-slate-900">5,000,000</p>
                         <p className="text-slate-600 text-sm">Fixed supply - no inflation</p>
                       </div>
                     </div>

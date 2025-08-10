@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x507c0270c251C875CB350E6c1E806cb60a9a9970'
+  SEEDING: '0xF9566De2e8697afa09fE2a5a08152561715d217E'
 };
 
 // Predefined referral codes (10 codes for big investors)
