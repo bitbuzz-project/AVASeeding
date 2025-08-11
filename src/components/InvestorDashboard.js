@@ -18,10 +18,19 @@ import {
   ChevronUp,
   Calendar,
   Info,
-  AlertCircle
+  AlertCircle,
+   Menu,        // ADD THIS
+  X           // ADD THIS
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
+
+const tabs = [
+  { id: 'overview', label: 'Portfolio Overview', icon: BarChart3, shortLabel: 'Portfolio' },
+  { id: 'analytics', label: 'Investment Analytics', icon: TrendingUp, shortLabel: 'Analytics' },
+  { id: 'strategy', label: 'Strategy Details', icon: Target, shortLabel: 'Strategy' },
+  { id: 'tokenomics', label: 'Tokenomics', icon: PieChart, shortLabel: 'Tokenomics' }
+];
 
 // Dynamically import ethers to avoid SSR issues
 let ethers;
@@ -77,7 +86,20 @@ function InvestorDashboard() {
   const [avaContract, setAvaContract] = useState(null);
   const [seedingContract, setSeedingContract] = useState(null);
   const [usdcContract, setUsdcContract] = useState(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+// 3. ADD MOBILE MENU FUNCTIONS (add these new functions)
+const toggleMobileMenu = () => {
+  setIsMobileMenuOpen(!isMobileMenuOpen);
+};
 
+const closeMobileMenu = () => {
+  setIsMobileMenuOpen(false);
+};
+
+const handleTabChange = (tabId) => {
+  setActiveTab(tabId);
+  closeMobileMenu();
+};
   // Project data
   const [projectData, setProjectData] = useState({
     totalSupply: '0',
@@ -269,33 +291,71 @@ function InvestorDashboard() {
         ) : (
           <>
             {/* Navigation Tabs */}
-            <div className="max-w-6xl mx-auto mb-8">
-              <div className="coinbase-card rounded-2xl p-2">
-                <div className="flex space-x-2">
-                  {[
-                    { id: 'overview', label: 'Portfolio Overview', icon: BarChart3 },
-                    { id: 'analytics', label: 'Investment Analytics', icon: TrendingUp },
-                    { id: 'strategy', label: 'Strategy Details', icon: Target },
-                    { id: 'tokenomics', label: 'Tokenomics', icon: PieChart }
-                  ].map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-semibold transition-all ${
-                        activeTab === tab.id
-                          ? 'bg-blue-600 text-white shadow-lg'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                      }`}
-                    >
-                      <tab.icon className="w-5 h-5 mr-2" />
-                      <span className="hidden md:inline">{tab.label}</span>
-                      <span className="md:hidden">{tab.label.split(' ')[0]}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <div className="max-w-6xl mx-auto mb-6 sm:mb-8">
+  <div className="coinbase-card rounded-xl sm:rounded-2xl">
+    {/* Desktop Navigation - Hidden on mobile */}
+    <div className="hidden lg:block p-2">
+      <div className="flex space-x-2">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-semibold transition-all ${
+              activeTab === tab.id
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <tab.icon className="w-5 h-5 mr-2" />
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
 
+    {/* Mobile Navigation Header */}
+    <div className="lg:hidden flex items-center justify-between p-4">
+      <div className="flex items-center">
+        {tabs.find(tab => tab.id === activeTab)?.icon && (
+          React.createElement(tabs.find(tab => tab.id === activeTab).icon, {
+            className: "w-5 h-5 mr-2 text-blue-600"
+          })
+        )}
+        <h2 className="text-lg font-bold text-slate-900">
+          {tabs.find(tab => tab.id === activeTab)?.shortLabel || 'Dashboard'}
+        </h2>
+      </div>
+      <button
+        onClick={toggleMobileMenu}
+        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+      >
+        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+      </button>
+    </div>
+
+    {/* Mobile Navigation Menu */}
+    {isMobileMenuOpen && (
+      <div className="lg:hidden border-t border-slate-200 bg-white rounded-b-xl sm:rounded-b-2xl">
+        <div className="p-3 space-y-1">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                activeTab === tab.id
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <tab.icon className="w-5 h-5 mr-3" />
+              <span className="font-medium">{tab.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    )}
+  </div>
+</div>
             {/* Portfolio Overview Tab */}
             {activeTab === 'overview' && (
               <div className="max-w-6xl mx-auto space-y-8">
@@ -662,7 +722,7 @@ function InvestorDashboard() {
                               </ul>
                             </div>
                             <div>
-                              <h5 className="font-bold text-slate-900 mb-3">Target LP Pairs</h5>
+                              <h5 className="font-bold text-slate-900 mb-3">Real-Life examples</h5>
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">WETH-USDC</span>

@@ -73,7 +73,7 @@ function HomePage() {
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy. and 25-75% with DeFi LP on Base Ecosystem.',
+      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy and 25-75% with DeFi LP on Base Ecosystem.',
       gradient: 'from-purple-500 to-pink-500'
     },
     {
@@ -128,7 +128,7 @@ function HomePage() {
                     to="/presale"
                     className="hero-btn-primary px-8 sm:px-6 lg:px-8 py-4 sm:py-4 rounded-2xl font-bold text-lg sm:text-base lg:text-lg text-white inline-flex items-center justify-center group min-h-[56px] sm:min-h-[48px] lg:min-h-[52px]"
                   >
-                    Join Presale
+                    Join the Token Sale
                     <ArrowRight className="w-5 h-5 sm:w-5 sm:h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Link>
                   
@@ -292,11 +292,11 @@ function HomePage() {
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4">
                     <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
                       <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Token Buybacks</span>
-                      <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">90%</span>
+                      <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">85%</span>
                     </div>
                     <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
                       <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Operations</span>
-                      <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">10%</span>
+                      <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">15%</span>
                     </div>
                   </div>
                 </div>
