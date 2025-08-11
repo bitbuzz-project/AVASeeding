@@ -725,20 +725,24 @@ const handleTabChange = (tabId) => {
                               <h5 className="font-bold text-slate-900 mb-3">Real-Life examples</h5>
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">WETH-USDC</span>
-                                  <span className="text-green-600 font-bold">78% APR</span>
+                                  <span className="font-medium">REI/USDC</span>
+                                  <span className="text-green-600 font-bold">70% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">WETH/REI</span>
-                                  <span className="text-green-600 font-bold">124% APR</span>
+                                  <span className="font-medium">ZORA/USDC</span>
+                                  <span className="text-green-600 font-bold">200% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">CLANKER/WETH</span>
-                                  <span className="text-green-600 font-bold">68% APR</span>
+                                  <span className="font-medium">CLANKER</span>
+                                  <span className="text-green-600 font-bold">100% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">USDC/MOCHI</span>
-                                  <span className="text-green-600 font-bold">135% APR</span>
+                                  <span className="font-medium">BNKR</span>
+                                  <span className="text-green-600 font-bold">45% APR</span>
+                                </div>
+                                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">MAMO/USDC</span>
+                                  <span className="text-green-600 font-bold">140% APR</span>
                                 </div>
                               </div>
                             </div>
