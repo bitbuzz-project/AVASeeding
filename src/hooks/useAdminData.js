@@ -26,7 +26,19 @@ const SEEDING_ABI = [
   "function purchasedAmount(address) external view returns (uint256)",
   // Events for tracking
   "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avaAmount)",
-  "event SeedingStatusChanged(bool active)"
+  "event SeedingStatusChanged(bool active)",
+  "function getUserReferralStats(address) external view returns (string, bool, uint256)",
+"function getReferralCode(address) external view returns (string)",
+"function isValidReferralCode(string) external view returns (bool)",
+"function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)",
+"function validReferralCodes(string) external view returns (bool)",
+"function referralCodeToOwner(string) external view returns (address)",
+"function referralEarnings(address) external view returns (uint256)",
+"function referralCount(address) external view returns (uint256)",
+// Events
+"event ReferralCodeAdded(string code, address owner)",
+"event ReferralPurchase(address referee, address referrer, string code, uint256 amount, uint256 bonus)",
+"event ReferralRewardPaid(address referrer, uint256 amount)"
 ];
 
 const AVA_ABI = [
@@ -65,7 +77,17 @@ export const useAdminData = () => {
       seedingContract: 'unknown',
       avaToken: 'unknown',
       tradingBots: 'unknown'
-    }
+    },
+        referralStats: {
+      totalCodes: 0,
+      activeCodes: 0,
+      totalRewards: '0',
+      totalBonusTokens: '0',
+      conversionRate: 0
+    },
+    topReferrers: [],
+    recentReferrals: [],
+    referralCodes: []
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -174,6 +196,98 @@ export const useAdminData = () => {
       return [];
     }
   }, [contracts]);
+  // Fetch referral program data
+const fetchReferralData = useCallback(async (contractInstances) => {
+  const { seeding, provider } = contractInstances || contracts;
+  if (!seeding || !provider) return null;
+
+  try {
+    // Get referral events
+    const currentBlock = await provider.getBlockNumber();
+    const fromBlock = Math.max(0, currentBlock - 2000);
+
+    const [codeAddedEvents, referralPurchaseEvents, rewardPaidEvents] = await Promise.all([
+      seeding.queryFilter(seeding.filters.ReferralCodeAdded(), fromBlock, currentBlock),
+      seeding.queryFilter(seeding.filters.ReferralPurchase(), fromBlock, currentBlock),
+      seeding.queryFilter(seeding.filters.ReferralRewardPaid(), fromBlock, currentBlock)
+    ]);
+
+    // Process referral codes
+    const referralCodes = [];
+    const referrerStats = new Map();
+
+    for (const event of codeAddedEvents) {
+      const code = event.args.code;
+      const owner = event.args.owner;
+      
+      try {
+        const [earnings, count] = await Promise.all([
+          seeding.referralEarnings(owner),
+          seeding.referralCount(owner)
+        ]);
+
+        referralCodes.push({
+          code,
+          owner,
+          earnings: ethers.formatUnits(earnings, 6),
+          usageCount: Number(count),
+          isActive: true
+        });
+
+        referrerStats.set(owner, {
+          address: owner,
+          totalEarnings: ethers.formatUnits(earnings, 6),
+          referralCount: Number(count),
+          codes: referrerStats.get(owner)?.codes ? [...referrerStats.get(owner).codes, code] : [code]
+        });
+      } catch (error) {
+        console.warn(`Error fetching data for code ${code}:`, error);
+      }
+    }
+
+    // Process recent referral purchases
+    const recentReferrals = await Promise.all(
+      referralPurchaseEvents.slice(-10).reverse().map(async (event) => {
+        const block = await provider.getBlock(event.blockNumber);
+        return {
+          referee: event.args.referee,
+          referrer: event.args.referrer,
+          code: event.args.code,
+          amount: ethers.formatUnits(event.args.amount, 6),
+          bonus: ethers.formatEther(event.args.bonus),
+          date: new Date(block.timestamp * 1000).toISOString(),
+          txHash: event.transactionHash
+        };
+      })
+    );
+
+    // Calculate totals
+    const totalRewards = Array.from(referrerStats.values())
+      .reduce((sum, referrer) => sum + parseFloat(referrer.totalEarnings), 0);
+    
+    const totalBonusTokens = recentReferrals
+      .reduce((sum, ref) => sum + parseFloat(ref.bonus), 0);
+
+    const conversionRate = codeAddedEvents.length > 0 ? 
+      (referralPurchaseEvents.length / codeAddedEvents.length) * 100 : 0;
+
+    return {
+      totalCodes: codeAddedEvents.length,
+      activeCodes: referralCodes.filter(code => code.usageCount > 0).length,
+      totalRewards: totalRewards.toString(),
+      totalBonusTokens: totalBonusTokens.toString(),
+      conversionRate,
+      topReferrers: Array.from(referrerStats.values())
+        .sort((a, b) => parseFloat(b.totalEarnings) - parseFloat(a.totalEarnings))
+        .slice(0, 10),
+      recentReferrals,
+      referralCodes: referralCodes.sort((a, b) => b.usageCount - a.usageCount)
+    };
+  } catch (error) {
+    console.error('Error fetching referral data:', error);
+    return null;
+  }
+}, [contracts]);
 
   // Calculate strategy performance (mock for now - you'll implement real calculation)
   const calculateStrategyPerformance = useCallback((totalInvestments) => {
@@ -245,10 +359,11 @@ export const useAdminData = () => {
       }
 
       // Fetch all data in parallel
-      const [basicData, recentInvestors, systemHealth] = await Promise.all([
+      const [basicData, recentInvestors, systemHealth, referralData] = await Promise.all([
         fetchBasicData(contractInstances),
         fetchRecentInvestors(contractInstances),
-        checkSystemHealth(contractInstances)
+        checkSystemHealth(contractInstances),
+        fetchReferralData(contractInstances)
       ]);
 
       if (!basicData) {
@@ -272,7 +387,17 @@ export const useAdminData = () => {
         strategiesPerformance,
         recentInvestors,
         monthlyData: [], // Will implement historical data tracking
-        systemHealth
+        systemHealth,
+        referralStats: referralData || {
+  totalCodes: 0,
+  activeCodes: 0,
+  totalRewards: '0',
+  totalBonusTokens: '0',
+  conversionRate: 0
+},
+topReferrers: referralData?.topReferrers || [],
+recentReferrals: referralData?.recentReferrals || [],
+referralCodes: referralData?.referralCodes || []
       });
 
       setLastUpdate(new Date());

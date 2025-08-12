@@ -14,7 +14,8 @@ import {
   Eye,
   Download,
   Calendar,
-  Filter
+  Filter,
+  Gift  // Add this
 } from 'lucide-react';
 
 function AdminInvestmentDashboard() {
@@ -156,6 +157,14 @@ function AdminInvestmentDashboard() {
           color="cyan"
           subtitle="Market price"
         />
+        <MetricCard
+          title="Referral Rewards"
+          value={`$${formatNumber(data.referralStats?.totalRewards || 0)}`}
+          change={5.2}
+          icon={Gift}
+          color="purple"
+          subtitle="Total paid out"
+        />
       </div>
 
       {/* Strategy Performance */}
@@ -187,7 +196,7 @@ function AdminInvestmentDashboard() {
       </div>
 
       {/* Recent Investors & Revenue */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Revenue Analytics */}
         <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
           <div className="flex items-center justify-between mb-6">
@@ -225,7 +234,43 @@ function AdminInvestmentDashboard() {
             </div>
           </div>
         </div>
-
+        {/* Add this new section after the Revenue Analytics div */}
+<div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
+  <div className="flex items-center justify-between mb-6">
+    <h2 className="text-xl font-bold text-slate-900">Referral Overview</h2>
+<button className="flex items-center gap-2 px-3 py-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
+      <Eye className="w-4 h-4" />
+      View All
+    </button>
+  </div>
+  <div className="space-y-4">
+    <div className="flex justify-between items-center p-4 bg-purple-50 rounded-lg">
+      <div>
+        <p className="text-purple-800 font-medium">Active Codes</p>
+        <p className="text-2xl font-bold text-purple-600">{data.referralStats?.activeCodes || 0}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-purple-600 text-sm">Total Created</p>
+        <p className="text-lg font-bold text-purple-700">{data.referralStats?.totalCodes || 0}</p>
+      </div>
+    </div>
+    <div className="space-y-2">
+      {data.topReferrers?.slice(0, 3).map((referrer, index) => (
+        <div key={referrer.address} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 bg-purple-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+              {index + 1}
+            </div>
+            <span className="font-mono text-sm text-slate-600">
+              {referrer.address.slice(0, 6)}...{referrer.address.slice(-4)}
+            </span>
+          </div>
+          <span className="font-bold text-purple-600">${formatNumber(referrer.totalEarnings)}</span>
+        </div>
+      )) || []}
+    </div>
+  </div>
+</div>
         {/* Recent Investors */}
         <div className="bg-white rounded-xl p-6 shadow-lg border border-slate-200">
           <div className="flex items-center justify-between mb-6">

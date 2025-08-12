@@ -11,11 +11,15 @@ import {
   Eye,
   AlertTriangle,
   Menu,
-  X
+  X,
+  Gift  // Add this
 } from 'lucide-react';
 import InvestmentDashboard from './admin/InvestmentDashboard';
 import InvestorManagement from './admin/InvestorManagement';
 import StrategyMonitor from './admin/StrategyMonitor';
+import ReferralAnalytics from './admin/ReferralAnalytics';
+import { useAdminData } from '../hooks/useAdminData';
+
 // Admin authentication utility
 const AdminAuth = {
   login: (password) => {
@@ -59,7 +63,7 @@ const AdminLogin = ({ onLogin }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+  
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -75,6 +79,7 @@ const AdminLogin = ({ onLogin }) => {
       setIsLoading(false);
       setPassword('');
     }, 1000);
+    
   };
 
   return (
@@ -135,6 +140,7 @@ const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { data, isLoading, error, refreshData } = useAdminData();
 
   // Check authentication on mount
   useEffect(() => {
@@ -158,7 +164,9 @@ const AdminPanel = () => {
     { id: 'strategies', label: 'Strategy Monitor', icon: Activity },
     { id: 'revenue', label: 'Revenue Analytics', icon: DollarSign },
     { id: 'system', label: 'System Health', icon: Eye },
-    { id: 'settings', label: 'Admin Settings', icon: Settings }
+    { id: 'settings', label: 'Admin Settings', icon: Settings },
+    { id: 'referrals', label: 'Referral Analytics', icon: Gift },
+
   ];
 
   // If not authenticated, show login
@@ -265,7 +273,8 @@ const AdminPanel = () => {
           
           {/* Strategy Monitor - NEW */}
           {activeTab === 'strategies' && <StrategyMonitor />}
-          
+          {activeTab === 'referrals' && <ReferralAnalytics data={data} onRefresh={refreshData} isLoading={isLoading} />}
+
           {/* Placeholder for other tabs */}
           {activeTab === 'revenue' && (
             <div className="bg-white rounded-xl p-8 shadow-lg">
