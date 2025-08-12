@@ -14,6 +14,9 @@ import {
   Zap, 
   Shield, 
   ExternalLink,
+    Gift,
+     Copy,
+      Loader,// ADD THESE
   ChevronDown,
   ChevronUp,
   Calendar,
@@ -42,7 +45,7 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0xF9566De2e8697afa09fE2a5a08152561715d217E'
+  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
 };
 
 // ABIs for the contracts
@@ -54,7 +57,12 @@ const SEEDING_ABI = [
   "function getParticipantCount() external view returns (uint256)",
   "function seedingActive() external view returns (bool)",
   "function minimumPurchase() external view returns (uint256)",
-  "function seedingPrice() external view returns (uint256)"
+  "function seedingPrice() external view returns (uint256)",
+    "function generateReferralCode() external returns (string)",
+  "function getReferralCode(address) external view returns (string)",
+  "function isValidReferralCode(string) external view returns (bool)",
+  "function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)",
+  "function getUserReferralStats(address) external view returns (string, bool, uint256)"
 ];
 
 const AVA_ABI = [
@@ -71,16 +79,18 @@ const USDC_ABI = [
 
 function InvestorDashboard() {
   // Get wallet state from context
-  const { 
-    account, 
-    provider, 
-    signer, 
-    isConnected, 
-    connectWallet, 
-    isLoading, 
-    error, 
-    success 
-  } = useWallet();
+const { 
+  account, 
+  provider, 
+  signer, 
+  isConnected, 
+  connectWallet, 
+  isLoading, 
+  error, 
+  success,
+  setError,     // ADD THIS LINE
+  setSuccess    // ADD THIS LINE
+} = useWallet();
   
   // Contract instances
   const [avaContract, setAvaContract] = useState(null);
@@ -120,6 +130,14 @@ const handleTabChange = (tabId) => {
     investmentValue: '0',
     portfolioPercent: 0
   });
+  const [referralData, setReferralData] = useState({
+    userCode: '',
+    hasCode: false,
+    totalBonusEarned: '0',
+    codeUsageInfo: null
+  });
+  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [showReferralSection, setShowReferralSection] = useState(false);
 
   // UI state
   const [activeTab, setActiveTab] = useState('overview');
@@ -186,7 +204,7 @@ const handleTabChange = (tabId) => {
       console.error('Error loading project data:', error);
     }
   };
-
+  
   // Load user data
   const loadUserData = async () => {
     if (!seedingContract || !avaContract || !usdcContract || !account || !ethers) return;
@@ -223,7 +241,62 @@ const handleTabChange = (tabId) => {
       console.error('Error loading user data:', error);
     }
   };
+  // Load referral data
+const loadReferralData = async () => {
+  if (!seedingContract || !account || !ethers) return;
 
+  try {
+    const [userCode, hasCode, totalBonusEarned] = await seedingContract.getUserReferralStats(account);
+    
+    let codeUsageInfo = null;
+    if (hasCode && userCode) {
+      const [owner, used, usedBy, amountUsed] = await seedingContract.getCodeUsageInfo(userCode);
+      codeUsageInfo = {
+        owner,
+        used,
+        usedBy,
+        amountUsed: used ? ethers.formatUnits(amountUsed, 6) : '0'
+      };
+    }
+
+    setReferralData({
+      userCode,
+      hasCode,
+      totalBonusEarned: ethers.formatEther(totalBonusEarned),
+      codeUsageInfo
+    });
+  } catch (error) {
+    console.error('Error loading referral data:', error);
+  }
+};
+
+// Generate referral code
+const generateReferralCode = async () => {
+  try {
+    setIsGeneratingCode(true);
+    setError('');
+    
+    const tx = await seedingContract.generateReferralCode();
+    await tx.wait();
+    
+    setSuccess('Referral code generated successfully!');
+    loadReferralData(); // Reload data
+  } catch (error) {
+    setError('Failed to generate referral code: ' + error.message);
+  } finally {
+    setIsGeneratingCode(false);
+  }
+};
+
+// Copy referral code
+const copyReferralCode = async () => {
+  try {
+    await navigator.clipboard.writeText(referralData.userCode);
+    setSuccess('Referral code copied to clipboard!');
+  } catch (error) {
+    setError('Failed to copy code');
+  }
+};
   // Load data on connection and intervals
   useEffect(() => {
     if (isConnected) {
@@ -236,7 +309,11 @@ const handleTabChange = (tabId) => {
   useEffect(() => {
     if (isConnected && account) {
       loadUserData();
-      const interval = setInterval(loadUserData, 30000);
+      loadReferralData(); // ADD THIS LINE
+      const interval = setInterval(() => {
+        loadUserData();
+        loadReferralData(); // ADD THIS LINE
+      }, 30000);
       return () => clearInterval(interval);
     }
   }, [isConnected, account, projectData.totalSold]);
@@ -403,7 +480,118 @@ const handleTabChange = (tabId) => {
                     <p className="text-slate-600 font-medium">Total Investors</p>
                   </div>
                 </div>
+                    <div className="coinbase-card rounded-2xl p-8">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-2xl font-bold text-slate-900 flex items-center">
+          <Gift className="w-6 h-6 mr-3 text-purple-600" />
+          Referral Program
+        </h3>
+        <button
+          onClick={() => setShowReferralSection(!showReferralSection)}
+          className="text-purple-600 hover:text-purple-700 font-medium"
+        >
+          {showReferralSection ? 'Hide' : 'Show'}
+        </button>
+      </div>
 
+      {showReferralSection && (
+        <div className="space-y-6">
+          {/* User's Referral Code */}
+          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
+            <h4 className="font-bold text-slate-900 mb-4">Your Referral Code</h4>
+            
+            {referralData.hasCode ? (
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex-1 bg-white rounded-lg p-4 border-2 border-purple-200">
+                    <p className="font-mono text-lg font-bold text-purple-700">
+                      {referralData.userCode}
+                    </p>
+                  </div>
+                  <button
+                    onClick={copyReferralCode}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                  >
+                    <Copy className="w-5 h-5" />
+                  </button>
+                </div>
+                
+                {/* Usage Status */}
+                {referralData.codeUsageInfo && (
+                  <div className="bg-white rounded-lg p-4 border">
+                    <h5 className="font-medium text-slate-900 mb-2">Code Status</h5>
+                    {referralData.codeUsageInfo.used ? (
+                      <div className="text-green-700">
+                        <p className="font-medium">✅ Code Used!</p>
+                        <p className="text-sm">Used by: {referralData.codeUsageInfo.usedBy.slice(0,6)}...{referralData.codeUsageInfo.usedBy.slice(-4)}</p>
+                        <p className="text-sm">Amount: ${formatNumber(referralData.codeUsageInfo.amountUsed)} USDC</p>
+                        <p className="text-sm text-purple-600 font-medium">
+                          💰 Contact admin for your 5% reward (${formatNumber(parseFloat(referralData.codeUsageInfo.amountUsed) * 0.05)} USDC)
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-slate-600">⏳ Code not used yet</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-slate-600 mb-4">Generate your unique referral code to earn rewards!</p>
+                <button
+                  onClick={generateReferralCode}
+                  disabled={isGeneratingCode}
+                  className="coinbase-btn text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+                >
+                  {isGeneratingCode ? (
+                    <>
+                      <Loader className="w-5 h-5 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Gift className="w-5 h-5 mr-2" />
+                      Generate Referral Code
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* How it Works */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-slate-50 rounded-xl p-6">
+              <h4 className="font-bold text-slate-900 mb-3">How It Works</h4>
+              <div className="space-y-2 text-sm text-slate-700">
+                <p>1. Generate your unique referral code</p>
+                <p>2. Share with friends and investors</p>
+                <p>3. They get 3% bonus tokens automatically</p>
+                <p>4. You get 5% of their investment (manual reward)</p>
+                <p>5. Each code can only be used once</p>
+              </div>
+            </div>
+            
+            <div className="bg-green-50 rounded-xl p-6">
+              <h4 className="font-bold text-green-900 mb-3">Your Stats</h4>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-green-700">Bonus Tokens Earned:</span>
+                  <span className="font-bold text-green-800">{formatNumber(referralData.totalBonusEarned)} AVA</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-green-700">Code Status:</span>
+                  <span className="font-bold text-green-800">
+                    {referralData.hasCode ? 'Active' : 'Not Generated'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+ 
                 {/* Project Progress */}
                 <div className="coinbase-card rounded-2xl p-8">
                   <h3 className="text-2xl font-bold mb-6 text-slate-900">Project Progress</h3>

@@ -14,22 +14,8 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0xF9566De2e8697afa09fE2a5a08152561715d217E'
+  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
 };
-
-// Predefined referral codes (10 codes for big investors)
-const REFERRAL_CODES = [
-  'AVALON2025',
-  'VOLATILITY',
-  'BMERS2025',
-  'BASECHAIN',
-  'STRATEGY1',
-  'PRESALE01',
-  'INVESTOR',
-  'TOPWHALE',
-  'AVAX2025',
-  'REWARDS3'
-];
 
 // Extended ABIs with referral functions
 const SEEDING_ABI = [
@@ -42,8 +28,8 @@ const SEEDING_ABI = [
   "function minimumPurchase() external view returns (uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
-  "function getReferralStats(string calldata code) external view returns (uint256, uint256)",
-  "function isValidReferralCode(string calldata code) external view returns (bool)"
+  "function isValidReferralCode(string) external view returns (bool)",
+  "function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)"
 ];
 
 const USDC_ABI = [
@@ -94,8 +80,6 @@ function PresaleApp() {
   const [referralCode, setReferralCode] = useState('');
   const [isValidCode, setIsValidCode] = useState(false);
   const [referralBonus, setReferralBonus] = useState('0');
-  const [showReferralSection, setShowReferralSection] = useState(false);
-  const [copiedCode, setCopiedCode] = useState('');
 
   // Transaction state
   const [isLoading, setIsLoading] = useState(false);
@@ -198,54 +182,68 @@ function PresaleApp() {
   }, [usdcAmount, seedingContract, isValidCode]);
 
   // Validate referral code
-  const validateReferralCode = async (code) => {
-    if (!code || !seedingContract) {
-      setIsValidCode(false);
-      return;
-    }
+// Validate referral code
+// Validate referral code - DEBUG VERSION
+const validateReferralCode = async (code) => {
+  if (!code || !seedingContract) {
+    setIsValidCode(false);
+    return;
+  }
 
-    try {
-      // Check if code exists in our predefined list
-      const codeExists = REFERRAL_CODES.includes(code.toUpperCase());
-      
-      // In a real implementation, you would check on-chain:
-      // const isValid = await seedingContract.isValidReferralCode(code);
-      
-      setIsValidCode(codeExists);
-      
-      if (codeExists) {
-        setSuccess(`Referral code "${code}" applied! You'll get 3% extra tokens.`);
+  try {
+    console.log('🔍 Validating code:', code);
+    console.log('🔍 Current account:', account);
+    
+    // Check if code is valid on-chain
+    const isValid = await seedingContract.isValidReferralCode(code);
+    console.log('🔍 isValidReferralCode result:', isValid);
+    
+    // Get detailed info about the code
+    const [owner, used, usedBy, amountUsed] = await seedingContract.getCodeUsageInfo(code);
+    
+    console.log('🔍 Code details:', {
+      owner,
+      used,
+      usedBy,
+      amountUsed: amountUsed.toString(),
+      isOwnCode: owner.toLowerCase() === account.toLowerCase()
+    });
+    
+    setIsValidCode(isValid);
+    
+    if (isValid) {
+      setSuccess(`✅ Referral code "${code}" is valid! You'll get 3% extra tokens.`);
+    } else {
+      // Detailed error messages
+      if (owner === '0x0000000000000000000000000000000000000000') {
+        setError(`❌ Code "${code}" does not exist. Make sure it was generated correctly.`);
+      } else if (used) {
+        setError(`❌ Code "${code}" was already used by ${usedBy.slice(0,6)}...${usedBy.slice(-4)}.`);
+      } else if (owner.toLowerCase() === account.toLowerCase()) {
+        setError(`❌ You cannot use your own referral code "${code}".`);
       } else {
-        setError(`Invalid referral code: "${code}"`);
+        setError(`❌ Code "${code}" exists but isValidReferralCode returned false. Owner: ${owner.slice(0,6)}...${owner.slice(-4)}`);
       }
-    } catch (error) {
-      console.error('Error validating referral code:', error);
-      setIsValidCode(false);
     }
-  };
+  } catch (error) {
+    console.error('❌ Error validating referral code:', error);
+    setIsValidCode(false);
+    setError('Error validating referral code: ' + error.message);
+  }
+};
 
   // Handle referral code input
-  const handleReferralCodeChange = (e) => {
-    const code = e.target.value.toUpperCase();
-    setReferralCode(code);
-    
-    if (code.length >= 3) {
-      validateReferralCode(code);
-    } else {
-      setIsValidCode(false);
-    }
-  };
+const handleReferralCodeChange = (e) => {
+  const code = e.target.value; // ✅ Keep original case
+  setReferralCode(code);
+  
+  if (code.length >= 3) {
+    validateReferralCode(code);
+  } else {
+    setIsValidCode(false);
+  }
+};
 
-  // Copy referral code to clipboard
-  const copyToClipboard = async (code) => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(''), 2000);
-    } catch (error) {
-      console.error('Failed to copy:', error);
-    }
-  };
 
   // Get test USDC
   const getTestUSDC = async () => {
@@ -491,20 +489,13 @@ function PresaleApp() {
             </div>
 
             {/* Referral Section - NEW */}
+{/* Updated Referral Section - Remove show/hide codes */}
             <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
               <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg sm:text-xl font-bold text-slate-900 flex items-center">
-                    <Gift className="w-5 h-5 mr-2 text-purple-600" />
-                    Referral Program
-                  </h3>
-                  <button
-                    onClick={() => setShowReferralSection(!showReferralSection)}
-                    className="text-purple-600 hover:text-purple-700 font-medium text-sm"
-                  >
-                    {showReferralSection ? 'Hide' : 'Show'} Codes
-                  </button>
-                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
+                  <Gift className="w-5 h-5 mr-2 text-purple-600" />
+                  Have a Referral Code?
+                </h3>
 
                 <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4">
                   <div className="flex items-center mb-2">
@@ -512,71 +503,49 @@ function PresaleApp() {
                     <span className="font-medium text-purple-800">Get 3% Extra Tokens!</span>
                   </div>
                   <p className="text-purple-700 text-sm">
-                    Enter a valid referral code to receive 3% bonus AVA tokens on your purchase.
+                    If someone shared their referral code with you, enter it below to receive 3% bonus tokens.
                   </p>
                 </div>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                      Referral Code (Optional)
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={referralCode}
-                        onChange={handleReferralCodeChange}
-                        placeholder="Enter referral code"
-                        className={`coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem] ${
-                          isValidCode ? 'border-green-500 bg-green-50' :
-                          referralCode && !isValidCode ? 'border-red-500 bg-red-50' : ''
-                        }`}
-                        disabled={displayLoading}
-                      />
-                      {isValidCode && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                          <CheckCircle className="w-5 h-5 text-green-500" />
-                        </div>
-                      )}
-                    </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Referral Code (Optional)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={referralCode}
+                      onChange={handleReferralCodeChange}
+                      placeholder="Enter referral code (e.g., AVA1a2b3c1)"
+                      className={`coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem] ${
+                        isValidCode ? 'border-green-500 bg-green-50' :
+                        referralCode && !isValidCode ? 'border-red-500 bg-red-50' : ''
+                      }`}
+                      disabled={displayLoading}
+                    />
                     {isValidCode && (
-                      <p className="text-green-600 text-sm mt-2 flex items-center">
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Valid code! You'll get 3% extra tokens ({formatNumber(referralBonus)} AVA)
-                      </p>
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                        <CheckCircle className="w-5 h-5 text-green-500" />
+                      </div>
                     )}
                   </div>
-
-                  {/* Available Referral Codes - Show/Hide */}
-                  {showReferralSection && (
-                    <div className="bg-slate-50 rounded-lg p-4">
-                      <h4 className="font-medium text-slate-800 mb-3">Available Referral Codes:</h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        {REFERRAL_CODES.map((code, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between bg-white rounded-lg p-2 border"
-                          >
-                            <span className="font-mono text-sm text-slate-700">{code}</span>
-                            <button
-                              onClick={() => copyToClipboard(code)}
-                              className="text-blue-600 hover:text-blue-700 p-1"
-                              title="Copy code"
-                            >
-                              {copiedCode === code ? (
-                                <Check className="w-4 h-4 text-green-600" />
-                              ) : (
-                                <Copy className="w-4 h-4" />
-                              )}
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-slate-500 mt-2">
-                        💡 These codes are provided for testing. In production, codes would be given to qualified investors.
-                      </p>
-                    </div>
+                  {isValidCode && (
+                    <p className="text-green-600 text-sm mt-2 flex items-center">
+                      <CheckCircle className="w-4 h-4 mr-1" />
+                      Valid code! You'll get 3% extra tokens ({formatNumber(referralBonus)} AVA)
+                    </p>
                   )}
+                  {referralCode && !isValidCode && (
+                    <p className="text-red-600 text-sm mt-2">
+                      Invalid or already used referral code
+                    </p>
+                  )}
+                </div>
+
+                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                  <p className="text-blue-800 text-sm">
+                    💡 <strong>Need a referral code?</strong> Ask someone who already invested in Avalon to generate one for you in their dashboard!
+                  </p>
                 </div>
               </div>
             </div>
