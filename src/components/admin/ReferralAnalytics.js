@@ -1,4 +1,4 @@
-// src/components/admin/ReferralAnalytics.js - FIXED WITH DEBUG INFO
+// src/components/admin/ReferralAnalytics.js - UPDATED FOR MULTI-USE REFERRAL SYSTEM
 import React, { useState } from 'react';
 import {
   Gift,
@@ -74,8 +74,8 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Referral Program Analytics</h2>
-          <p className="text-slate-600 mt-1">Monitor referral performance and track rewards</p>
+          <h2 className="text-2xl font-bold text-slate-900">Multi-Use Referral Program Analytics</h2>
+          <p className="text-slate-600 mt-1">Monitor referral performance and track multi-use code rewards</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -101,7 +101,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
           <h3 className="font-bold text-yellow-800 mb-3 flex items-center">
             <AlertCircle className="w-5 h-5 mr-2" />
-            Debug Information
+            Debug Information - Multi-Use Referral System
           </h3>
           <div className="space-y-2 text-sm">
             <div className="grid grid-cols-2 gap-4">
@@ -132,7 +132,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
           <div className="flex items-start">
             <Info className="w-5 h-5 text-blue-600 mr-3 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="font-medium text-blue-800">No Referral Data Found</p>
+              <p className="font-medium text-blue-800">No Multi-Use Referral Data Found</p>
               <p className="text-blue-700 text-sm mt-1">
                 This could mean:
               </p>
@@ -157,7 +157,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
             <TrendingUp className={`w-4 h-4 ${safeReferralStats.totalCodes > 0 ? 'text-green-500' : 'text-gray-400'}`} />
           </div>
           <p className="text-2xl font-bold text-slate-900">{safeReferralStats.totalCodes}</p>
-          <p className="text-slate-600 font-medium">Total Codes</p>
+          <p className="text-slate-600 font-medium">Total Multi-Use Codes</p>
           {safeReferralStats.totalCodes === 0 && (
             <p className="text-xs text-red-500 mt-1">No codes found</p>
           )}
@@ -171,7 +171,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
             <TrendingUp className={`w-4 h-4 ${safeReferralStats.activeCodes > 0 ? 'text-green-500' : 'text-gray-400'}`} />
           </div>
           <p className="text-2xl font-bold text-slate-900">{safeReferralStats.activeCodes}</p>
-          <p className="text-slate-600 font-medium">Active Codes</p>
+          <p className="text-slate-600 font-medium">Active Codes (Used)</p>
           {safeReferralStats.activeCodes === 0 && safeReferralStats.totalCodes > 0 && (
             <p className="text-xs text-yellow-600 mt-1">No codes used yet</p>
           )}
@@ -185,7 +185,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
             <TrendingUp className={`w-4 h-4 ${parseFloat(safeReferralStats.totalRewards) > 0 ? 'text-green-500' : 'text-gray-400'}`} />
           </div>
           <p className="text-2xl font-bold text-slate-900">${formatNumber(safeReferralStats.totalRewards)}</p>
-          <p className="text-slate-600 font-medium">Total Rewards</p>
+          <p className="text-slate-600 font-medium">Total Rewards Paid</p>
           {parseFloat(safeReferralStats.totalRewards) === 0 && (
             <p className="text-xs text-gray-500 mt-1">No rewards paid yet</p>
           )}
@@ -198,10 +198,10 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
             </div>
           </div>
           <p className="text-2xl font-bold text-slate-900">{formatNumber(safeReferralStats.conversionRate)}%</p>
-          <p className="text-slate-600 font-medium">Conversion Rate</p>
+          <p className="text-slate-600 font-medium">Usage Rate</p>
           <p className="text-xs text-slate-500 mt-1">
             {safeReferralStats.totalCodes > 0 ? 
-              `${safeRecentReferrals.length}/${safeReferralStats.totalCodes} codes used` :
+              `${safeRecentReferrals.length} total uses / ${safeReferralStats.totalCodes} codes` :
               'No data available'
             }
           </p>
@@ -214,7 +214,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
         <div className="bg-white rounded-xl p-6 shadow-lg">
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
             <Award className="w-5 h-5 mr-2 text-yellow-600" />
-            Top Referrers
+            Top Multi-Use Referrers
             <span className="ml-2 text-sm font-normal text-slate-500">({safeTopReferrers.length})</span>
           </h3>
           
@@ -232,7 +232,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
                       <p className="font-mono text-sm font-medium text-slate-900">
                         {referrer.address.slice(0, 6)}...{referrer.address.slice(-4)}
                       </p>
-                      <p className="text-xs text-slate-500">{referrer.referralCount} referrals</p>
+                      <p className="text-xs text-slate-500">{referrer.referralCount} total uses</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -257,7 +257,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
         <div className="bg-white rounded-xl p-6 shadow-lg">
           <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
             <Activity className="w-5 h-5 mr-2 text-blue-600" />
-            Recent Referrals
+            Recent Multi-Use Activity
             <span className="ml-2 text-sm font-normal text-slate-500">({safeRecentReferrals.length})</span>
           </h3>
           
@@ -267,7 +267,8 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
                 <div key={index} className="flex items-center justify-between p-3 border border-slate-200 rounded-lg">
                   <div>
                     <p className="font-medium text-slate-900 font-mono text-sm">
-                      {referral.referee.slice(0, 6)}...{referral.referee.slice(-4)}
+                      {referral.buyer ? referral.buyer.slice(0, 6) + '...' + referral.buyer.slice(-4) : 
+                       referral.referee ? referral.referee.slice(0, 6) + '...' + referral.referee.slice(-4) : 'Unknown'}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
@@ -288,20 +289,20 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
           ) : (
             <div className="text-center py-8">
               <Activity className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-              <p className="text-slate-500 font-medium">No Recent Referrals</p>
+              <p className="text-slate-500 font-medium">No Recent Activity</p>
               <p className="text-slate-400 text-sm mt-1">
-                Referral purchases will appear here
+                Multi-use referral activity will appear here
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* Referral Codes Management */}
+      {/* Multi-Use Referral Codes Management */}
       <div className="bg-white rounded-xl p-6 shadow-lg">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-bold text-slate-900">
-            Referral Codes Management
+            Multi-Use Referral Codes Management
             <span className="ml-2 text-sm font-normal text-slate-500">({filteredCodes.length} codes)</span>
           </h3>
           <div className="flex items-center gap-3">
@@ -311,8 +312,8 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
               className="px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Codes ({safeReferralCodes.length})</option>
-              <option value="active">Active Codes ({safeReferralCodes.filter(c => c.usageCount > 0).length})</option>
-              <option value="unused">Unused Codes ({safeReferralCodes.filter(c => c.usageCount === 0).length})</option>
+              <option value="active">Multi-Use Active ({safeReferralCodes.filter(c => c.usageCount > 0).length})</option>
+              <option value="unused">Never Used ({safeReferralCodes.filter(c => c.usageCount === 0).length})</option>
             </select>
           </div>
         </div>
@@ -324,7 +325,8 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
                 <tr className="border-b border-slate-200">
                   <th className="text-left py-3 px-4 font-medium text-slate-700">Code</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-700">Owner</th>
-                  <th className="text-left py-3 px-4 font-medium text-slate-700">Usage Count</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-700">Times Used</th>
+                  <th className="text-left py-3 px-4 font-medium text-slate-700">Total Volume</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-700">Earnings</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-700">Status</th>
                   <th className="text-left py-3 px-4 font-medium text-slate-700">Actions</th>
@@ -373,7 +375,12 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
                     </td>
                     <td className="py-3 px-4">
                       <span className="font-medium text-slate-900">
-                        ${formatNumber(code.earnings)}
+                        ${formatNumber(code.totalVolume || '0')}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className="font-medium text-green-600">
+                        ${formatNumber(code.earnings || '0')}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -382,7 +389,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
                           ? 'bg-green-100 text-green-700' 
                           : 'bg-gray-100 text-gray-600'
                       }`}>
-                        {code.usageCount > 0 ? 'Used' : 'Unused'}
+                        {code.usageCount > 0 ? `Active (${code.usageCount}x)` : 'Unused'}
                       </span>
                     </td>
                     <td className="py-3 px-4">
@@ -405,23 +412,24 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
           <div className="text-center py-12">
             <Search className="w-16 h-16 text-slate-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-slate-900 mb-2">
-              {filter === 'all' ? 'No Referral Codes Found' : `No ${filter} codes`}
+              {filter === 'all' ? 'No Multi-Use Referral Codes Found' : `No ${filter} codes`}
             </h3>
             <p className="text-slate-600 mb-4">
               {safeReferralCodes.length === 0 
-                ? 'No referral codes have been generated yet.'
+                ? 'No multi-use referral codes have been generated yet.'
                 : `No codes match the "${filter}" filter.`
               }
             </p>
             {safeReferralCodes.length === 0 && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-blue-800 text-sm">
-                  <strong>To generate referral codes:</strong>
+                  <strong>Multi-use referral system:</strong>
                 </p>
                 <ol className="text-blue-700 text-sm mt-2 list-decimal list-inside">
-                  <li>Connect a wallet to the presale</li>
-                  <li>Go to the dashboard referral section</li>
-                  <li>Click "Generate Referral Code"</li>
+                  <li>Users generate referral codes in the dashboard</li>
+                  <li>Each code can be used multiple times</li>
+                  <li>Code owners earn 5% per use automatically</li>
+                  <li>Code users get 3% bonus tokens per use</li>
                 </ol>
               </div>
             )}
@@ -432,15 +440,16 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
       {/* Summary Statistics */}
       {safeReferralStats.totalCodes > 0 && (
         <div className="bg-gradient-to-br from-purple-50 to-blue-50 rounded-xl p-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-4">Program Summary</h3>
+          <h3 className="text-lg font-bold text-slate-900 mb-4">Multi-Use Program Summary</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="text-center">
               <p className="text-2xl font-bold text-purple-600">
-                {Math.round((safeReferralStats.activeCodes / safeReferralStats.totalCodes) * 100)}%
+                {safeReferralStats.totalCodes > 0 ? 
+                  Math.round((safeReferralStats.activeCodes / safeReferralStats.totalCodes) * 100) : 0}%
               </p>
               <p className="text-slate-700 font-medium">Code Utilization Rate</p>
               <p className="text-slate-500 text-sm">
-                {safeReferralStats.activeCodes} of {safeReferralStats.totalCodes} codes used
+                {safeReferralStats.activeCodes} of {safeReferralStats.totalCodes} codes used (multi-use enabled)
               </p>
             </div>
             <div className="text-center">
@@ -449,7 +458,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
               </p>
               <p className="text-slate-700 font-medium">Total Rewards Distributed</p>
               <p className="text-slate-500 text-sm">
-                To {safeTopReferrers.length} referrers
+                To {safeTopReferrers.length} referrers via multi-use codes
               </p>
             </div>
             <div className="text-center">
@@ -458,7 +467,7 @@ const ReferralAnalytics = ({ data, onRefresh, isLoading }) => {
               </p>
               <p className="text-slate-700 font-medium">Bonus AVA Tokens</p>
               <p className="text-slate-500 text-sm">
-                Given to referees
+                Given to code users (multi-use system)
               </p>
             </div>
           </div>

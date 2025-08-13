@@ -45,24 +45,27 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
+  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612'
 };
 
 // ABIs for the contracts
 const SEEDING_ABI = [
+  "function purchaseTokens(uint256 usdcAmount) external",
+  "function purchaseTokensWithReferral(uint256 usdcAmount, string calldata referralCode) external",
+  "function getQuote(uint256 usdcAmount) external pure returns (uint256)",
+  "function getQuoteWithReferral(uint256 usdcAmount) external pure returns (uint256, uint256, uint256)",
+  "function seedingActive() external view returns (bool)",
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
+  "function minimumPurchase() external view returns (uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
-  "function getParticipantCount() external view returns (uint256)",
-  "function seedingActive() external view returns (bool)",
-  "function minimumPurchase() external view returns (uint256)",
-  "function seedingPrice() external view returns (uint256)",
-    "function generateReferralCode() external returns (string)",
-  "function getReferralCode(address) external view returns (string)",
   "function isValidReferralCode(string) external view returns (bool)",
-  "function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)",
-  "function getUserReferralStats(address) external view returns (string, bool, uint256)"
+  "function getCodeUsageInfo(string) external view returns (address, uint256, uint256, uint256)",
+  "function getCodeUsageHistory(string) external view returns (address[], uint256[], uint256[])",
+  "function getUserReferralStats(address) external view returns (string, bool, uint256, uint256, uint256)",
+  "function generateReferralCode() external returns (string)",
+  "function getReferralCode(address) external view returns (string)"
 ];
 
 const AVA_ABI = [
@@ -130,12 +133,14 @@ const handleTabChange = (tabId) => {
     investmentValue: '0',
     portfolioPercent: 0
   });
-  const [referralData, setReferralData] = useState({
-    userCode: '',
-    hasCode: false,
-    totalBonusEarned: '0',
-    codeUsageInfo: null
-  });
+const [referralData, setReferralData] = useState({
+  userCode: '',
+  hasCode: false,
+  totalBonusEarned: '0',
+  totalEarnings: '0',     // ADD THIS LINE
+  referralCount: 0,       // ADD THIS LINE
+  codeUsageInfo: null
+});
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showReferralSection, setShowReferralSection] = useState(false);
 
@@ -242,20 +247,23 @@ const handleTabChange = (tabId) => {
     }
   };
   // Load referral data
+// Find the loadReferralData function and replace it:
 const loadReferralData = async () => {
   if (!seedingContract || !account || !ethers) return;
 
   try {
-    const [userCode, hasCode, totalBonusEarned] = await seedingContract.getUserReferralStats(account);
+    // UPDATED for multi-use referral system
+    const [userCode, hasCode, totalBonusEarned, totalEarnings, referralCount] = await seedingContract.getUserReferralStats(account);
     
     let codeUsageInfo = null;
     if (hasCode && userCode) {
-      const [owner, used, usedBy, amountUsed] = await seedingContract.getCodeUsageInfo(userCode);
+      // UPDATED: getCodeUsageInfo now returns different data for multi-use
+      const [owner, usageCount, totalVolume, lastUsedTimestamp] = await seedingContract.getCodeUsageInfo(userCode);
       codeUsageInfo = {
         owner,
-        used,
-        usedBy,
-        amountUsed: used ? ethers.formatUnits(amountUsed, 6) : '0'
+        usageCount: Number(usageCount),
+        totalVolume: ethers.formatUnits(totalVolume, 6),
+        lastUsed: lastUsedTimestamp > 0 ? new Date(Number(lastUsedTimestamp) * 1000) : null
       };
     }
 
@@ -263,6 +271,8 @@ const loadReferralData = async () => {
       userCode,
       hasCode,
       totalBonusEarned: ethers.formatEther(totalBonusEarned),
+      totalEarnings: ethers.formatUnits(totalEarnings, 6),
+      referralCount: Number(referralCount),
       codeUsageInfo
     });
   } catch (error) {
@@ -279,8 +289,11 @@ const generateReferralCode = async () => {
     const tx = await seedingContract.generateReferralCode();
     await tx.wait();
     
-    setSuccess('Referral code generated successfully!');
-    loadReferralData(); // Reload data
+setSuccess('Referral code generated successfully!');
+setTimeout(() => {
+  loadReferralData(); // Reload data with delay
+  loadProjectData(); // Also reload project data
+}, 1000);
   } catch (error) {
     setError('Failed to generate referral code: ' + error.message);
   } finally {
@@ -517,23 +530,26 @@ const copyReferralCode = async () => {
                 </div>
                 
                 {/* Usage Status */}
-                {referralData.codeUsageInfo && (
-                  <div className="bg-white rounded-lg p-4 border">
-                    <h5 className="font-medium text-slate-900 mb-2">Code Status</h5>
-                    {referralData.codeUsageInfo.used ? (
-                      <div className="text-green-700">
-                        <p className="font-medium">✅ Code Used!</p>
-                        <p className="text-sm">Used by: {referralData.codeUsageInfo.usedBy.slice(0,6)}...{referralData.codeUsageInfo.usedBy.slice(-4)}</p>
-                        <p className="text-sm">Amount: ${formatNumber(referralData.codeUsageInfo.amountUsed)} USDC</p>
-                        <p className="text-sm text-purple-600 font-medium">
-                          💰 Contact admin for your 5% reward (${formatNumber(parseFloat(referralData.codeUsageInfo.amountUsed) * 0.05)} USDC)
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="text-slate-600">⏳ Code not used yet</p>
-                    )}
-                  </div>
-                )}
+{referralData.codeUsageInfo && (
+  <div className="bg-white rounded-lg p-4 border">
+    <h5 className="font-medium text-slate-900 mb-2">Code Usage Stats</h5>
+    {referralData.codeUsageInfo.usageCount > 0 ? (
+      <div className="text-green-700 space-y-1">
+        <p className="font-medium">✅ Code Used {referralData.codeUsageInfo.usageCount} times!</p>
+        <p className="text-sm">Total Volume: ${formatNumber(referralData.codeUsageInfo.totalVolume)} USDC</p>
+        <p className="text-sm">Your Earnings: ${formatNumber(referralData.totalEarnings)} USDC</p>
+        {referralData.codeUsageInfo.lastUsed && (
+          <p className="text-sm">Last Used: {referralData.codeUsageInfo.lastUsed.toLocaleDateString()}</p>
+        )}
+        <p className="text-sm text-purple-600 font-medium">
+          💰 Total earned: ${formatNumber(referralData.totalEarnings)} USDC from {referralData.referralCount} referrals
+        </p>
+      </div>
+    ) : (
+      <p className="text-slate-600">⏳ Code not used yet</p>
+    )}
+  </div>
+)}
               </div>
             ) : (
               <div className="text-center">
@@ -568,25 +584,33 @@ const copyReferralCode = async () => {
                 <p>2. Share with friends and investors</p>
                 <p>3. They get 3% bonus tokens automatically</p>
                 <p>4. You get 5% of their investment (manual reward)</p>
-                <p>5. Each code can only be used once</p>
+                <p>5. Each code can be used multiple times</p>
               </div>
             </div>
             
-            <div className="bg-green-50 rounded-xl p-6">
-              <h4 className="font-bold text-green-900 mb-3">Your Stats</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-green-700">Bonus Tokens Earned:</span>
-                  <span className="font-bold text-green-800">{formatNumber(referralData.totalBonusEarned)} AVA</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-green-700">Code Status:</span>
-                  <span className="font-bold text-green-800">
-                    {referralData.hasCode ? 'Active' : 'Not Generated'}
-                  </span>
-                </div>
-              </div>
-            </div>
+<div className="bg-green-50 rounded-xl p-6">
+  <h4 className="font-bold text-green-900 mb-3">Your Stats</h4>
+  <div className="space-y-2">
+    <div className="flex justify-between">
+      <span className="text-green-700">Bonus Tokens Earned:</span>
+      <span className="font-bold text-green-800">{formatNumber(referralData.totalBonusEarned)} AVA</span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-green-700">USDC Earned:</span>
+      <span className="font-bold text-green-800">${formatNumber(referralData.totalEarnings)}</span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-green-700">Total Referrals:</span>
+      <span className="font-bold text-green-800">{referralData.referralCount}</span>
+    </div>
+    <div className="flex justify-between">
+      <span className="text-green-700">Code Status:</span>
+      <span className="font-bold text-green-800">
+        {referralData.hasCode ? 'Multi-Use Active' : 'Not Generated'}
+      </span>
+    </div>
+  </div>
+</div>
           </div>
         </div>
       )}

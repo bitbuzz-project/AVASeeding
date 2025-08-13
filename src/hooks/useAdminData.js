@@ -27,21 +27,19 @@ const SEEDING_ABI = [
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   
-  // Referral system - CORRECTED based on your actual contract
-  "function validReferralCodes(string) external view returns (bool)",
-  "function referralCodeToOwner(string) external view returns (address)",
-  "function referralEarnings(address) external view returns (uint256)",
-  "function referralCount(address) external view returns (uint256)",
-  
-  // Functions to add codes (admin only)
-  "function addReferralCode(string, address) external",
+  // Multi-use referral system - UPDATED
+  "function getUserReferralStats(address) external view returns (string, bool, uint256, uint256, uint256)",
+  "function getCodeUsageInfo(string) external view returns (address, uint256, uint256, uint256)",
+  "function getCodeUsageHistory(string) external view returns (address[], uint256[], uint256[])",
+  "function getGlobalReferralStats() external view returns (uint256, uint256, uint256, uint256, uint256)",
   "function isValidReferralCode(string) external view returns (bool)",
+  "function referralCodeToOwner(string) external view returns (address)",
   
-  // Events from your contract
+  // Events - UPDATED for multi-use
   "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avalonAmount)",
-  "event ReferralCodeAdded(string code, address owner)",
-  "event ReferralPurchase(address referee, address referrer, string code, uint256 amount, uint256 bonus)",
-  "event ReferralRewardPaid(address referrer, uint256 amount)"
+  "event ReferralCodeGenerated(address indexed user, string code)",
+  "event ReferralCodeUsed(address indexed buyer, address indexed codeOwner, string code, uint256 usdcAmount, uint256 bonusTokens)",
+  "event ReferralRewardPaid(address indexed referrer, uint256 usdcAmount, string code)"
 ];
 
 // Predefined referral codes from your contract constructor
@@ -220,221 +218,173 @@ export const useAdminData = () => {
   }, [contracts]);
 
   // CORRECTED: Fetch referral data based on actual contract structure
-  const fetchReferralData = useCallback(async (contractInstances) => {
-    const { seeding, provider } = contractInstances || contracts;
-    if (!seeding || !provider) {
-      console.log('🔴 No seeding contract or provider for referral data');
-      return null;
+const fetchReferralData = useCallback(async (contractInstances) => {
+  const { seeding, provider } = contractInstances || contracts;
+  if (!seeding || !provider) {
+    console.log('🔴 No seeding contract or provider for referral data');
+    return null;
+  }
+
+  try {
+    console.log('🔍 Starting MULTI-USE referral data fetch...');
+    
+    const currentBlock = await provider.getBlockNumber();
+    const fromBlock = Math.max(0, currentBlock - 10000);
+    
+    console.log(`🔍 Searching blocks ${fromBlock} to ${currentBlock}...`);
+
+    // Get events for multi-use referral system
+    const [codeGeneratedEvents, codeUsedEvents, rewardPaidEvents] = await Promise.all([
+      seeding.queryFilter(seeding.filters.ReferralCodeGenerated(), fromBlock, currentBlock),
+      seeding.queryFilter(seeding.filters.ReferralCodeUsed(), fromBlock, currentBlock),
+      seeding.queryFilter(seeding.filters.ReferralRewardPaid(), fromBlock, currentBlock)
+    ]);
+
+    console.log(`🔍 Found ${codeGeneratedEvents.length} code generated events`);
+    console.log(`🔍 Found ${codeUsedEvents.length} code used events`);
+    console.log(`🔍 Found ${rewardPaidEvents.length} reward paid events`);
+
+    const referralCodes = [];
+    const referrerStatsMap = new Map();
+
+    // Process generated codes
+    for (const event of codeGeneratedEvents) {
+      try {
+        const code = event.args.code;
+        const owner = event.args.user;
+        
+        console.log(`🔍 Processing generated code: ${code} for owner: ${owner}`);
+        
+        // Get current usage info - UPDATED for multi-use
+        const [codeOwner, usageCount, totalVolume, lastUsedTimestamp] = await seeding.getCodeUsageInfo(code);
+        
+        const usageCountNum = Number(usageCount);
+        const totalVolumeFormatted = ethers.formatUnits(totalVolume, 6);
+
+        referralCodes.push({
+          code,
+          owner: codeOwner,
+          usageCount: usageCountNum,
+          totalVolume: totalVolumeFormatted,
+          lastUsed: lastUsedTimestamp > 0 ? new Date(Number(lastUsedTimestamp) * 1000) : null,
+          isActive: usageCountNum > 0,
+          earnings: '0' // Will be calculated from events
+        });
+
+        console.log(`✅ Code ${code}: ${usageCountNum} uses, ${totalVolumeFormatted} USDC volume`);
+        
+      } catch (error) {
+        console.warn(`❌ Error processing generated code event:`, error.message);
+      }
     }
 
-    try {
-      console.log('🔍 Starting CORRECTED referral data fetch...');
-      
-      // Get events for better block range
-      const currentBlock = await provider.getBlockNumber();
-      const fromBlock = Math.max(0, currentBlock - 10000); // Increased range
-      
-      console.log(`🔍 Searching blocks ${fromBlock} to ${currentBlock}...`);
+    // Process reward payments to calculate earnings
+    for (const event of rewardPaidEvents) {
+      try {
+        const referrer = event.args.referrer;
+        const amount = ethers.formatUnits(event.args.usdcAmount, 6);
+        const code = event.args.code;
 
-      // 1. First, check predefined codes that were set in constructor
-      console.log('🔍 Checking predefined referral codes...');
-      const referralCodes = [];
-      const referrerStatsMap = new Map();
-
-      // Check all predefined codes + any additional codes added via events
-      const [codeAddedEvents, referralPurchaseEvents, rewardPaidEvents] = await Promise.all([
-        seeding.queryFilter(seeding.filters.ReferralCodeAdded(), fromBlock, currentBlock),
-        seeding.queryFilter(seeding.filters.ReferralPurchase(), fromBlock, currentBlock),
-        seeding.queryFilter(seeding.filters.ReferralRewardPaid(), fromBlock, currentBlock)
-      ]);
-
-      console.log(`🔍 Found ${codeAddedEvents.length} code added events`);
-      console.log(`🔍 Found ${referralPurchaseEvents.length} referral purchase events`);
-      console.log(`🔍 Found ${rewardPaidEvents.length} reward paid events`);
-
-      // Check predefined codes from constructor
-      for (const code of PREDEFINED_CODES) {
-        try {
-          console.log(`🔍 Checking predefined code: ${code}`);
-          
-          // Check if code is valid (should be true for predefined codes)
-          const isValid = await seeding.validReferralCodes(code);
-          console.log(`  - Code ${code} valid: ${isValid}`);
-          
-          if (isValid) {
-            // Get owner of this code
-            const owner = await seeding.referralCodeToOwner(code);
-            console.log(`  - Code ${code} owner: ${owner}`);
-            
-            if (owner && owner !== '0x0000000000000000000000000000000000000000') {
-              // Get earnings and count for this owner
-              const [earnings, count] = await Promise.all([
-                seeding.referralEarnings(owner).catch(() => 0n),
-                seeding.referralCount(owner).catch(() => 0n)
-              ]);
-
-              const earningsFormatted = ethers.formatUnits(earnings, 6);
-              const usageCount = Number(count);
-
-              referralCodes.push({
-                code,
-                owner,
-                earnings: earningsFormatted,
-                usageCount,
-                isActive: usageCount > 0,
-                isPredefined: true
-              });
-
-              // Update referrer stats
-              if (!referrerStatsMap.has(owner)) {
-                referrerStatsMap.set(owner, {
-                  address: owner,
-                  totalEarnings: '0',
-                  referralCount: 0,
-                  codes: []
-                });
-              }
-              
-              const existing = referrerStatsMap.get(owner);
-              existing.totalEarnings = (parseFloat(existing.totalEarnings) + parseFloat(earningsFormatted)).toString();
-              existing.referralCount = Math.max(existing.referralCount, usageCount);
-              existing.codes.push(code);
-
-              console.log(`✅ Predefined code ${code}: ${earningsFormatted} USDC, ${usageCount} uses`);
-            }
-          }
-        } catch (error) {
-          console.warn(`❌ Error checking predefined code ${code}:`, error.message);
-        }
-      }
-
-      // Process additional codes added via events
-      for (const event of codeAddedEvents) {
-        try {
-          const code = event.args.code;
-          const owner = event.args.owner;
-          
-          console.log(`🔍 Processing event-added code: ${code} for owner: ${owner}`);
-          
-          // Skip if already processed in predefined codes
-          if (PREDEFINED_CODES.includes(code)) {
-            console.log(`  - Skipping ${code} (already processed as predefined)`);
-            continue;
-          }
-          
-          const [earnings, count] = await Promise.all([
-            seeding.referralEarnings(owner).catch(() => 0n),
-            seeding.referralCount(owner).catch(() => 0n)
-          ]);
-
-          const earningsFormatted = ethers.formatUnits(earnings, 6);
-          const usageCount = Number(count);
-
-          referralCodes.push({
-            code,
-            owner,
-            earnings: earningsFormatted,
-            usageCount,
-            isActive: usageCount > 0,
-            isPredefined: false
+        // Update referrer stats
+        if (!referrerStatsMap.has(referrer)) {
+          referrerStatsMap.set(referrer, {
+            address: referrer,
+            totalEarnings: '0',
+            referralCount: 0,
+            codes: []
           });
-
-          // Update referrer stats
-          if (!referrerStatsMap.has(owner)) {
-            referrerStatsMap.set(owner, {
-              address: owner,
-              totalEarnings: '0',
-              referralCount: 0,
-              codes: []
-            });
-          }
-          
-          const existing = referrerStatsMap.get(owner);
-          existing.totalEarnings = (parseFloat(existing.totalEarnings) + parseFloat(earningsFormatted)).toString();
-          existing.referralCount = Math.max(existing.referralCount, usageCount);
+        }
+        
+        const existing = referrerStatsMap.get(referrer);
+        existing.totalEarnings = (parseFloat(existing.totalEarnings) + parseFloat(amount)).toString();
+        existing.referralCount += 1;
+        if (!existing.codes.includes(code)) {
           existing.codes.push(code);
-          
-          console.log(`✅ Event code ${code}: ${earningsFormatted} USDC, ${usageCount} uses`);
-          
-        } catch (error) {
-          console.warn(`❌ Error processing code event:`, error.message);
         }
-      }
 
-      // Process recent referral purchases
-      const recentReferrals = [];
-      for (const event of referralPurchaseEvents.slice(-10).reverse()) {
-        try {
-          const block = await provider.getBlock(event.blockNumber);
-          recentReferrals.push({
-            referee: event.args.referee,
-            referrer: event.args.referrer,
-            code: event.args.code,
-            amount: ethers.formatUnits(event.args.amount, 6),
-            bonus: ethers.formatEther(event.args.bonus),
-            date: new Date(block.timestamp * 1000).toISOString(),
-            txHash: event.transactionHash
-          });
-        } catch (error) {
-          console.warn(`❌ Error processing referral purchase event:`, error.message);
+        // Update code earnings
+        const codeIndex = referralCodes.findIndex(c => c.code === code);
+        if (codeIndex >= 0) {
+          const currentEarnings = parseFloat(referralCodes[codeIndex].earnings) || 0;
+          referralCodes[codeIndex].earnings = (currentEarnings + parseFloat(amount)).toString();
         }
+        
+      } catch (error) {
+        console.warn(`❌ Error processing reward event:`, error.message);
       }
-
-      // Calculate totals
-      const totalRewards = Array.from(referrerStatsMap.values())
-        .reduce((sum, referrer) => sum + parseFloat(referrer.totalEarnings), 0);
-      
-      const totalBonusTokens = recentReferrals
-        .reduce((sum, ref) => sum + parseFloat(ref.bonus), 0);
-
-      const activeCodes = referralCodes.filter(code => code.usageCount > 0).length;
-      const conversionRate = referralCodes.length > 0 ? 
-        (referralPurchaseEvents.length / referralCodes.length) * 100 : 0;
-
-      const topReferrers = Array.from(referrerStatsMap.values())
-        .filter(referrer => parseFloat(referrer.totalEarnings) > 0)
-        .sort((a, b) => parseFloat(b.totalEarnings) - parseFloat(a.totalEarnings))
-        .slice(0, 10);
-
-      const result = {
-        totalCodes: referralCodes.length,
-        activeCodes,
-        totalRewards: totalRewards.toString(),
-        totalBonusTokens: totalBonusTokens.toString(),
-        conversionRate: Math.round(conversionRate * 100) / 100,
-        topReferrers,
-        recentReferrals,
-        referralCodes: referralCodes.sort((a, b) => b.usageCount - a.usageCount)
-      };
-
-      console.log('✅ CORRECTED Referral data summary:', {
-        totalCodes: result.totalCodes,
-        activeCodes: result.activeCodes,
-        totalRewards: result.totalRewards,
-        topReferrersCount: result.topReferrers.length,
-        recentReferralsCount: result.recentReferrals.length,
-        predefinedCodesFound: referralCodes.filter(c => c.isPredefined).length,
-        eventCodesFound: referralCodes.filter(c => !c.isPredefined).length
-      });
-
-      return result;
-      
-    } catch (error) {
-      console.error('❌ Error fetching CORRECTED referral data:', error);
-      
-      // Return default data instead of null
-      return {
-        totalCodes: 0,
-        activeCodes: 0,
-        totalRewards: '0',
-        totalBonusTokens: '0',
-        conversionRate: 0,
-        topReferrers: [],
-        recentReferrals: [],
-        referralCodes: []
-      };
     }
-  }, [contracts]);
+
+    // Process recent referral uses
+    const recentReferrals = [];
+    for (const event of codeUsedEvents.slice(-10).reverse()) {
+      try {
+        const block = await provider.getBlock(event.blockNumber);
+        recentReferrals.push({
+          buyer: event.args.buyer,
+          codeOwner: event.args.codeOwner,
+          code: event.args.code,
+          amount: ethers.formatUnits(event.args.usdcAmount, 6),
+          bonus: ethers.formatEther(event.args.bonusTokens),
+          date: new Date(block.timestamp * 1000).toISOString(),
+          txHash: event.transactionHash
+        });
+      } catch (error) {
+        console.warn(`❌ Error processing code used event:`, error.message);
+      }
+    }
+
+    // Calculate totals
+    const totalRewards = Array.from(referrerStatsMap.values())
+      .reduce((sum, referrer) => sum + parseFloat(referrer.totalEarnings), 0);
+    
+    const totalBonusTokens = recentReferrals
+      .reduce((sum, ref) => sum + parseFloat(ref.bonus), 0);
+
+    const activeCodes = referralCodes.filter(code => code.usageCount > 0).length;
+    const conversionRate = referralCodes.length > 0 ? 
+      (codeUsedEvents.length / referralCodes.length) * 100 : 0;
+
+    const topReferrers = Array.from(referrerStatsMap.values())
+      .filter(referrer => parseFloat(referrer.totalEarnings) > 0)
+      .sort((a, b) => parseFloat(b.totalEarnings) - parseFloat(a.totalEarnings))
+      .slice(0, 10);
+
+    const result = {
+      totalCodes: referralCodes.length,
+      activeCodes,
+      totalRewards: totalRewards.toString(),
+      totalBonusTokens: totalBonusTokens.toString(),
+      conversionRate: Math.round(conversionRate * 100) / 100,
+      topReferrers,
+      recentReferrals,
+      referralCodes: referralCodes.sort((a, b) => b.usageCount - a.usageCount)
+    };
+
+    console.log('✅ MULTI-USE Referral data summary:', {
+      totalCodes: result.totalCodes,
+      activeCodes: result.activeCodes,
+      totalRewards: result.totalRewards,
+      topReferrersCount: result.topReferrers.length,
+      recentReferralsCount: result.recentReferrals.length
+    });
+
+    return result;
+    
+  } catch (error) {
+    console.error('❌ Error fetching MULTI-USE referral data:', error);
+    
+    return {
+      totalCodes: 0,
+      activeCodes: 0,
+      totalRewards: '0',
+      totalBonusTokens: '0',
+      conversionRate: 0,
+      topReferrers: [],
+      recentReferrals: [],
+      referralCodes: []
+    };
+  }
+}, [contracts]);
 
   // Calculate strategy performance
   const calculateStrategyPerformance = useCallback((totalInvestments) => {

@@ -14,7 +14,7 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
+  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612'
 };
 
 // Extended ABIs with referral functions
@@ -22,6 +22,7 @@ const SEEDING_ABI = [
   "function purchaseTokens(uint256 usdcAmount) external",
   "function purchaseTokensWithReferral(uint256 usdcAmount, string calldata referralCode) external",
   "function getQuote(uint256 usdcAmount) external pure returns (uint256)",
+  "function getQuoteWithReferral(uint256 usdcAmount) external pure returns (uint256, uint256, uint256)",
   "function seedingActive() external view returns (bool)",
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
@@ -29,7 +30,11 @@ const SEEDING_ABI = [
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
   "function isValidReferralCode(string) external view returns (bool)",
-  "function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)"
+  "function getCodeUsageInfo(string) external view returns (address, uint256, uint256, uint256)",
+  "function getCodeUsageHistory(string) external view returns (address[], uint256[], uint256[])",
+  "function getUserReferralStats(address) external view returns (string, bool, uint256, uint256, uint256)",
+  "function generateReferralCode() external returns (string)",
+  "function getReferralCode(address) external view returns (string)"
 ];
 
 const USDC_ABI = [
@@ -191,40 +196,41 @@ const validateReferralCode = async (code) => {
   }
 
   try {
-    console.log('🔍 Validating code:', code);
+    console.log('🔍 Validating multi-use code:', code);
     console.log('🔍 Current account:', account);
     
     // Check if code is valid on-chain
     const isValid = await seedingContract.isValidReferralCode(code);
     console.log('🔍 isValidReferralCode result:', isValid);
     
-    // Get detailed info about the code
-    const [owner, used, usedBy, amountUsed] = await seedingContract.getCodeUsageInfo(code);
+    if (!isValid) {
+      setIsValidCode(false);
+      setError(`❌ Code "${code}" does not exist.`);
+      return;
+    }
+    
+    // Get detailed info about the code - UPDATED for multi-use
+    const [owner, usageCount, totalVolume, lastUsedTimestamp] = await seedingContract.getCodeUsageInfo(code);
     
     console.log('🔍 Code details:', {
       owner,
-      used,
-      usedBy,
-      amountUsed: amountUsed.toString(),
+      usageCount: usageCount.toString(),
+      totalVolume: totalVolume.toString(),
+      lastUsedTimestamp: lastUsedTimestamp.toString(),
       isOwnCode: owner.toLowerCase() === account.toLowerCase()
     });
     
-    setIsValidCode(isValid);
-    
-    if (isValid) {
-      setSuccess(`✅ Referral code "${code}" is valid! You'll get 3% extra tokens.`);
-    } else {
-      // Detailed error messages
-      if (owner === '0x0000000000000000000000000000000000000000') {
-        setError(`❌ Code "${code}" does not exist. Make sure it was generated correctly.`);
-      } else if (used) {
-        setError(`❌ Code "${code}" was already used by ${usedBy.slice(0,6)}...${usedBy.slice(-4)}.`);
-      } else if (owner.toLowerCase() === account.toLowerCase()) {
-        setError(`❌ You cannot use your own referral code "${code}".`);
-      } else {
-        setError(`❌ Code "${code}" exists but isValidReferralCode returned false. Owner: ${owner.slice(0,6)}...${owner.slice(-4)}`);
-      }
+    // Check if user is trying to use their own code
+    if (owner.toLowerCase() === account.toLowerCase()) {
+      setIsValidCode(false);
+      setError(`❌ You cannot use your own referral code "${code}".`);
+      return;
     }
+    
+    // For multi-use codes, we only check if it exists and isn't user's own code
+    setIsValidCode(true);
+    setSuccess(`✅ Referral code "${code}" is valid! You'll get 3% extra tokens. (Multi-use: ${usageCount.toString()} previous uses)`);
+    
   } catch (error) {
     console.error('❌ Error validating referral code:', error);
     setIsValidCode(false);
@@ -502,9 +508,13 @@ const handleReferralCodeChange = (e) => {
                     <Users className="w-4 h-4 text-purple-600 mr-2" />
                     <span className="font-medium text-purple-800">Get 3% Extra Tokens!</span>
                   </div>
-                  <p className="text-purple-700 text-sm">
-                    If someone shared their referral code with you, enter it below to receive 3% bonus tokens.
-                  </p>
+<div className="space-y-2 text-sm text-slate-700">
+  <p>1. Generate your unique referral code</p>
+  <p>2. Share with friends and investors</p>
+  <p>3. They get 3% bonus tokens automatically</p>
+  <p>4. You get 5% of their investment (manual reward)</p>
+  <p>5. Each code can be used multiple times</p> {/* CHANGED from "only once" */}
+</div>
                 </div>
 
                 <div>
