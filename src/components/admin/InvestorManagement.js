@@ -36,7 +36,7 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
+  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612'
 };
 
 // Contract ABIs based on the actual contract code

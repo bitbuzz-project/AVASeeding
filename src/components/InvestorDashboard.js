@@ -1,4 +1,4 @@
-
+// src/components/InvestorDashboard.js - UPDATED WITH NEW CONTRACT ADDRESS
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
@@ -14,16 +14,16 @@ import {
   Zap, 
   Shield, 
   ExternalLink,
-    Gift,
-     Copy,
-      Loader,// ADD THESE
+  Gift,
+  Copy,
+  Loader,
   ChevronDown,
   ChevronUp,
   Calendar,
   Info,
   AlertCircle,
-   Menu,        // ADD THIS
-  X           // ADD THIS
+  Menu,
+  X
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
@@ -41,14 +41,14 @@ if (typeof window !== 'undefined') {
   ethers = require('ethers');
 }
 
-// Contract addresses from your deployment
+// UPDATED CONTRACT ADDRESSES
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x31508BD77f24F09301F62072Fb4d1Ea0bA79356A'
+  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612' // NEW CONTRACT ADDRESS
 };
 
-// ABIs for the contracts
+// UPDATED SEEDING ABI with new referral functions
 const SEEDING_ABI = [
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
@@ -58,11 +58,12 @@ const SEEDING_ABI = [
   "function seedingActive() external view returns (bool)",
   "function minimumPurchase() external view returns (uint256)",
   "function seedingPrice() external view returns (uint256)",
-    "function generateReferralCode() external returns (string)",
+  // UPDATED: New referral functions (multiple uses)
+  "function generateReferralCode() external returns (string)",
   "function getReferralCode(address) external view returns (string)",
   "function isValidReferralCode(string) external view returns (bool)",
-  "function getCodeUsageInfo(string) external view returns (address, bool, address, uint256)",
-  "function getUserReferralStats(address) external view returns (string, bool, uint256)"
+  "function getCodeUsageInfo(string) external view returns (address, uint256, uint256, uint256)",
+  "function getUserReferralStats(address) external view returns (string, bool, uint256, uint256, uint256)"
 ];
 
 const AVA_ABI = [
@@ -79,37 +80,39 @@ const USDC_ABI = [
 
 function InvestorDashboard() {
   // Get wallet state from context
-const { 
-  account, 
-  provider, 
-  signer, 
-  isConnected, 
-  connectWallet, 
-  isLoading, 
-  error, 
-  success,
-  setError,     // ADD THIS LINE
-  setSuccess    // ADD THIS LINE
-} = useWallet();
+  const { 
+    account, 
+    provider, 
+    signer, 
+    isConnected, 
+    connectWallet, 
+    isLoading, 
+    error, 
+    success,
+    setError,
+    setSuccess
+  } = useWallet();
   
   // Contract instances
   const [avaContract, setAvaContract] = useState(null);
   const [seedingContract, setSeedingContract] = useState(null);
   const [usdcContract, setUsdcContract] = useState(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-// 3. ADD MOBILE MENU FUNCTIONS (add these new functions)
-const toggleMobileMenu = () => {
-  setIsMobileMenuOpen(!isMobileMenuOpen);
-};
 
-const closeMobileMenu = () => {
-  setIsMobileMenuOpen(false);
-};
+  // Mobile menu functions
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
 
-const handleTabChange = (tabId) => {
-  setActiveTab(tabId);
-  closeMobileMenu();
-};
+  const closeMobileMenu = () => {
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    closeMobileMenu();
+  };
+  
   // Project data
   const [projectData, setProjectData] = useState({
     totalSupply: '0',
@@ -130,12 +133,17 @@ const handleTabChange = (tabId) => {
     investmentValue: '0',
     portfolioPercent: 0
   });
+
+  // UPDATED: Referral data structure for multiple uses
   const [referralData, setReferralData] = useState({
     userCode: '',
     hasCode: false,
     totalBonusEarned: '0',
+    totalEarnings: '0',
+    totalReferrals: 0,
     codeUsageInfo: null
   });
+
   const [isGeneratingCode, setIsGeneratingCode] = useState(false);
   const [showReferralSection, setShowReferralSection] = useState(false);
 
@@ -195,7 +203,7 @@ const handleTabChange = (tabId) => {
         maxAllocation: ethers.formatEther(maxAllocation),
         progressPercent: Number(progress[2]),
         participantCount: Number(participantCount),
-        sellTaxRate: Number(sellTaxRate) / 100, // Convert from basis points
+        sellTaxRate: Number(sellTaxRate) / 100,
         seedingActive,
         minimumPurchase: ethers.formatEther(minimumPurchase)
       });
@@ -222,9 +230,8 @@ const handleTabChange = (tabId) => {
 
       const avaBalanceFormatted = ethers.formatEther(avaBalance);
       const purchasedAmountFormatted = ethers.formatEther(purchasedAmount);
-      const investmentValue = purchasedAmountFormatted; // 1:1 ratio with USDC
+      const investmentValue = purchasedAmountFormatted;
       
-      // Calculate portfolio percentage
       const totalSoldFormatted = parseFloat(projectData.totalSold);
       const portfolioPercent = totalSoldFormatted > 0 ? 
         (parseFloat(purchasedAmountFormatted) / totalSoldFormatted) * 100 : 0;
@@ -241,62 +248,73 @@ const handleTabChange = (tabId) => {
       console.error('Error loading user data:', error);
     }
   };
-  // Load referral data
-const loadReferralData = async () => {
-  if (!seedingContract || !account || !ethers) return;
 
-  try {
-    const [userCode, hasCode, totalBonusEarned] = await seedingContract.getUserReferralStats(account);
-    
-    let codeUsageInfo = null;
-    if (hasCode && userCode) {
-      const [owner, used, usedBy, amountUsed] = await seedingContract.getCodeUsageInfo(userCode);
-      codeUsageInfo = {
-        owner,
-        used,
-        usedBy,
-        amountUsed: used ? ethers.formatUnits(amountUsed, 6) : '0'
-      };
+  // UPDATED: Load referral data with new contract functions
+  const loadReferralData = async () => {
+    if (!seedingContract || !account || !ethers) return;
+
+    try {
+      // Use updated function signature: (userCode, hasCode, totalBonusEarned, totalEarnings, totalReferrals)
+      const [userCode, hasCode, totalBonusEarned, totalEarnings, totalReferrals] = 
+        await seedingContract.getUserReferralStats(account);
+      
+      let codeUsageInfo = null;
+      if (hasCode && userCode) {
+        // Use updated function signature: (owner, usageCount, totalVolume, lastUsedTimestamp)
+        const [owner, usageCount, totalVolume, lastUsedTimestamp] = 
+          await seedingContract.getCodeUsageInfo(userCode);
+        
+        codeUsageInfo = {
+          owner,
+          usageCount: Number(usageCount),
+          totalVolume: ethers.formatUnits(totalVolume, 6),
+          lastUsedTimestamp: Number(lastUsedTimestamp),
+          lastUsedDate: Number(lastUsedTimestamp) > 0 ? 
+            new Date(Number(lastUsedTimestamp) * 1000).toISOString() : null
+        };
+      }
+
+      setReferralData({
+        userCode,
+        hasCode,
+        totalBonusEarned: ethers.formatEther(totalBonusEarned),
+        totalEarnings: ethers.formatUnits(totalEarnings, 6), // USDC earnings
+        totalReferrals: Number(totalReferrals),
+        codeUsageInfo
+      });
+    } catch (error) {
+      console.error('Error loading referral data:', error);
     }
+  };
 
-    setReferralData({
-      userCode,
-      hasCode,
-      totalBonusEarned: ethers.formatEther(totalBonusEarned),
-      codeUsageInfo
-    });
-  } catch (error) {
-    console.error('Error loading referral data:', error);
-  }
-};
+  // Generate referral code
+  const generateReferralCode = async () => {
+    try {
+      setIsGeneratingCode(true);
+      setError('');
+      
+      const tx = await seedingContract.generateReferralCode();
+      await tx.wait();
+      
+      setSuccess('Referral code generated successfully!');
+      loadReferralData();
+    } catch (error) {
+      setError('Failed to generate referral code: ' + error.message);
+    } finally {
+      setIsGeneratingCode(false);
+    }
+  };
 
-// Generate referral code
-const generateReferralCode = async () => {
-  try {
-    setIsGeneratingCode(true);
-    setError('');
-    
-    const tx = await seedingContract.generateReferralCode();
-    await tx.wait();
-    
-    setSuccess('Referral code generated successfully!');
-    loadReferralData(); // Reload data
-  } catch (error) {
-    setError('Failed to generate referral code: ' + error.message);
-  } finally {
-    setIsGeneratingCode(false);
-  }
-};
+  // Copy referral code
+  const copyReferralCode = async () => {
+    try {
+      await navigator.clipboard.writeText(referralData.userCode);
+      setSuccess('Referral code copied to clipboard!');
+    } catch (error) {
+      setError('Failed to copy code');
+    }
+  };
 
-// Copy referral code
-const copyReferralCode = async () => {
-  try {
-    await navigator.clipboard.writeText(referralData.userCode);
-    setSuccess('Referral code copied to clipboard!');
-  } catch (error) {
-    setError('Failed to copy code');
-  }
-};
   // Load data on connection and intervals
   useEffect(() => {
     if (isConnected) {
@@ -309,10 +327,10 @@ const copyReferralCode = async () => {
   useEffect(() => {
     if (isConnected && account) {
       loadUserData();
-      loadReferralData(); // ADD THIS LINE
+      loadReferralData();
       const interval = setInterval(() => {
         loadUserData();
-        loadReferralData(); // ADD THIS LINE
+        loadReferralData();
       }, 30000);
       return () => clearInterval(interval);
     }
@@ -369,70 +387,71 @@ const copyReferralCode = async () => {
           <>
             {/* Navigation Tabs */}
             <div className="max-w-6xl mx-auto mb-6 sm:mb-8">
-  <div className="coinbase-card rounded-xl sm:rounded-2xl">
-    {/* Desktop Navigation - Hidden on mobile */}
-    <div className="hidden lg:block p-2">
-      <div className="flex space-x-2">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-semibold transition-all ${
-              activeTab === tab.id
-                ? 'bg-blue-600 text-white shadow-lg'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-            }`}
-          >
-            <tab.icon className="w-5 h-5 mr-2" />
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
-    </div>
+              <div className="coinbase-card rounded-xl sm:rounded-2xl">
+                {/* Desktop Navigation - Hidden on mobile */}
+                <div className="hidden lg:block p-2">
+                  <div className="flex space-x-2">
+                    {tabs.map((tab) => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex-1 flex items-center justify-center py-3 px-4 rounded-xl font-semibold transition-all ${
+                          activeTab === tab.id
+                            ? 'bg-blue-600 text-white shadow-lg'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        }`}
+                      >
+                        <tab.icon className="w-5 h-5 mr-2" />
+                        <span>{tab.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
-    {/* Mobile Navigation Header */}
-    <div className="lg:hidden flex items-center justify-between p-4">
-      <div className="flex items-center">
-        {tabs.find(tab => tab.id === activeTab)?.icon && (
-          React.createElement(tabs.find(tab => tab.id === activeTab).icon, {
-            className: "w-5 h-5 mr-2 text-blue-600"
-          })
-        )}
-        <h2 className="text-lg font-bold text-slate-900">
-          {tabs.find(tab => tab.id === activeTab)?.shortLabel || 'Dashboard'}
-        </h2>
-      </div>
-      <button
-        onClick={toggleMobileMenu}
-        className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-      >
-        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
-    </div>
+                {/* Mobile Navigation Header */}
+                <div className="lg:hidden flex items-center justify-between p-4">
+                  <div className="flex items-center">
+                    {tabs.find(tab => tab.id === activeTab)?.icon && (
+                      React.createElement(tabs.find(tab => tab.id === activeTab).icon, {
+                        className: "w-5 h-5 mr-2 text-blue-600"
+                      })
+                    )}
+                    <h2 className="text-lg font-bold text-slate-900">
+                      {tabs.find(tab => tab.id === activeTab)?.shortLabel || 'Dashboard'}
+                    </h2>
+                  </div>
+                  <button
+                    onClick={toggleMobileMenu}
+                    className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                  >
+                    {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  </button>
+                </div>
 
-    {/* Mobile Navigation Menu */}
-    {isMobileMenuOpen && (
-      <div className="lg:hidden border-t border-slate-200 bg-white rounded-b-xl sm:rounded-b-2xl">
-        <div className="p-3 space-y-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => handleTabChange(tab.id)}
-              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
-                activeTab === tab.id
-                  ? 'bg-blue-100 text-blue-700'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-              }`}
-            >
-              <tab.icon className="w-5 h-5 mr-3" />
-              <span className="font-medium">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
-</div>
+                {/* Mobile Navigation Menu */}
+                {isMobileMenuOpen && (
+                  <div className="lg:hidden border-t border-slate-200 bg-white rounded-b-xl sm:rounded-b-2xl">
+                    <div className="p-3 space-y-1">
+                      {tabs.map((tab) => (
+                        <button
+                          key={tab.id}
+                          onClick={() => handleTabChange(tab.id)}
+                          className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                            activeTab === tab.id
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          }`}
+                        >
+                          <tab.icon className="w-5 h-5 mr-3" />
+                          <span className="font-medium">{tab.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Portfolio Overview Tab */}
             {activeTab === 'overview' && (
               <div className="max-w-6xl mx-auto space-y-8">
@@ -480,117 +499,148 @@ const copyReferralCode = async () => {
                     <p className="text-slate-600 font-medium">Total Investors</p>
                   </div>
                 </div>
-                    <div className="coinbase-card rounded-2xl p-8">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-2xl font-bold text-slate-900 flex items-center">
-          <Gift className="w-6 h-6 mr-3 text-purple-600" />
-          Referral Program
-        </h3>
-        <button
-          onClick={() => setShowReferralSection(!showReferralSection)}
-          className="text-purple-600 hover:text-purple-700 font-medium"
-        >
-          {showReferralSection ? 'Hide' : 'Show'}
-        </button>
-      </div>
 
-      {showReferralSection && (
-        <div className="space-y-6">
-          {/* User's Referral Code */}
-          <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
-            <h4 className="font-bold text-slate-900 mb-4">Your Referral Code</h4>
-            
-            {referralData.hasCode ? (
-              <div className="space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="flex-1 bg-white rounded-lg p-4 border-2 border-purple-200">
-                    <p className="font-mono text-lg font-bold text-purple-700">
-                      {referralData.userCode}
-                    </p>
+                {/* UPDATED: Referral Program Section */}
+                <div className="coinbase-card rounded-2xl p-8">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-2xl font-bold text-slate-900 flex items-center">
+                      <Gift className="w-6 h-6 mr-3 text-purple-600" />
+                      Referral Program
+                    </h3>
+                    <button
+                      onClick={() => setShowReferralSection(!showReferralSection)}
+                      className="text-purple-600 hover:text-purple-700 font-medium"
+                    >
+                      {showReferralSection ? 'Hide' : 'Show'}
+                    </button>
                   </div>
-                  <button
-                    onClick={copyReferralCode}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    <Copy className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                {/* Usage Status */}
-                {referralData.codeUsageInfo && (
-                  <div className="bg-white rounded-lg p-4 border">
-                    <h5 className="font-medium text-slate-900 mb-2">Code Status</h5>
-                    {referralData.codeUsageInfo.used ? (
-                      <div className="text-green-700">
-                        <p className="font-medium">✅ Code Used!</p>
-                        <p className="text-sm">Used by: {referralData.codeUsageInfo.usedBy.slice(0,6)}...{referralData.codeUsageInfo.usedBy.slice(-4)}</p>
-                        <p className="text-sm">Amount: ${formatNumber(referralData.codeUsageInfo.amountUsed)} USDC</p>
-                        <p className="text-sm text-purple-600 font-medium">
-                          💰 Contact admin for your 5% reward (${formatNumber(parseFloat(referralData.codeUsageInfo.amountUsed) * 0.05)} USDC)
-                        </p>
+
+                  {showReferralSection && (
+                    <div className="space-y-6">
+                      {/* User's Referral Code */}
+                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
+                        <h4 className="font-bold text-slate-900 mb-4">Your Referral Code</h4>
+                        
+                        {referralData.hasCode ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center space-x-4">
+                              <div className="flex-1 bg-white rounded-lg p-4 border-2 border-purple-200">
+                                <p className="font-mono text-lg font-bold text-purple-700">
+                                  {referralData.userCode}
+                                </p>
+                              </div>
+                              <button
+                                onClick={copyReferralCode}
+                                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                              >
+                                <Copy className="w-5 h-5" />
+                              </button>
+                            </div>
+                            
+                            {/* UPDATED: Usage Status for multiple uses */}
+                            {referralData.codeUsageInfo && (
+                              <div className="bg-white rounded-lg p-4 border">
+                                <h5 className="font-medium text-slate-900 mb-2">Code Statistics</h5>
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                  <div className="text-center">
+                                    <p className="text-2xl font-bold text-blue-600">
+                                      {referralData.codeUsageInfo.usageCount}
+                                    </p>
+                                    <p className="text-sm text-slate-600">Times Used</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-2xl font-bold text-green-600">
+                                      ${formatNumber(referralData.codeUsageInfo.totalVolume)}
+                                    </p>
+                                    <p className="text-sm text-slate-600">Total Volume</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-2xl font-bold text-purple-600">
+                                      ${formatNumber(referralData.totalEarnings)}
+                                    </p>
+                                    <p className="text-sm text-slate-600">Your Earnings</p>
+                                  </div>
+                                  <div className="text-center">
+                                    <p className="text-2xl font-bold text-orange-600">
+                                      {referralData.totalReferrals}
+                                    </p>
+                                    <p className="text-sm text-slate-600">Total Referrals</p>
+                                  </div>
+                                </div>
+                                {referralData.codeUsageInfo.lastUsedDate && (
+                                  <div className="mt-4 p-3 bg-green-50 rounded-lg">
+                                    <p className="text-green-800 font-medium">
+                                      🎉 Last used: {new Date(referralData.codeUsageInfo.lastUsedDate).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-center">
+                            <p className="text-slate-600 mb-4">Generate your unique referral code to earn rewards!</p>
+                            <button
+                              onClick={generateReferralCode}
+                              disabled={isGeneratingCode}
+                              className="coinbase-btn text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
+                            >
+                              {isGeneratingCode ? (
+                                <>
+                                  <Loader className="w-5 h-5 mr-2 animate-spin" />
+                                  Generating...
+                                </>
+                              ) : (
+                                <>
+                                  <Gift className="w-5 h-5 mr-2" />
+                                  Generate Referral Code
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-slate-600">⏳ Code not used yet</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-slate-600 mb-4">Generate your unique referral code to earn rewards!</p>
-                <button
-                  onClick={generateReferralCode}
-                  disabled={isGeneratingCode}
-                  className="coinbase-btn text-white px-6 py-3 rounded-lg font-semibold disabled:opacity-50"
-                >
-                  {isGeneratingCode ? (
-                    <>
-                      <Loader className="w-5 h-5 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Gift className="w-5 h-5 mr-2" />
-                      Generate Referral Code
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
 
-          {/* How it Works */}
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-slate-50 rounded-xl p-6">
-              <h4 className="font-bold text-slate-900 mb-3">How It Works</h4>
-              <div className="space-y-2 text-sm text-slate-700">
-                <p>1. Generate your unique referral code</p>
-                <p>2. Share with friends and investors</p>
-                <p>3. They get 3% bonus tokens automatically</p>
-                <p>4. You get 5% of their investment (manual reward)</p>
-                <p>5. Each code can only be used once</p>
-              </div>
-            </div>
-            
-            <div className="bg-green-50 rounded-xl p-6">
-              <h4 className="font-bold text-green-900 mb-3">Your Stats</h4>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-green-700">Bonus Tokens Earned:</span>
-                  <span className="font-bold text-green-800">{formatNumber(referralData.totalBonusEarned)} AVA</span>
+                      {/* UPDATED: How it Works */}
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <div className="bg-slate-50 rounded-xl p-6">
+                          <h4 className="font-bold text-slate-900 mb-3">How It Works (Multiple Uses)</h4>
+                          <div className="space-y-2 text-sm text-slate-700">
+                            <p>1. Generate your unique referral code</p>
+                            <p>2. Share with friends and investors</p>
+                            <p>3. Each person gets 3% bonus tokens automatically</p>
+                            <p>4. You get 5% USDC reward for each purchase</p>
+                            <p>5. ✨ Your code can be used multiple times!</p>
+                          </div>
+                        </div>
+                        
+                        <div className="bg-green-50 rounded-xl p-6">
+                          <h4 className="font-bold text-green-900 mb-3">Your Referral Stats</h4>
+                          <div className="space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-green-700">Bonus Tokens Earned:</span>
+                              <span className="font-bold text-green-800">{formatNumber(referralData.totalBonusEarned)} AVA</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-green-700">USDC Earnings:</span>
+                              <span className="font-bold text-green-800">${formatNumber(referralData.totalEarnings)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-green-700">Total Referrals:</span>
+                              <span className="font-bold text-green-800">{referralData.totalReferrals}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-green-700">Code Status:</span>
+                              <span className="font-bold text-green-800">
+                                {referralData.hasCode ? 'Active & Reusable' : 'Not Generated'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-green-700">Code Status:</span>
-                  <span className="font-bold text-green-800">
-                    {referralData.hasCode ? 'Active' : 'Not Generated'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
  
                 {/* Project Progress */}
                 <div className="coinbase-card rounded-2xl p-8">
@@ -671,6 +721,7 @@ const copyReferralCode = async () => {
               </div>
             )}
 
+            {/* Rest of the tabs remain the same... */}
             {/* Investment Analytics Tab */}
             {activeTab === 'analytics' && (
               <div className="max-w-6xl mx-auto space-y-8">
@@ -857,130 +908,6 @@ const copyReferralCode = async () => {
                           <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                             <div className="flex items-start">
                               <Info className="w-5 h-5 text-yellow-600 mt-0.5 mr-3 flex-shrink-0" />
-                              <div>
-                                <p className="font-medium text-yellow-800">Technical Explanation</p>
-                                <p className="text-yellow-700 text-sm mt-1">
-                                  The net profit comes from the mathematical difference between upward and downward price movements. 
-                                  A 25% price increase followed by a 20% decrease results in a 5% net profit that can be captured systematically.
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Base Ecosystem Strategy */}
-                    <div className="border border-slate-200 rounded-xl">
-                      <button
-                        onClick={() => toggleSection('base')}
-                        className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                      >
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Base Ecosystem Liquidity Providing</h4>
-                          <p className="text-slate-600 mt-1">Active daily revenue generation through LP positions</p>
-                        </div>
-                        {expandedSections.base ? 
-                          <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                          <ChevronDown className="w-6 h-6 text-slate-400" />
-                        }
-                      </button>
-                      {expandedSections.base && (
-                        <div className="px-6 pb-6">
-                          <div className="grid md:grid-cols-2 gap-6">
-                            <div>
-                              <h5 className="font-bold text-slate-900 mb-3">Strategy Overview</h5>
-                              <ul className="space-y-2 text-slate-700">
-                                <li className="flex items-start">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Medium/wide range liquidity provision</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Focus on strong Base ecosystem tokens</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Daily revenue for buyback program</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                  <span>Beta exposure to Base growth</span>
-                                </li>
-                              </ul>
-                            </div>
-                            <div>
-                              <h5 className="font-bold text-slate-900 mb-3">Real-Life examples</h5>
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">REI/USDC</span>
-                                  <span className="text-green-600 font-bold">70% APR</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">ZORA/USDC</span>
-                                  <span className="text-green-600 font-bold">200% APR</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">CLANKER</span>
-                                  <span className="text-green-600 font-bold">100% APR</span>
-                                </div>
-                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">BNKR</span>
-                                  <span className="text-green-600 font-bold">45% APR</span>
-                                </div>
-                                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                                  <span className="font-medium">MAMO/USDC</span>
-                                  <span className="text-green-600 font-bold">140% APR</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Tokenomics Tab */}
-            {activeTab === 'tokenomics' && (
-              <div className="max-w-6xl mx-auto space-y-8">
-                {/* Token Distribution */}
-                <div className="coinbase-card rounded-2xl p-8">
-                  <h3 className="text-2xl font-bold mb-6 text-slate-900">Token Distribution</h3>
-                  
-                  <div className="grid md:grid-cols-2 gap-8 mb-8">
-                    <div>
-                      <h4 className="text-lg font-bold text-slate-900 mb-4">Total Supply Breakdown</h4>
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                          <div>
-                            <p className="font-bold text-blue-900">Seeding Allocation</p>
-                            <p className="text-blue-700 text-sm">4,375,000 AVA (87.5%)</p>
-                          </div>
-                          <p className="text-2xl font-bold text-blue-600">87.5%</p>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
-                          <div>
-                            <p className="font-bold text-green-900">Liquidity Pool</p>
-                            <p className="text-green-700 text-sm">625,000 AVA (12.5%)</p>
-                          </div>
-                          <p className="text-2xl font-bold text-green-600">12.5%</p>
-                        </div>
-                      </div>
-                      <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-                        <p className="font-bold text-slate-900">Maximum Supply</p>
-                        <p className="text-3xl font-bold text-slate-900">5,000,000</p>
-                        <p className="text-slate-600 text-sm">Fixed supply - no inflation</p>
-                      </div>
-                    </div>
-
-                    <div>
-                      <h4 className="text-lg font-bold text-slate-900 mb-4">Key Token Features</h4>
-                      <div className="space-y-3">
-                        <div className="flex items-start p-3 bg-green-50 rounded-lg">
-                          <Shield className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
                           <div>
                             <p className="font-medium text-green-800">No Staking Required</p>
                             <p className="text-green-700 text-sm">Simply hold AVA tokens to benefit</p>
@@ -1331,10 +1258,133 @@ const copyReferralCode = async () => {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
 
-        @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
       `}</style>
     </div>
   );
 }
 
 export default InvestorDashboard;
+                              <div>
+                                <p className="font-medium text-yellow-800">Technical Explanation</p>
+                                <p className="text-yellow-700 text-sm mt-1">
+                                  The net profit comes from the mathematical difference between upward and downward price movements. 
+                                  A 25% price increase followed by a 20% decrease results in a 5% net profit that can be captured systematically.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Base Ecosystem Strategy */}
+                    <div className="border border-slate-200 rounded-xl">
+                      <button
+                        onClick={() => toggleSection('base')}
+                        className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
+                      >
+                        <div>
+                          <h4 className="text-xl font-bold text-slate-900">Base Ecosystem Liquidity Providing</h4>
+                          <p className="text-slate-600 mt-1">Active daily revenue generation through LP positions</p>
+                        </div>
+                        {expandedSections.base ? 
+                          <ChevronUp className="w-6 h-6 text-slate-400" /> : 
+                          <ChevronDown className="w-6 h-6 text-slate-400" />
+                        }
+                      </button>
+                      {expandedSections.base && (
+                        <div className="px-6 pb-6">
+                          <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                              <h5 className="font-bold text-slate-900 mb-3">Strategy Overview</h5>
+                              <ul className="space-y-2 text-slate-700">
+                                <li className="flex items-start">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <span>Medium/wide range liquidity provision</span>
+                                </li>
+                                <li className="flex items-start">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <span>Focus on strong Base ecosystem tokens</span>
+                                </li>
+                                <li className="flex items-start">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <span>Daily revenue for buyback program</span>
+                                </li>
+                                <li className="flex items-start">
+                                  <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                                  <span>Beta exposure to Base growth</span>
+                                </li>
+                              </ul>
+                            </div>
+                            <div>
+                              <h5 className="font-bold text-slate-900 mb-3">Real-Life examples</h5>
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">REI/USDC</span>
+                                  <span className="text-green-600 font-bold">70% APR</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">ZORA/USDC</span>
+                                  <span className="text-green-600 font-bold">200% APR</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">CLANKER</span>
+                                  <span className="text-green-600 font-bold">100% APR</span>
+                                </div>
+                                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">BNKR</span>
+                                  <span className="text-green-600 font-bold">45% APR</span>
+                                </div>
+                                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                                  <span className="font-medium">MAMO/USDC</span>
+                                  <span className="text-green-600 font-bold">140% APR</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tokenomics Tab - Same as before */}
+            {activeTab === 'tokenomics' && (
+              <div className="max-w-6xl mx-auto space-y-8">
+                <div className="coinbase-card rounded-2xl p-8">
+                  <h3 className="text-2xl font-bold mb-6 text-slate-900">Token Distribution</h3>
+                  
+                  <div className="grid md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-900 mb-4">Total Supply Breakdown</h4>
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                          <div>
+                            <p className="font-bold text-blue-900">Seeding Allocation</p>
+                            <p className="text-blue-700 text-sm">4,375,000 AVA (87.5%)</p>
+                          </div>
+                          <p className="text-2xl font-bold text-blue-600">87.5%</p>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                          <div>
+                            <p className="font-bold text-green-900">Liquidity Pool</p>
+                            <p className="text-green-700 text-sm">625,000 AVA (12.5%)</p>
+                          </div>
+                          <p className="text-2xl font-bold text-green-600">12.5%</p>
+                        </div>
+                      </div>
+                      <div className="mt-6 p-4 bg-slate-50 rounded-lg">
+                        <p className="font-bold text-slate-900">Maximum Supply</p>
+                        <p className="text-3xl font-bold text-slate-900">5,000,000</p>
+                        <p className="text-slate-600 text-sm">Fixed supply - no inflation</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-900 mb-4">Key Token Features</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-start p-3 bg-green-50 rounded-lg">
+                          <Shield className="w-5 h-5 text-green-600 mt-0.5
