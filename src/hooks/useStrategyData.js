@@ -4,17 +4,19 @@ import { useState, useCallback, useEffect } from 'react';
 // Contract addresses and strategy configurations - UPDATED
 const STRATEGY_CONFIG = {
   bitcoin: {
-    allocation: 0.35, // 35% of total funds
-    targetExposure: 0.70, // 70% BTC, 30% USDC
-    rebalanceThreshold: 0.09, // 9% deviation triggers rebalance
-    name: 'Bitcoin Maximum Exposure Rebalancing System'
+    allocation: 0.35, // 35% 
+    targetExposure: 0.70,
+    rebalanceThreshold: 0.09,
+    name: 'Bitcoin Maximum Exposure Rebalancing System',
+    targetAPY: 0.187 // 18.7%
   },
   baseLP: {
-    allocation: 0.45, // 45% of total funds
-    name: 'Base Ecosystem Liquidity Provisioning'
+    allocation: 0.45, // 45%
+    name: 'Base Ecosystem Liquidity Provisioning',
+    apyRange: [0.30, 2.00] // 30-200%
   },
   tokenLiquidity: {
-    allocation: 0.20, // 20% of total funds
+    allocation: 0.20, // 20%
     name: 'AVA Token Liquidity Management'
   }
 };
@@ -139,7 +141,8 @@ export const useStrategyData = () => {
         const weeklyReturn = dailyReturn * 7 + (Math.random() - 0.5) * 0.008;
         const monthlyReturn = weeklyReturn * 4.33 + (Math.random() - 0.45) * 0.015;
         const ytdReturn = monthlyReturn * 12 + (Math.random() - 0.38) * 0.04;
-        const apy = 0.211 + (Math.random() - 0.5) * 0.02; // 21.1% base APY from whitepaper
+        const apy = 0.187 + (Math.random() - 0.5) * 0.02; // 18.7% base APY
+        const outperformance = 0.51; // 51% outperformance
 
         return {
           ...baseMetrics,
@@ -153,6 +156,9 @@ export const useStrategyData = () => {
             new Date(Date.now() + 30 * 60 * 1000) : // 30 minutes if needed
             new Date(Date.now() + 4 * 60 * 60 * 1000), // 4 hours if not needed
           apy: apy * 100,
+          outperformanceVsBaseline: outperformance * 100,
+          baselineStrategy: '0% threshold rebalancing',
+          backtestPeriod: '2021-2025',
           ytdReturn: ytdReturn * 100,
           monthlyReturn: monthlyReturn * 100,
           weeklyReturn: weeklyReturn * 100,

@@ -43,18 +43,7 @@ const SEEDING_ABI = [
 ];
 
 // Predefined referral codes from your contract constructor
-const PREDEFINED_CODES = [
-  "AVALON2025",
-  "VOLATILITY", 
-  "BMERS2025",
-  "BASECHAIN",
-  "STRATEGY1",
-  "PRESALE01",
-  "INVESTOR",
-  "TOPWHALE",
-  "AVAX2025",
-  "REWARDS3"
-];
+
 
 const AVA_ABI = [
   "function balanceOf(address) external view returns (uint256)",
@@ -472,10 +461,14 @@ const fetchReferralData = useCallback(async (contractInstances) => {
 
       console.log('📊 Basic data fetched:', basicData);
       console.log('📊 CORRECTED Referral data fetched:', referralData);
-
+      
       // Calculate derived metrics
       const totalInvestments = parseFloat(basicData.totalSold);
-      const estimatedRevenue = totalInvestments * 0.25;
+      const estimatedRevenue = totalInvestments * (
+        (basicData.allocation?.bitcoin || 0.35) * 0.187 + // Bitcoin 18.7% APY
+        (basicData.allocation?.baseLP || 0.45) * 0.65 +    // Base LP average 65% APY  
+        (basicData.allocation?.tokenLiquidity || 0.20) * 0.08 // Token liquidity 8% APY
+      );
       const strategiesPerformance = calculateStrategyPerformance(totalInvestments);
 
       // Update state with corrected referral data

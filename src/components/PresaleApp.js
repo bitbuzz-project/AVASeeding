@@ -508,13 +508,13 @@ const handleReferralCodeChange = (e) => {
                     <Users className="w-4 h-4 text-purple-600 mr-2" />
                     <span className="font-medium text-purple-800">Get 3% Extra Tokens!</span>
                   </div>
-<div className="space-y-2 text-sm text-slate-700">
-  <p>1. Generate your unique referral code</p>
-  <p>2. Share with friends and investors</p>
-  <p>3. They get 3% bonus tokens automatically</p>
-  <p>4. You get 5% of their investment (manual reward)</p>
-  <p>5. Each code can be used multiple times</p> {/* CHANGED from "only once" */}
-</div>
+                  <div className="space-y-2 text-sm text-slate-700">
+                    <p>1. Generate your unique referral code</p>
+                    <p>2. Share with friends and investors</p>
+                    <p>3. They get 3% bonus tokens automatically</p>
+                    <p>4. You get 5% of their investment in USDC</p>
+                    <p>5. Each code can be used multiple times</p>
+                  </div>
                 </div>
 
                 <div>

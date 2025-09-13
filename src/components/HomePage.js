@@ -51,11 +51,11 @@ function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-  const performanceMetrics = [
-    { label: 'Bitcoin Strategy APY', value: '21.1%', period: '2021-2025 Avg' },
-    { label: 'Base LP Provisioning APY', value: '25-75%', period: 'Target Range' },
-    { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' }
-  ];
+const performanceMetrics = [
+  { label: 'Bitcoin Strategy APY', value: '18.7%', period: '2021-2025 Backtested' }, // Changed from 21.1%
+  { label: 'Base LP Provisioning APY', value: '30-200%', period: 'Wide Range LP' }, // Updated range
+  { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' } // Updated range
+];
 
   const features = [
     {
@@ -84,11 +84,11 @@ function HomePage() {
     }
   ];
 
-  const allocations = [
-    { name: 'Base Ecosystem LP', percentage: 45, color: 'bg-green-500' },
-    { name: 'Bitcoin Strategy (B-MERS)', percentage: 35, color: 'bg-blue-500' },
-    { name: 'Token Liquidity', percentage: 20, color: 'bg-purple-500' }
-  ];
+ const allocations = [
+  { name: 'Base Ecosystem LP', percentage: 45, color: 'bg-green-500' },
+  { name: 'Bitcoin Strategy (B-MERS)', percentage: 35, color: 'bg-blue-500' },
+  { name: 'Token Liquidity', percentage: 20, color: 'bg-purple-500' }
+];
 
   return (
     <div className="homepage-bg text-slate-900 font-inter">
@@ -272,10 +272,10 @@ function HomePage() {
                       ></div>
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                      {allocation.name === 'Bitcoin Strategy (B-MERS)' &&
-                        'Bitcoin Maximum Exposure Rebalancing System - 9% rebalancing threshold for optimal profit capture'}
-                      {allocation.name === 'Base Ecosystem LP' &&
-                        'Active liquidity provisioning in high-yield Base ecosystem tokens with 25-75% APY target'}
+                        {allocation.name === 'Bitcoin Strategy (B-MERS)' &&
+                          'Bitcoin Maximum Exposure Rebalancing System - achieved ~18.7% APY with 51% outperformance over 0% threshold'}
+                        {allocation.name === 'Base Ecosystem LP' &&
+                          'Wide-range liquidity provisioning in Base ecosystem tokens with 30-200% APY potential'}
                       {allocation.name === 'Token Liquidity' &&
                         'Market support through ratcheting liquidity system starting at $1.00 with price stability'}
                     </p>

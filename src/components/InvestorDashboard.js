@@ -702,22 +702,16 @@ const copyReferralCode = async () => {
                 <div className="coinbase-card rounded-2xl p-8">
                   <h3 className="text-2xl font-bold mb-6 text-slate-900">Strategy Performance Metrics</h3>
                   <div className="grid md:grid-cols-3 gap-6">
-                    <div className="bg-green-50 rounded-xl p-6 text-center">
-                      <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-                        <TrendingUp className="w-6 h-6 text-green-600" />
-                      </div>
-                      <p className="text-3xl font-bold text-green-600 mb-2">21.1%</p>
-                      <p className="text-slate-700 font-medium">Bitcoin Strategy APY</p>
-                      <p className="text-sm text-slate-500 mt-2">Based on backtested data</p>
-                    </div>
-                    <div className="bg-blue-50 rounded-xl p-6 text-center">
-                      <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Activity className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <p className="text-3xl font-bold text-blue-600 mb-2">25-75%</p>
-                      <p className="text-slate-700 font-medium">Base LP APY Range</p>
-                      <p className="text-sm text-slate-500 mt-2">Target performance</p>
-                    </div>
+<div className="bg-green-50 rounded-xl p-6 text-center">
+  <p className="text-3xl font-bold text-green-600 mb-2">18.7%</p>
+  <p className="text-slate-700 font-medium">Bitcoin Strategy APY</p>
+  <p className="text-sm text-slate-500 mt-2">2021-2025 backtested with 51% outperformance</p>
+</div>
+                 <div className="bg-blue-50 rounded-xl p-6 text-center">
+  <p className="text-3xl font-bold text-blue-600 mb-2">30-200%</p>
+  <p className="text-slate-700 font-medium">Base LP APY Range</p>
+  <p className="text-sm text-slate-500 mt-2">Wide-range liquidity provision</p>
+</div>
                     <div className="bg-purple-50 rounded-xl p-6 text-center">
                       <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                         <PieChart className="w-6 h-6 text-purple-600" />
@@ -733,26 +727,24 @@ const copyReferralCode = async () => {
                 <div className="coinbase-card rounded-2xl p-8">
                   <h3 className="text-2xl font-bold mb-6 text-slate-900">Asset Allocation Strategy</h3>
                   <div className="grid md:grid-cols-3 gap-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-blue-900 mb-3">Bitcoin Strategy</h4>
-                      <p className="text-4xl font-bold text-blue-600 mb-2">35%</p>
-                      <p className="text-blue-800 font-medium mb-3">Bitcoin Maximum Exposure Rebalancing System (B-MERS)</p>
-                      <ul className="text-sm text-blue-700 space-y-1">
-                        <li>• Systematic buying and selling</li>
-                        <li>• 9% rebalancing threshold</li>
-                        <li>• Fixed exposure target</li>
-                      </ul>
-                    </div>
-                    <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
-                      <h4 className="text-lg font-bold text-green-900 mb-3">Base Ecosystem LP</h4>
-                      <p className="text-4xl font-bold text-green-600 mb-2">45%</p>
-                      <p className="text-green-800 font-medium mb-3">Liquidity Provisioning</p>
-                      <ul className="text-sm text-green-700 space-y-1">
-                        <li>• Active yield generation</li>
-                        <li>• 25-75% APY target</li>
-                        <li>• Beta exposure to Base ecosystem</li>
-                      </ul>
-                    </div>
+                                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
+                        <p className="text-4xl font-bold text-blue-600 mb-2">35%</p>
+                        <p className="text-blue-800 font-medium mb-3">Bitcoin Maximum Exposure Rebalancing System</p>
+                        <ul className="text-sm text-blue-700 space-y-1">
+                          <li>• 9% rebalancing threshold optimized</li>
+                          <li>• 18.7% APY backtested performance</li>
+                          <li>• 51% outperformance vs 0% threshold</li>
+                        </ul>
+                      </div>
+                                      <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
+                        <p className="text-4xl font-bold text-green-600 mb-2">45%</p>
+                        <p className="text-green-800 font-medium mb-3">Base Ecosystem LP</p>
+                        <ul className="text-sm text-green-700 space-y-1">
+                          <li>• Wide-range liquidity provision</li>
+                          <li>• 30-200% APY target range</li>
+                          <li>• Focus on established Base projects</li>
+                        </ul>
+                      </div>
                     <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
                       <h4 className="text-lg font-bold text-purple-900 mb-3">Token Liquidity</h4>
                       <p className="text-4xl font-bold text-purple-600 mb-2">20%</p>
@@ -773,14 +765,17 @@ const copyReferralCode = async () => {
                     <div>
                       <h4 className="text-lg font-bold text-slate-900 mb-4">Revenue Allocation</h4>
                       <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                          <span className="font-medium text-green-800">Buybacks & Token Burns</span>
-                          <span className="text-2xl font-bold text-green-600">90%</span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                          <span className="font-medium text-blue-800">Operational Costs</span>
-                          <span className="text-2xl font-bold text-blue-600">10%</span>
-                        </div>
+                                              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                        <span className="font-medium text-green-800">Initial Phase: Buybacks & Liquidity</span>
+                        <span className="text-2xl font-bold text-green-600">70%</span>
+                      </div>
+                                            <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                        <span className="font-medium text-blue-800">Operations & Referrals</span>
+                        <span className="text-2xl font-bold text-blue-600">30%</span>
+                      </div>
+                      <div className="mt-4 p-3 bg-purple-50 rounded-lg">
+                        <p className="text-purple-800 text-sm">After 50% token sale: 85% to buybacks, 15% operations</p>
+                      </div>
                       </div>
                     </div>
                     <div>
