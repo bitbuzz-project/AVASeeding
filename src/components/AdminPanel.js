@@ -12,12 +12,10 @@ import {
   AlertTriangle,
   Menu,
   X,
-  Gift  // Add this
 } from 'lucide-react';
 import InvestmentDashboard from './admin/InvestmentDashboard';
 import InvestorManagement from './admin/InvestorManagement';
 import StrategyMonitor from './admin/StrategyMonitor';
-import ReferralAnalytics from './admin/ReferralAnalytics';
 import { useAdminData } from '../hooks/useAdminData';
 
 // Admin authentication utility
@@ -165,7 +163,6 @@ const AdminPanel = () => {
     { id: 'revenue', label: 'Revenue Analytics', icon: DollarSign },
     { id: 'system', label: 'System Health', icon: Eye },
     { id: 'settings', label: 'Admin Settings', icon: Settings },
-    { id: 'referrals', label: 'Referral Analytics', icon: Gift },
 
   ];
 
@@ -273,7 +270,6 @@ const AdminPanel = () => {
           
           {/* Strategy Monitor - NEW */}
           {activeTab === 'strategies' && <StrategyMonitor />}
-          {activeTab === 'referrals' && <ReferralAnalytics data={data} onRefresh={refreshData} isLoading={isLoading} />}
 
           {/* Placeholder for other tabs */}
           {activeTab === 'revenue' && (

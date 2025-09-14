@@ -57,32 +57,33 @@ const performanceMetrics = [
   { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' } // Updated range
 ];
 
-  const features = [
-    {
-      icon: Activity,
-      title: 'Volatility Harvesting',
-      description: 'Systematic profit generation from market motion - the only constant in crypto.',
-      gradient: 'from-blue-500 to-cyan-500'
-    },
-    {
-      icon: Shield,
-      title: 'No Staking Required',
-      description: 'Simply hold AVA tokens. No manual claiming, no complex processes.',
-      gradient: 'from-green-500 to-emerald-500'
-    },
-    {
-      icon: Target,
-      title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy and 25-75% with DeFi LP on Base Ecosystem.',
-      gradient: 'from-purple-500 to-pink-500'
-    },
-    {
-      icon: Zap,
-      title: 'Automated Revenue',
-      description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
-      gradient: 'from-yellow-500 to-orange-500'
-    }
-  ];
+const features = [
+  {
+    icon: Activity,
+    title: 'Volatility Harvesting',
+    description: 'Systematic profit generation from market motion - the only constant in crypto.',
+    gradient: 'from-blue-500 to-cyan-500'
+  },
+  {
+    icon: Shield,
+    title: 'No Staking Required',
+    description: 'Simply hold AVA tokens. No manual claiming, no complex processes.',
+    gradient: 'from-green-500 to-emerald-500'
+  },
+  {
+    icon: Target,
+    title: 'Proven Strategy',
+    description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy and 25-75% with DeFi LP on Base Ecosystem.',
+    gradient: 'from-purple-500 to-pink-500'
+  },
+  {
+    icon: Zap,
+    title: 'Automated Revenue',
+    description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
+    gradient: 'from-yellow-500 to-orange-500'
+  }
+  // REMOVE any referral-related feature if present
+];
 
  const allocations = [
   { name: 'Base Ecosystem LP', percentage: 45, color: 'bg-green-500' },
@@ -362,26 +363,30 @@ const performanceMetrics = [
                 </ul>
               </div>
 
-              <div className={`tokenomics-card p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl transition-all duration-500 ${
-                isVisible['section-tokenomics'] ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
-              }`} style={{ transitionDelay: '200ms' }}>
-                <div className="w-10 sm:w-12 lg:w-16 h-10 sm:h-12 lg:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 lg:mb-6">
-                  <TrendingUp className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
-                </div>
-                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Referral Program</h3>
-                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">5% + 3%</p>
-                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Referrer earns 5%, referee gets 3% bonus.</p>
-                <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
-                  <li className="flex items-center">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Network growth incentives</span>
-                  </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Quality investor focus</span>
-                  </li>
-                </ul>
-              </div>
+          <div className={`tokenomics-card p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl transition-all duration-500 ${
+  isVisible['section-tokenomics'] ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
+}`} style={{ transitionDelay: '200ms' }}>
+  <div className="w-10 sm:w-12 lg:w-16 h-10 sm:h-12 lg:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 lg:mb-6">
+    <TrendingUp className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
+  </div>
+  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Volume Bonuses</h3>
+  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">Up to 8%</p>
+  <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Additional tokens for larger investments.</p>
+  <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
+    <li className="flex items-center">
+      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+      <span>Tiered bonus structure</span>
+    </li>
+    <li className="flex items-center">
+      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+      <span>60-day vesting period</span>
+    </li>
+    <li className="flex items-center">
+      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+      <span>Supports buyback liquidity</span>
+    </li>
+  </ul>
+</div>
             </div>
           </div>
         </div>

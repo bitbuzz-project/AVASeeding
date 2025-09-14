@@ -1,6 +1,6 @@
 // src/components/PresaleApp.js - UPDATED WITH REFERRAL SYSTEM
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink, ArrowLeft, Gift, Users, Copy, Check } from 'lucide-react';
+import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
 
@@ -20,21 +20,13 @@ const CONTRACTS = {
 // Extended ABIs with referral functions
 const SEEDING_ABI = [
   "function purchaseTokens(uint256 usdcAmount) external",
-  "function purchaseTokensWithReferral(uint256 usdcAmount, string calldata referralCode) external",
   "function getQuote(uint256 usdcAmount) external pure returns (uint256)",
-  "function getQuoteWithReferral(uint256 usdcAmount) external pure returns (uint256, uint256, uint256)",
   "function seedingActive() external view returns (bool)",
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
   "function minimumPurchase() external view returns (uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
-  "function isValidReferralCode(string) external view returns (bool)",
-  "function getCodeUsageInfo(string) external view returns (address, uint256, uint256, uint256)",
-  "function getCodeUsageHistory(string) external view returns (address[], uint256[], uint256[])",
-  "function getUserReferralStats(address) external view returns (string, bool, uint256, uint256, uint256)",
-  "function generateReferralCode() external returns (string)",
-  "function getReferralCode(address) external view returns (string)"
 ];
 
 const USDC_ABI = [
@@ -157,98 +149,27 @@ function PresaleApp() {
   }, [isConnected, seedingContract, account]);
 
   // Calculate AVA amount when USDC input changes
-  useEffect(() => {
-    if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
-      const calculateAva = async () => {
-        try {
-          const usdcWei = ethers.parseUnits(usdcAmount, 6);
-          const avaWei = await seedingContract.getQuote(usdcWei);
-          const baseAva = ethers.formatEther(avaWei);
-          setAvaAmount(baseAva);
-          
-          // Calculate referral bonus (3% extra tokens)
-          if (isValidCode) {
-            const bonus = parseFloat(baseAva) * 0.03;
-            setReferralBonus(bonus.toString());
+        useEffect(() => {
+          if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
+            const calculateAva = async () => {
+              try {
+                const usdcWei = ethers.parseUnits(usdcAmount, 6);
+                const avaWei = await seedingContract.getQuote(usdcWei);
+                const baseAva = ethers.formatEther(avaWei);
+                setAvaAmount(baseAva);
+                // REMOVE all referral bonus calculation
+              } catch (error) {
+                console.error('Error calculating AVA amount:', error);
+                setAvaAmount('0');
+              }
+            };
+            calculateAva();
           } else {
-            setReferralBonus('0');
+            setAvaAmount('0');
           }
-        } catch (error) {
-          console.error('Error calculating AVA amount:', error);
-          setAvaAmount('0');
-          setReferralBonus('0');
-        }
-      };
-      calculateAva();
-    } else {
-      setAvaAmount('0');
-      setReferralBonus('0');
-    }
-  }, [usdcAmount, seedingContract, isValidCode]);
+        }, [usdcAmount, seedingContract]); // REMOVE isValidCode dependency
 
-  // Validate referral code
-// Validate referral code
-// Validate referral code - DEBUG VERSION
-const validateReferralCode = async (code) => {
-  if (!code || !seedingContract) {
-    setIsValidCode(false);
-    return;
-  }
 
-  try {
-    console.log('🔍 Validating multi-use code:', code);
-    console.log('🔍 Current account:', account);
-    
-    // Check if code is valid on-chain
-    const isValid = await seedingContract.isValidReferralCode(code);
-    console.log('🔍 isValidReferralCode result:', isValid);
-    
-    if (!isValid) {
-      setIsValidCode(false);
-      setError(`❌ Code "${code}" does not exist.`);
-      return;
-    }
-    
-    // Get detailed info about the code - UPDATED for multi-use
-    const [owner, usageCount, totalVolume, lastUsedTimestamp] = await seedingContract.getCodeUsageInfo(code);
-    
-    console.log('🔍 Code details:', {
-      owner,
-      usageCount: usageCount.toString(),
-      totalVolume: totalVolume.toString(),
-      lastUsedTimestamp: lastUsedTimestamp.toString(),
-      isOwnCode: owner.toLowerCase() === account.toLowerCase()
-    });
-    
-    // Check if user is trying to use their own code
-    if (owner.toLowerCase() === account.toLowerCase()) {
-      setIsValidCode(false);
-      setError(`❌ You cannot use your own referral code "${code}".`);
-      return;
-    }
-    
-    // For multi-use codes, we only check if it exists and isn't user's own code
-    setIsValidCode(true);
-    setSuccess(`✅ Referral code "${code}" is valid! You'll get 3% extra tokens. (Multi-use: ${usageCount.toString()} previous uses)`);
-    
-  } catch (error) {
-    console.error('❌ Error validating referral code:', error);
-    setIsValidCode(false);
-    setError('Error validating referral code: ' + error.message);
-  }
-};
-
-  // Handle referral code input
-const handleReferralCodeChange = (e) => {
-  const code = e.target.value; // ✅ Keep original case
-  setReferralCode(code);
-  
-  if (code.length >= 3) {
-    validateReferralCode(code);
-  } else {
-    setIsValidCode(false);
-  }
-};
 
 
   // Get test USDC
@@ -271,62 +192,50 @@ const handleReferralCodeChange = (e) => {
   };
 
   // Purchase tokens with or without referral
-  const purchaseTokens = async () => {
-    try {
-      setIsLoading(true);
-      setError('');
-      setSuccess('');
+const purchaseTokens = async () => {
+  try {
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
-      if (!usdcAmount || parseFloat(usdcAmount) <= 0) {
-        throw new Error('Please enter a valid USDC amount');
-      }
-
-      const usdcWei = ethers.parseUnits(usdcAmount, 6);
-      const baseAvaWei = ethers.parseEther(avaAmount);
-
-      // Check minimum purchase
-      if (baseAvaWei < ethers.parseEther(minimumPurchase)) {
-        throw new Error(`Minimum purchase is ${minimumPurchase} AVA tokens`);
-      }
-
-      // Check allowance
-      const allowance = await usdcContract.allowance(account, CONTRACTS.SEEDING);
-      if (allowance < usdcWei) {
-        setSuccess('Step 1/2: Approving USDC...');
-        const approveTx = await usdcContract.approve(CONTRACTS.SEEDING, usdcWei);
-        setTxHash(approveTx.hash);
-        await approveTx.wait();
-      }
-
-      // Purchase tokens (with or without referral)
-      setSuccess('Step 2/2: Purchasing AVA tokens...');
-      let purchaseTx;
-      
-      if (isValidCode && referralCode) {
-        // Purchase with referral code
-        purchaseTx = await seedingContract.purchaseTokensWithReferral(usdcWei, referralCode);
-        setSuccess(`Purchasing with referral code "${referralCode}"...`);
-      } else {
-        // Regular purchase
-        purchaseTx = await seedingContract.purchaseTokens(usdcWei);
-      }
-      
-      setTxHash(purchaseTx.hash);
-      await purchaseTx.wait();
-
-      const totalTokens = parseFloat(avaAmount) + parseFloat(referralBonus);
-      setSuccess(`Successfully purchased ${totalTokens.toFixed(6)} AVA tokens!${isValidCode ? ' (Including 3% bonus)' : ''}`);
-      setUsdcAmount('');
-      setReferralCode('');
-      setIsValidCode(false);
-      loadData();
-
-    } catch (error) {
-      setError('Purchase failed: ' + error.message);
-    } finally {
-      setIsLoading(false);
+    if (!usdcAmount || parseFloat(usdcAmount) <= 0) {
+      throw new Error('Please enter a valid USDC amount');
     }
-  };
+
+    const usdcWei = ethers.parseUnits(usdcAmount, 6);
+    const baseAvaWei = ethers.parseEther(avaAmount);
+
+    // Check minimum purchase
+    if (baseAvaWei < ethers.parseEther(minimumPurchase)) {
+      throw new Error(`Minimum purchase is ${minimumPurchase} AVA tokens`);
+    }
+
+    // Check allowance
+    const allowance = await usdcContract.allowance(account, CONTRACTS.SEEDING);
+    if (allowance < usdcWei) {
+      setSuccess('Step 1/2: Approving USDC...');
+      const approveTx = await usdcContract.approve(CONTRACTS.SEEDING, usdcWei);
+      setTxHash(approveTx.hash);
+      await approveTx.wait();
+    }
+
+    // Purchase tokens (regular purchase only)
+    setSuccess('Step 2/2: Purchasing AVA tokens...');
+    const purchaseTx = await seedingContract.purchaseTokens(usdcWei);
+    
+    setTxHash(purchaseTx.hash);
+    await purchaseTx.wait();
+
+    setSuccess(`Successfully purchased ${parseFloat(avaAmount).toFixed(6)} AVA tokens!`);
+    setUsdcAmount('');
+    loadData();
+
+  } catch (error) {
+    setError('Purchase failed: ' + error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const formatNumber = (num) => {
     return new Intl.NumberFormat().format(parseFloat(num).toFixed(2));
@@ -494,71 +403,6 @@ const handleReferralCodeChange = (e) => {
               </div>
             </div>
 
-            {/* Referral Section - NEW */}
-{/* Updated Referral Section - Remove show/hide codes */}
-            <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
-              <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 flex items-center">
-                  <Gift className="w-5 h-5 mr-2 text-purple-600" />
-                  Have a Referral Code?
-                </h3>
-
-                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 mb-4">
-                  <div className="flex items-center mb-2">
-                    <Users className="w-4 h-4 text-purple-600 mr-2" />
-                    <span className="font-medium text-purple-800">Get 3% Extra Tokens!</span>
-                  </div>
-                  <div className="space-y-2 text-sm text-slate-700">
-                    <p>1. Generate your unique referral code</p>
-                    <p>2. Share with friends and investors</p>
-                    <p>3. They get 3% bonus tokens automatically</p>
-                    <p>4. You get 5% of their investment in USDC</p>
-                    <p>5. Each code can be used multiple times</p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Referral Code (Optional)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={referralCode}
-                      onChange={handleReferralCodeChange}
-                      placeholder="Enter referral code (e.g., AVA1a2b3c1)"
-                      className={`coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem] ${
-                        isValidCode ? 'border-green-500 bg-green-50' :
-                        referralCode && !isValidCode ? 'border-red-500 bg-red-50' : ''
-                      }`}
-                      disabled={displayLoading}
-                    />
-                    {isValidCode && (
-                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                      </div>
-                    )}
-                  </div>
-                  {isValidCode && (
-                    <p className="text-green-600 text-sm mt-2 flex items-center">
-                      <CheckCircle className="w-4 h-4 mr-1" />
-                      Valid code! You'll get 3% extra tokens ({formatNumber(referralBonus)} AVA)
-                    </p>
-                  )}
-                  {referralCode && !isValidCode && (
-                    <p className="text-red-600 text-sm mt-2">
-                      Invalid or already used referral code
-                    </p>
-                  )}
-                </div>
-
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-blue-800 text-sm">
-                    💡 <strong>Need a referral code?</strong> Ask someone who already invested in Avalon to generate one for you in their dashboard!
-                  </p>
-                </div>
-              </div>
-            </div>
 
             {/* Purchase Interface - Mobile Optimized */}
             <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
@@ -584,54 +428,38 @@ const handleReferralCodeChange = (e) => {
                     </div>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
-                    <input
-                      type="text"
-                      value={formatNumber(avaAmount)}
-                      readOnly
-                      className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
-                    />
-                    {isValidCode && parseFloat(referralBonus) > 0 && (
-                      <div className="mt-2 p-3 bg-green-50 rounded-lg border border-green-200">
-                        <div className="flex items-center justify-between">
-                          <span className="text-green-700 font-medium text-sm">Referral Bonus (3%):</span>
-                          <span className="text-green-800 font-bold">{formatNumber(referralBonus)} AVA</span>
-                        </div>
-                        <div className="flex items-center justify-between mt-1 pt-2 border-t border-green-200">
-                          <span className="text-green-800 font-bold">Total Tokens:</span>
-                          <span className="text-green-800 font-bold">
-                            {formatNumber((parseFloat(avaAmount) + parseFloat(referralBonus)).toString())} AVA
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
-                    <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
-                    <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
-                    {isValidCode && (
-                      <p className="text-green-700 text-xs sm:text-sm mt-1 font-medium">
-                        + 3% bonus with referral code "{referralCode}"
-                      </p>
-                    )}
-                  </div>
+                          <div>
+                            <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
+                            <input
+                              type="text"
+                              value={formatNumber(avaAmount)}
+                              readOnly
+                              className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
+                            />
+                            {/* REMOVE all referral bonus display */}
+                          </div>
 
-                  <button
-                    onClick={purchaseTokens}
-                    disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
-                    className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
-                  >
-                    {displayLoading ? (
-                      <span className="flex items-center justify-center">
-                        <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
-                        Processing...
-                      </span>
-                    ) : (
-                      `Purchase AVA Tokens${isValidCode ? ' (+ 3% Bonus)' : ''}`
-                    )}
-                  </button>
+                          <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
+                            <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
+                            <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
+                            {/* REMOVE referral code display */}
+                          </div>
+
+                          <button
+                            onClick={purchaseTokens}
+                            disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
+                            className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
+                          >
+                            {displayLoading ? (
+                              <span className="flex items-center justify-center">
+                                <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
+                                Processing...
+                              </span>
+                            ) : (
+                              'Purchase AVA Tokens' // REMOVE referral text
+                            )}
+                          </button>
                 </div>
               </div>
             </div>
@@ -674,63 +502,7 @@ const handleReferralCodeChange = (e) => {
               </div>
             )}
 
-            {/* Referral Program Explanation */}
-            <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
-              <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
-                <h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-slate-900 flex items-center">
-                  <Gift className="w-5 h-5 mr-2 text-purple-600" />
-                  How the Referral Program Works
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-purple-600 font-bold text-sm">1</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-slate-900">Get a Referral Code</h4>
-                        <p className="text-slate-600 text-sm">Qualified investors receive unique referral codes to share with their network.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-purple-600 font-bold text-sm">2</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-slate-900">Share Your Code</h4>
-                        <p className="text-slate-600 text-sm">Share your referral code with friends and colleagues interested in Avalon.</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 font-bold text-sm">3</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-slate-900">Earn Rewards</h4>
-                        <p className="text-slate-600 text-sm">Earn 5% of USDC invested by users with your code.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-green-600 font-bold text-sm">4</span>
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-slate-900">Bonus Tokens</h4>
-                        <p className="text-slate-600 text-sm">Code users get 3% extra AVA tokens instantly.</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
-                  <p className="text-purple-800 font-medium text-center">
-                    🎯 Win-Win: Referrers earn USDC rewards, users get bonus tokens!
-                  </p>
-                </div>
-              </div>
-            </div>
-
+  
             {/* Contract Addresses - Mobile Optimized */}
             <div className="max-w-4xl mx-auto">
               <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
