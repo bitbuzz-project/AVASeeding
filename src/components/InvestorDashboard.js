@@ -42,21 +42,22 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612'
+  SEEDING: '0x6DfD909Be557Ed5a6ec4C5c4375a3b9F3f40D33d'
 };
 
 // ABIs for the contracts
 const SEEDING_ABI = [
   "function purchaseTokens(uint256 usdcAmount) external",
-  "function purchaseTokensWithReferral(uint256 usdcAmount, string calldata referralCode) external",
-  "function getQuote(uint256 usdcAmount) external pure returns (uint256)",
-  "function getQuoteWithReferral(uint256 usdcAmount) external pure returns (uint256, uint256, uint256)",
+  "function getQuote(uint256 usdcAmount) external view returns (uint256, uint256, uint256)",
+  "function claimBonusTokens() external",
+  "function getBonusTokenInfo(address) external view returns (uint256, uint256, bool)",
   "function seedingActive() external view returns (bool)",
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
   "function minimumPurchase() external view returns (uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
+  "function getParticipantCount() external view returns (uint256)"
 ];
 
 const AVA_ABI = [
@@ -501,11 +502,17 @@ const handleTabChange = (tabId) => {
                   <h3 className="text-2xl font-bold mb-6 text-slate-900">Strategy Performance Metrics</h3>
                   <div className="grid md:grid-cols-3 gap-6">
 <div className="bg-green-50 rounded-xl p-6 text-center">
+    <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                        <PieChart className="w-6 h-6 text-purple-600" />
+                      </div>
   <p className="text-3xl font-bold text-green-600 mb-2">18.7%</p>
   <p className="text-slate-700 font-medium">Bitcoin Strategy APY</p>
   <p className="text-sm text-slate-500 mt-2">2021-2025 backtested with 51% outperformance</p>
 </div>
                  <div className="bg-blue-50 rounded-xl p-6 text-center">
+                    <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-purple-600" />
+                      </div>
   <p className="text-3xl font-bold text-blue-600 mb-2">30-200%</p>
   <p className="text-slate-700 font-medium">Base LP APY Range</p>
   <p className="text-sm text-slate-500 mt-2">Wide-range liquidity provision</p>

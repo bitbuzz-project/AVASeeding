@@ -14,19 +14,27 @@ if (typeof window !== 'undefined') {
 const CONTRACTS = {
   USDC: '0xd6842B6CfF83784aD53ef9a838F041ac2c337659',
   AVA: '0xA25Fd0C9906d124792b6F1909d3F3b52A4fb98aE',
-  SEEDING: '0x19CC5bE61a46b66a668fF641FAFa98a5b1805612'
+  SEEDING: '0x6DfD909Be557Ed5a6ec4C5c4375a3b9F3f40D33d'
 };
 
 // Extended ABIs with referral functions
 const SEEDING_ABI = [
   "function purchaseTokens(uint256 usdcAmount) external",
-  "function getQuote(uint256 usdcAmount) external pure returns (uint256)",
+  "function getQuote(uint256 usdcAmount) external view returns (uint256, uint256, uint256)",
+  "function claimBonusTokens() external",
+  "function getBonusTokenInfo(address) external view returns (uint256, uint256, bool)",
+  "function getBonusPercentage(uint256) external view returns (uint256)",
   "function seedingActive() external view returns (bool)",
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
   "function minimumPurchase() external view returns (uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
+  "function getParticipantCount() external view returns (uint256)",
+  "function getBonusTiers() external view returns (tuple(uint256,uint256)[])",
+  "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avalonAmount)",
+  "event BonusTokensGranted(address indexed buyer, uint256 bonusAmount, uint256 vestingTime)",
+  "event BonusTokensClaimed(address indexed buyer, uint256 amount)"
 ];
 
 const USDC_ABI = [
@@ -60,7 +68,8 @@ function PresaleApp() {
   const [usdcContract, setUsdcContract] = useState(null);
   const [avaContract, setAvaContract] = useState(null);
   const [seedingContract, setSeedingContract] = useState(null);
-
+  const [baseAmount, setBaseAmount] = useState('0');
+  const [bonusAmount, setBonusAmount] = useState('0');
   // Presale state
   const [usdcAmount, setUsdcAmount] = useState('');
   const [avaAmount, setAvaAmount] = useState('0');
@@ -72,11 +81,6 @@ function PresaleApp() {
   const [userPurchased, setUserPurchased] = useState('0');
   const [seedingActive, setSeedingActive] = useState(false);
   const [minimumPurchase, setMinimumPurchase] = useState('0');
-
-  // Referral state
-  const [referralCode, setReferralCode] = useState('');
-  const [isValidCode, setIsValidCode] = useState(false);
-  const [referralBonus, setReferralBonus] = useState('0');
 
   // Transaction state
   const [isLoading, setIsLoading] = useState(false);
@@ -158,26 +162,34 @@ const getBonusRate = () => {
     }
   }, [isConnected, seedingContract, account]);
 
-  // Calculate AVA amount when USDC input changes
-        useEffect(() => {
-          if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
-            const calculateAva = async () => {
-              try {
-                const usdcWei = ethers.parseUnits(usdcAmount, 6);
-                const avaWei = await seedingContract.getQuote(usdcWei);
-                const baseAva = ethers.formatEther(avaWei);
-                setAvaAmount(baseAva);
-                // REMOVE all referral bonus calculation
-              } catch (error) {
-                console.error('Error calculating AVA amount:', error);
-                setAvaAmount('0');
-              }
-            };
-            calculateAva();
-          } else {
-            setAvaAmount('0');
-          }
-        }, [usdcAmount, seedingContract]); // REMOVE isValidCode dependency
+useEffect(() => {
+  if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
+    const calculateAva = async () => {
+      try {
+        const usdcWei = ethers.parseUnits(usdcAmount, 6);
+        const [baseTokens, bonusTokens, totalTokens] = await seedingContract.getQuote(usdcWei);
+        
+        // Set the total amount (base + bonus) for the main input
+        setAvaAmount(ethers.formatEther(totalTokens));
+        
+        // Store base and bonus amounts for display
+        setBaseAmount(ethers.formatEther(baseTokens));
+        setBonusAmount(ethers.formatEther(bonusTokens));
+        
+      } catch (error) {
+        console.error('Error calculating AVA amount:', error);
+        setAvaAmount('0');
+        setBaseAmount('0');
+        setBonusAmount('0');
+      }
+    };
+    calculateAva();
+  } else {
+    setAvaAmount('0');
+    setBaseAmount('0');
+    setBonusAmount('0');
+  }
+}, [usdcAmount, seedingContract]);
 
 
 
@@ -213,12 +225,6 @@ const purchaseTokens = async () => {
     }
 
     const usdcWei = ethers.parseUnits(usdcAmount, 6);
-    const baseAvaWei = ethers.parseEther(avaAmount);
-
-    // Check minimum purchase
-    if (baseAvaWei < ethers.parseEther(minimumPurchase)) {
-      throw new Error(`Minimum purchase is ${minimumPurchase} AVA tokens`);
-    }
 
     // Check allowance
     const allowance = await usdcContract.allowance(account, CONTRACTS.SEEDING);
@@ -229,7 +235,7 @@ const purchaseTokens = async () => {
       await approveTx.wait();
     }
 
-    // Purchase tokens (regular purchase only)
+    // Purchase tokens
     setSuccess('Step 2/2: Purchasing AVA tokens...');
     const purchaseTx = await seedingContract.purchaseTokens(usdcWei);
     
@@ -246,6 +252,63 @@ const purchaseTokens = async () => {
     setIsLoading(false);
   }
 };
+
+
+// Add state for bonus tokens
+const [bonusTokenInfo, setBonusTokenInfo] = useState({
+  vestingAmount: '0',
+  releaseTime: 0,
+  canClaim: false
+});
+
+// Load bonus token info
+const loadBonusTokenInfo = async () => {
+  if (!seedingContract || !account || !ethers) return;
+  
+  try {
+    const [vestingAmount, releaseTime, canClaim] = await seedingContract.getBonusTokenInfo(account);
+    setBonusTokenInfo({
+      vestingAmount: ethers.formatEther(vestingAmount),
+      releaseTime: Number(releaseTime),
+      canClaim
+    });
+  } catch (error) {
+    console.error('Error loading bonus token info:', error);
+  }
+};
+
+// Claim bonus tokens function
+const claimBonusTokens = async () => {
+  try {
+    setIsLoading(true);
+    setError('');
+    
+    const tx = await seedingContract.claimBonusTokens();
+    setTxHash(tx.hash);
+    await tx.wait();
+    
+    setSuccess('Bonus tokens claimed successfully!');
+    loadData();
+    loadBonusTokenInfo();
+  } catch (error) {
+    setError('Failed to claim bonus tokens: ' + error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+// Update the loadData calls to include bonus token info
+useEffect(() => {
+  if (isConnected && account) {
+    loadData();
+    loadBonusTokenInfo();
+    const interval = setInterval(() => {
+      loadData();
+      loadBonusTokenInfo();
+    }, 30000);
+    return () => clearInterval(interval);
+  }
+}, [isConnected, account, seedingContract]);
 
   const formatNumber = (num) => {
     return new Intl.NumberFormat().format(parseFloat(num).toFixed(2));
@@ -412,7 +475,38 @@ const purchaseTokens = async () => {
                 </div>
               </div>
             </div>
-
+              {/* Bonus Token Section */}
+{parseFloat(bonusTokenInfo.vestingAmount) > 0 && (
+  <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+    <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
+      <h3 className="text-lg sm:text-xl font-bold mb-4 text-slate-900">Bonus Tokens</h3>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="text-center p-4 bg-purple-50 rounded-xl">
+          <p className="text-sm text-purple-600 font-medium">Vesting Amount</p>
+          <p className="text-xl font-bold text-purple-700">{formatNumber(bonusTokenInfo.vestingAmount)} AVA</p>
+        </div>
+        <div className="text-center p-4 bg-blue-50 rounded-xl">
+          <p className="text-sm text-blue-600 font-medium">Release Time</p>
+          <p className="text-sm font-medium text-blue-700">
+            {bonusTokenInfo.releaseTime > 0 ? 
+              new Date(bonusTokenInfo.releaseTime * 1000).toLocaleString() : 
+              'No vesting tokens'
+            }
+          </p>
+        </div>
+        <div className="text-center p-4 bg-green-50 rounded-xl">
+          <button
+            onClick={claimBonusTokens}
+            disabled={!bonusTokenInfo.canClaim || displayLoading}
+            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm w-full"
+          >
+            {bonusTokenInfo.canClaim ? 'Claim Bonus' : 'Still Vesting'}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
             {/* Purchase Interface - Mobile Optimized */}
         {/* Purchase Interface - Mobile Optimized */}
@@ -502,7 +596,21 @@ const purchaseTokens = async () => {
         {parseFloat(usdcAmount) >= 2000 && (
           <div className="mt-2 pt-2 border-t border-blue-200">
             <p className="text-blue-700 font-semibold text-sm">
-              Total with bonus: {(parseFloat(avaAmount) * (1 + getBonusRate())).toFixed(2)} AVA
+              Total with bonus: {parseFloat(usdcAmount) >= 2000 && parseFloat(bonusAmount) > 0 && (
+  <div className="mt-2 pt-2 border-t border-blue-200">
+    <div className="space-y-1 text-sm">
+      <p className="text-blue-700">
+        Base tokens: {formatNumber(baseAmount)} AVA
+      </p>
+      <p className="text-blue-700">
+        Bonus tokens: {formatNumber(bonusAmount)} AVA ({(parseFloat(bonusAmount) / parseFloat(baseAmount) * 100).toFixed(1)}%)
+      </p>
+      <p className="text-blue-700 font-semibold text-base">
+        Total: {formatNumber(avaAmount)} AVA
+      </p>
+    </div>
+  </div>
+)} AVA
             </p>
           </div>
         )}
