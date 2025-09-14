@@ -528,11 +528,12 @@ const handleTabChange = (tabId) => {
                                 <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6">
                         <p className="text-4xl font-bold text-blue-600 mb-2">35%</p>
                         <p className="text-blue-800 font-medium mb-3">Bitcoin Maximum Exposure Rebalancing System</p>
-                        <ul className="text-sm text-blue-700 space-y-1">
-                          <li>• 9% rebalancing threshold optimized</li>
-                          <li>• 18.7% APY backtested performance</li>
-                          <li>• 51% outperformance vs 0% threshold</li>
-                        </ul>
+                              <ul className="text-sm text-blue-700 space-y-1">
+                                <li>• 9% rebalancing threshold optimized</li>
+                                <li>• 18.7% APY backtested performance</li>
+                                <li>• 51% outperformance vs 0% threshold</li>
+                                <li>• Final NAV: $5.16M from $2M initial</li>
+                              </ul>
                       </div>
                                       <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6">
                         <p className="text-4xl font-bold text-green-600 mb-2">45%</p>
@@ -568,7 +569,7 @@ const handleTabChange = (tabId) => {
                         <span className="text-2xl font-bold text-green-600">70%</span>
                       </div>
                                             <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                        <span className="font-medium text-blue-800">Operations & Referrals</span>
+                        <span className="font-medium text-blue-800">Operations</span>
                         <span className="text-2xl font-bold text-blue-600">30%</span>
                       </div>
                       <div className="mt-4 p-3 bg-purple-50 rounded-lg">
@@ -600,6 +601,7 @@ const handleTabChange = (tabId) => {
                   </div>
                 </div>
               </div>
+              
             )}
 
             {/* Strategy Details Tab */}
@@ -759,7 +761,7 @@ const handleTabChange = (tabId) => {
                 </div>
               </div>
             )}
-
+        
             {/* Tokenomics Tab */}
             {activeTab === 'tokenomics' && (
               <div className="max-w-6xl mx-auto space-y-8">
@@ -967,8 +969,14 @@ const handleTabChange = (tabId) => {
                   </div>
                 </div>
               </div>
+            
+            
+            
+            
+            
+            
             )}
-
+            
             {/* Error Display */}
             {error && (
               <div className="max-w-4xl mx-auto mt-6">
@@ -978,6 +986,7 @@ const handleTabChange = (tabId) => {
                 </div>
               </div>
             )}
+
 
             {/* Contract Information Footer */}
             <div className="max-w-6xl mx-auto mt-12">

@@ -83,7 +83,17 @@ function PresaleApp() {
   const [txHash, setTxHash] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-
+  // Helper function to calculate bonus rate
+const getBonusRate = () => {
+  const amount = parseFloat(usdcAmount);
+  if (amount >= 60000) return 0.08; // 8%
+  if (amount >= 40000) return 0.06; // 6%
+  if (amount >= 20000) return 0.04; // 4%
+  if (amount >= 10000) return 0.03; // 3%
+  if (amount >= 5000) return 0.02;  // 2%
+  if (amount >= 2000) return 0.01;  // 1%
+  return 0;
+};
   // Initialize contracts with error handling
   useEffect(() => {
     if (signer && isConnected && ethers) {
@@ -405,64 +415,116 @@ const purchaseTokens = async () => {
 
 
             {/* Purchase Interface - Mobile Optimized */}
-            <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
-              <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
-                <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-slate-900">Purchase AVA Tokens</h3>
-                
-                <div className="space-y-4 sm:space-y-6">
-                  <div>
-                    <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">USDC Amount</label>
-                    <input
-                      type="number"
-                      value={usdcAmount}
-                      onChange={(e) => setUsdcAmount(e.target.value)}
-                      placeholder="Enter USDC amount"
-                      className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem]"
-                      disabled={!seedingActive || displayLoading}
-                    />
-                  </div>
+        {/* Purchase Interface - Mobile Optimized */}
+<div className="max-w-2xl mx-auto mb-6 sm:mb-8">
+  <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
+    <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-slate-900">Purchase AVA Tokens</h3>
+    
+    <div className="space-y-4 sm:space-y-6">
+      <div>
+        <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">USDC Amount</label>
+        <input
+          type="number"
+          value={usdcAmount}
+          onChange={(e) => setUsdcAmount(e.target.value)}
+          placeholder="Enter USDC amount"
+          className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem]"
+          disabled={!seedingActive || displayLoading}
+        />
+      </div>
 
-                  <div className="flex items-center justify-center py-2 sm:py-4">
-                    <div className="w-8 sm:w-10 h-8 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                      <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 text-slate-600" />
-                    </div>
-                  </div>
+      <div className="flex items-center justify-center py-2 sm:py-4">
+        <div className="w-8 sm:w-10 h-8 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center">
+          <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 text-slate-600" />
+        </div>
+      </div>
 
+      <div>
+        <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
+        <input
+          type="text"
+          value={formatNumber(avaAmount)}
+          readOnly
+          className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
+        />
+      </div>
 
-                          <div>
-                            <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
-                            <input
-                              type="text"
-                              value={formatNumber(avaAmount)}
-                              readOnly
-                              className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
-                            />
-                            {/* REMOVE all referral bonus display */}
-                          </div>
-
-                          <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
-                            <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
-                            <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
-                            {/* REMOVE referral code display */}
-                          </div>
-
-                          <button
-                            onClick={purchaseTokens}
-                            disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
-                            className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
-                          >
-                            {displayLoading ? (
-                              <span className="flex items-center justify-center">
-                                <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
-                                Processing...
-                              </span>
-                            ) : (
-                              'Purchase AVA Tokens' // REMOVE referral text
-                            )}
-                          </button>
-                </div>
-              </div>
+      {/* Volume Bonus Tiers */}
+      {parseFloat(usdcAmount) >= 2000 && (
+        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
+          <h4 className="font-bold text-purple-900 mb-3 text-center text-sm sm:text-base">🎯 Volume Bonus Tiers</h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 2000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>2,000 AVA:</span>
+              <span className="font-bold">+1.0%</span>
             </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 5000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>5,000 AVA:</span>
+              <span className="font-bold">+2.0%</span>
+            </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 10000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>10,000 AVA:</span>
+              <span className="font-bold">+3.0%</span>
+            </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 20000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>20,000 AVA:</span>
+              <span className="font-bold">+4.0%</span>
+            </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 40000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>40,000 AVA:</span>
+              <span className="font-bold">+6.0%</span>
+            </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 60000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>60,000 AVA:</span>
+              <span className="font-bold">+8.0%</span>
+            </div>
+          </div>
+          <div className="mt-3 p-2 bg-blue-100 rounded-lg">
+            <p className="text-xs text-blue-800 text-center font-medium">
+              {parseFloat(usdcAmount) >= 60000 ? 'Maximum 8.0% bonus qualified!' :
+               parseFloat(usdcAmount) >= 40000 ? '6.0% volume bonus qualified!' :
+               parseFloat(usdcAmount) >= 20000 ? '4.0% volume bonus qualified!' :
+               parseFloat(usdcAmount) >= 10000 ? '3.0% volume bonus qualified!' :
+               parseFloat(usdcAmount) >= 5000 ? '2.0% volume bonus qualified!' :
+               parseFloat(usdcAmount) >= 2000 ? '1.0% volume bonus qualified!' :
+               'Minimum 2,000 AVA for bonus'}
+            </p>
+            <p className="text-xs text-blue-600 mt-1 text-center">
+              Bonus tokens vest after 60 days to support buyback liquidity
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
+        <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
+        <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
+        {parseFloat(usdcAmount) >= 2000 && (
+          <div className="mt-2 pt-2 border-t border-blue-200">
+            <p className="text-blue-700 font-semibold text-sm">
+              Total with bonus: {(parseFloat(avaAmount) * (1 + getBonusRate())).toFixed(2)} AVA
+            </p>
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={purchaseTokens}
+        disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
+        className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
+      >
+        {displayLoading ? (
+          <span className="flex items-center justify-center">
+            <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
+            Processing...
+          </span>
+        ) : (
+          `Purchase AVA Tokens${parseFloat(usdcAmount) >= 2000 ? ' + Bonus' : ''}`
+        )}
+      </button>
+    </div>
+  </div>
+</div>
 
             {/* Status Messages - Mobile Optimized */}
             {displayError && (

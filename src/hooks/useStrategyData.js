@@ -8,16 +8,18 @@ const STRATEGY_CONFIG = {
     targetExposure: 0.70,
     rebalanceThreshold: 0.09,
     name: 'Bitcoin Maximum Exposure Rebalancing System',
-    targetAPY: 0.187 // 18.7%
+    targetAPY: 0.187 // CHANGED from 0.211
   },
   baseLP: {
     allocation: 0.45, // 45%
     name: 'Base Ecosystem Liquidity Provisioning',
-    apyRange: [0.30, 2.00] // 30-200%
+    apyRange: [0.30, 2.00], // CHANGED to 30-200%
+    userFunnel: '100M+ Base users'
   },
   tokenLiquidity: {
     allocation: 0.20, // 20%
-    name: 'AVA Token Liquidity Management'
+    name: 'AVA Token Liquidity Management',
+    sellTax: 0.08
   }
 };
 
@@ -183,7 +185,7 @@ export const useStrategyData = () => {
         const netProfit = totalFeesMonth - Math.abs(impermanentLoss);
 
         // Updated APR range from whitepaper (25-75%)
-        const currentAPR = 35 + Math.random() * 40; // 35-75% range
+        const currentAPR = 30 + Math.random() * 170; // 30-200% range
 
         return {
           ...baseMetrics,

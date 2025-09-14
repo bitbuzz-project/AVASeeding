@@ -70,12 +70,12 @@ const features = [
     description: 'Simply hold AVA tokens. No manual claiming, no complex processes.',
     gradient: 'from-green-500 to-emerald-500'
   },
-  {
-    icon: Target,
-    title: 'Proven Strategy',
-    description: 'Backtested results showing consistent 21.1% APY with Bitcoin strategy and 25-75% with DeFi LP on Base Ecosystem.',
-    gradient: 'from-purple-500 to-pink-500'
-  },
+    {
+      icon: Target,
+      title: 'Proven Strategy',
+      description: 'Backtested results showing consistent 18.7% APY with Bitcoin strategy and 30-200% with Base LP.',
+      gradient: 'from-purple-500 to-pink-500'
+    },
   {
     icon: Zap,
     title: 'Automated Revenue',
@@ -239,10 +239,11 @@ const features = [
               <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4 lg:mb-6 text-slate-900 px-2">
                 Three-Pillar Strategy
               </h2>
-              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
-                Diversified approach combining systematic Bitcoin trading, Base ecosystem LP,
-                and liquidity provisioning for maximum risk-adjusted returns.
-              </p>
+                            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
+                  Diversified approach combining systematic Bitcoin trading, Base ecosystem LP 
+                  leveraging Coinbase's 100M+ user funnel, and liquidity provisioning for maximum 
+                  risk-adjusted returns.
+                </p>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
