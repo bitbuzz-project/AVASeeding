@@ -564,7 +564,7 @@ function SwapPage() {
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Pool Fee</span>
-                          <span className="font-medium text-purple-600">0.30%</span>
+                          <span className="font-medium text-purple-600">0.01%</span>
                         </div>
                         <div className="flex justify-between text-sm">
                           <span className="text-slate-600">Slippage Tolerance</span>
@@ -632,7 +632,7 @@ function SwapPage() {
                     </div>
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                       <span className="font-medium text-blue-800">Pool Fee</span>
-                      <span className="font-bold text-blue-700">0.30%</span>
+                      <span className="font-bold text-blue-700">0.01%</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                       <span className="font-medium text-purple-800">Total Liquidity</span>

@@ -8,15 +8,13 @@ import {
   DollarSign, 
   Activity, 
   PieChart, 
-  ArrowUpRight, 
-  ArrowDownRight, 
+  ArrowUpRight,  
   Users, 
   Zap, 
   Shield, 
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Calendar,
   Info,
   AlertCircle,
    Menu,        // ADD THIS
@@ -130,27 +128,33 @@ const handleTabChange = (tabId) => {
   // UI state
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedSections, setExpandedSections] = useState({
-    tokenomics: false,
+    tokenomics: true,
     strategy: false,
-    base: false
+    base: false,
+    riskManagement: false  // ADD THIS LINE
+
   });
 
   // Initialize contracts
-  useEffect(() => {
-    if (signer && isConnected && ethers) {
-      try {
-        const ava = new ethers.Contract(CONTRACTS.AVA, AVA_ABI, signer);
-        const seeding = new ethers.Contract(CONTRACTS.SEEDING, SEEDING_ABI, signer);
-        const usdc = new ethers.Contract(CONTRACTS.USDC, USDC_ABI, signer);
-
-        setAvaContract(ava);
-        setSeedingContract(seeding);
-        setUsdcContract(usdc);
-      } catch (error) {
-        console.error('Failed to initialize contracts:', error);
-      }
+useEffect(() => {
+  const initContracts = async () => {
+    if (!ethers || !window.ethereum) return;
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const ava = new ethers.Contract(CONTRACTS.AVA, AVA_ABI, provider);
+    const seeding = new ethers.Contract(CONTRACTS.SEEDING, SEEDING_ABI, provider);
+    const usdc = new ethers.Contract(CONTRACTS.USDC, USDC_ABI, provider);
+    setAvaContract(ava);
+    setSeedingContract(seeding);
+    setUsdcContract(usdc);
+    
+    if (signer && isConnected) {
+      setAvaContract(ava.connect(signer));
+      setSeedingContract(seeding.connect(signer));
+      setUsdcContract(usdc.connect(signer));
     }
-  }, [signer, isConnected]);
+  };
+  initContracts();
+}, [signer, isConnected]);
 
   // Load project data
   const loadProjectData = async () => {
@@ -234,12 +238,10 @@ const handleTabChange = (tabId) => {
 
   // Load data on connection and intervals
   useEffect(() => {
-    if (isConnected) {
-      loadProjectData();
-      const interval = setInterval(loadProjectData, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isConnected, seedingContract, avaContract]);
+    loadProjectData();
+    const interval = setInterval(loadProjectData, 30000);
+    return () => clearInterval(interval);
+  }, [seedingContract, avaContract]);
 
   useEffect(() => {
     if (isConnected && account) {
@@ -268,7 +270,7 @@ const handleTabChange = (tabId) => {
     return `${parseFloat(num).toFixed(2)}%`;
   };
 
-  return (
+ return (
     <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
@@ -279,26 +281,35 @@ const handleTabChange = (tabId) => {
           <p className="text-xl coinbase-subtitle">Track Your Investment Performance</p>
         </div>
 
-        {/* Connection Status */}
-        {!isConnected ? (
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="coinbase-card rounded-2xl p-8 text-center">
-              <div className="w-16 h-16 mx-auto mb-6 bg-blue-100 rounded-full flex items-center justify-center">
-                <Wallet className="w-8 h-8 text-blue-600" />
+        {/* Connection Status Banner - Only show if NOT connected */}
+        {!isConnected && (
+          <div className="max-w-4xl mx-auto mb-8">
+            <div className="coinbase-card rounded-2xl p-6 border-2 border-blue-200 bg-blue-50">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Wallet className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div className="text-center sm:text-left">
+                    <h3 className="text-lg font-bold text-slate-900">Connect to View Your Portfolio</h3>
+                    <p className="text-sm text-slate-600">Connect your wallet to see your personal investment data</p>
+                  </div>
+                </div>
+                <button
+                  onClick={connectWallet}
+                  disabled={isLoading}
+                  className="coinbase-btn text-white px-6 py-3 rounded-xl font-semibold disabled:opacity-50 whitespace-nowrap"
+                >
+                  <Wallet className="w-4 h-4 mr-2 inline" />
+                  {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                </button>
               </div>
-              <h3 className="text-2xl font-bold mb-3 text-slate-900">Connect Your Wallet</h3>
-              <p className="text-slate-600 mb-6 text-lg">Connect to view your Avalon investment portfolio</p>
-              <button
-                onClick={connectWallet}
-                disabled={isLoading}
-                className="coinbase-btn text-white px-8 py-4 rounded-xl font-semibold text-lg disabled:opacity-50"
-              >
-                <Wallet className="w-5 h-5 mr-3 inline" />
-                Connect MetaMask
-              </button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {/* Main Content - Always show */}
+ 
           <>
             {/* Navigation Tabs */}
             <div className="max-w-6xl mx-auto mb-6 sm:mb-8">
@@ -503,7 +514,7 @@ const handleTabChange = (tabId) => {
                   <div className="grid md:grid-cols-3 gap-6">
 <div className="bg-green-50 rounded-xl p-6 text-center">
     <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                        <PieChart className="w-6 h-6 text-purple-600" />
+                        <TrendingUp className="w-6 h-6 text-purple-600" />
                       </div>
   <p className="text-3xl font-bold text-green-600 mb-2">18.7%</p>
   <p className="text-slate-700 font-medium">Bitcoin Strategy APY</p>
@@ -511,15 +522,15 @@ const handleTabChange = (tabId) => {
 </div>
                  <div className="bg-blue-50 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-purple-600" />
+                        <Activity className="w-6 h-6 text-purple-600" />
                       </div>
-  <p className="text-3xl font-bold text-blue-600 mb-2">30-200%</p>
+  <p className="text-3xl font-bold text-blue-600 mb-2">30-80%</p>
   <p className="text-slate-700 font-medium">Base LP APY Range</p>
   <p className="text-sm text-slate-500 mt-2">Wide-range liquidity provision</p>
 </div>
                     <div className="bg-purple-50 rounded-xl p-6 text-center">
                       <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
-                        <PieChart className="w-6 h-6 text-purple-600" />
+                        <Shield className="w-6 h-6 text-purple-600" />
                       </div>
                       <p className="text-3xl font-bold text-purple-600 mb-2">8%</p>
                       <p className="text-slate-700 font-medium">Sell Tax Rate</p>
@@ -547,7 +558,7 @@ const handleTabChange = (tabId) => {
                         <p className="text-green-800 font-medium mb-3">Base Ecosystem LP</p>
                         <ul className="text-sm text-green-700 space-y-1">
                           <li>• Wide-range liquidity provision</li>
-                          <li>• 30-200% APY target range</li>
+                          <li>• 30-80% APY target range</li>
                           <li>• Focus on established Base projects</li>
                         </ul>
                       </div>
@@ -580,7 +591,7 @@ const handleTabChange = (tabId) => {
                         <span className="text-2xl font-bold text-blue-600">30%</span>
                       </div>
                       <div className="mt-4 p-3 bg-purple-50 rounded-lg">
-                        <p className="text-purple-800 text-sm">After 50% token sale: 85% to buybacks, 15% operations</p>
+                        <p className="text-purple-800 text-sm">After 70% token sale: 85% to buybacks, 15% operations</p>
                       </div>
                       </div>
                     </div>
@@ -670,7 +681,7 @@ const handleTabChange = (tabId) => {
                               <h5 className="font-bold text-slate-900 mb-3">Expected Performance</h5>
                               <div className="space-y-3">
                                 <div className="bg-green-50 rounded-lg p-4">
-                                  <p className="font-bold text-green-600 text-lg">Bitcoin: 21.1% APY</p>
+                                  <p className="font-bold text-green-600 text-lg">Bitcoin: 18.7% APY</p>
                                   <p className="text-green-700 text-sm">Based on 2021-2025 backtesting</p>
                                 </div>
                                 <div className="bg-blue-50 rounded-lg p-4">
@@ -740,23 +751,23 @@ const handleTabChange = (tabId) => {
                               <div className="space-y-2">
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">REI/USDC</span>
-                                  <span className="text-green-600 font-bold">70% APR</span>
+                                  <span className="text-green-600 font-bold">80% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">ZORA/USDC</span>
-                                  <span className="text-green-600 font-bold">200% APR</span>
+                                  <span className="text-green-600 font-bold">160% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">CLANKER</span>
-                                  <span className="text-green-600 font-bold">100% APR</span>
+                                  <span className="text-green-600 font-bold">90% APR</span>
                                 </div>
                                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">BNKR</span>
-                                  <span className="text-green-600 font-bold">45% APR</span>
+                                  <span className="text-green-600 font-bold">35% APR</span>
                                 </div>
                                   <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                   <span className="font-medium">MAMO/USDC</span>
-                                  <span className="text-green-600 font-bold">140% APR</span>
+                                  <span className="text-green-600 font-bold">85% APR</span>
                                 </div>
                               </div>
                             </div>
@@ -764,7 +775,132 @@ const handleTabChange = (tabId) => {
                         </div>
                       )}
                     </div>
+
+                                      {/* Risk Management Section - ADD THIS */}
+<div className="border border-slate-200 rounded-xl">
+  <button
+    onClick={() => toggleSection('riskManagement')}
+    className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
+  >
+    <div>
+      <h4 className="text-xl font-bold text-slate-900">Risk Management Framework</h4>
+      <p className="text-slate-600 mt-1">Capital preservation and operational integrity protocols</p>
+    </div>
+    {expandedSections.riskManagement ? 
+      <ChevronUp className="w-6 h-6 text-slate-400" /> : 
+      <ChevronDown className="w-6 h-6 text-slate-400" />
+    }
+  </button>
+  {expandedSections.riskManagement && (
+    <div className="px-6 pb-6">
+      <div className="grid md:grid-cols-2 gap-6">
+        <div>
+          <h5 className="font-bold text-slate-900 mb-3">USDC Reserve Management</h5>
+          <ul className="space-y-2 text-slate-700">
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>30% USDC allocation for B-MERS provides crash liquidity</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>20% allocation for Base Ecosystem supports new positions</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>Surplus USDC for black swan event opportunities</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>Dynamic exposure adjustments based on market signals</span>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <h5 className="font-bold text-slate-900 mb-3">Market Signal Monitoring</h5>
+          <div className="space-y-3">
+            <div className="bg-blue-50 rounded-lg p-4">
+              <p className="font-bold text-blue-600 text-sm">Technical Indicators</p>
+              <p className="text-blue-700 text-xs mt-1">
+                Funding rates, MVRV Z-score, liquidation heatmaps, trend detection
+              </p>
+            </div>
+            <div className="bg-purple-50 rounded-lg p-4">
+              <p className="font-bold text-purple-600 text-sm">Macro Analysis</p>
+              <p className="text-purple-700 text-xs mt-1">
+                Forward guidance shifts, institutional flows, regulatory changes
+              </p>
+            </div>
+            <div className="bg-orange-50 rounded-lg p-4">
+              <p className="font-bold text-orange-600 text-sm">On-Chain Metrics</p>
+              <p className="text-orange-700 text-xs mt-1">
+                Exchange flows, whale movements, network activity
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-6 grid md:grid-cols-2 gap-6">
+        <div>
+          <h5 className="font-bold text-slate-900 mb-3">Volatility Resilience</h5>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+              <span className="font-medium text-green-800">B-MERS Performance</span>
+              <span className="font-bold text-green-700">Consistent across all markets</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+              <span className="font-medium text-blue-800">2022 Bear Market</span>
+              <span className="font-bold text-blue-700">+40% vs HODL at lows</span>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
+              <span className="font-medium text-purple-800">Drawdown Protection</span>
+              <span className="font-bold text-purple-700">Systematic rebalancing</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <h5 className="font-bold text-slate-900 mb-3">Base Ecosystem Risk Controls</h5>
+          <ul className="space-y-2 text-slate-700">
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>Wide-range LP positions to minimize impermanent loss</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>Conservative project selection criteria</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>TVL-to-volume ratio analysis for risk assessment</span>
+            </li>
+            <li className="flex items-start">
+              <span className="w-2 h-2 bg-orange-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+              <span>Target 30-80% APY to balance risk and reward</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="mt-6 p-4 bg-red-50 rounded-lg border border-red-200">
+        <div className="flex items-start">
+          <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <p className="font-medium text-red-800">Black Swan Response Protocol</p>
+            <p className="text-red-700 text-sm mt-1">
+              During extreme market events, surplus USDC reserves are deployed for opportunistic 
+              buying during flash crashes and forced selling events. The strategy capitalizes on 
+              market dislocations rather than trying to predict them.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
                   </div>
+
+
+
                 </div>
               </div>
             )}
@@ -816,7 +952,7 @@ const handleTabChange = (tabId) => {
                           <ArrowUpRight className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
                           <div>
                             <p className="font-medium text-blue-800">Deflationary Mechanism</p>
-                            <p className="text-blue-700 text-sm">90% of profits go to buybacks</p>
+                            <p className="text-blue-700 text-sm">Up to 85% of profits go to buybacks</p>
                           </div>
                         </div>
                         <div className="flex items-start p-3 bg-purple-50 rounded-lg">
@@ -869,7 +1005,7 @@ const handleTabChange = (tabId) => {
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
                                 <div>
                                   <p className="font-medium text-slate-900">Sell Tax Mechanism</p>
-                                  <p className="text-slate-600 text-sm">8% tax discourages frequent trading</p>
+                                  <p className="text-slate-600 text-sm">8% tax avoids arbitrage between Seeding and Buybacks</p>
                                 </div>
                               </li>
                               <li className="flex items-start">
@@ -928,7 +1064,7 @@ const handleTabChange = (tabId) => {
                           <p className="text-slate-700 leading-relaxed">
                             The longer you hold AVA tokens, the more you benefit from the cumulative effects of:
                             <span className="font-medium"> systematic profit generation, continuous buyback pressure, 
-                            weak hands being filtered out, and scaling revenue as the strategy manages larger amounts.</span>
+                            weak hands being filtered out, and scaling revenue as the strategy manages larger amounts. </span>
                             All without any taxable events or need for active management on your part.
                           </p>
                         </div>
@@ -946,11 +1082,11 @@ const handleTabChange = (tabId) => {
                       <div className="bg-blue-50 rounded-xl p-6">
                         <p className="text-blue-800 font-medium mb-3">"Minimum Viable Product Work Ethic"</p>
                         <ul className="text-blue-700 space-y-2 text-sm">
-                          <li>• Cover operational costs with idle asset yield</li>
-                          <li>• Maximum 10% of revenue for operations</li>
-                          <li>• 90% of profits dedicated to buybacks</li>
+                          <li>• 85% of profits dedicated to buybacks</li>
                           <li>• No unnecessary smart contract risks</li>
                           <li>• Focus on proven, battle-tested strategies</li>
+                          <li>• Prioritize lean, scalable processes</li>
+                          <li>• Leverage data-driven insights for descision-making</li>
                         </ul>
                       </div>
                     </div>
@@ -958,17 +1094,15 @@ const handleTabChange = (tabId) => {
                       <h4 className="text-lg font-bold text-slate-900 mb-4">Team Background</h4>
                       <div className="space-y-4">
                         <div className="p-4 bg-slate-50 rounded-lg">
-                          <p className="font-bold text-slate-900">CC - Strategy Lead</p>
+                          <p className="font-bold text-slate-900">Chief Strategist</p>
                           <p className="text-slate-600 text-sm mt-1">
-                            Engineering background, Forex systematic trading experience, 
-                            active in crypto since 2017 through all market cycles
+                            An engineer-turned-systematic trader, entered the crypto space in 2017, contributing to DeFi protocols and developing proprietary trading systems. His expertise in liquidity pool mechanics and backtesting drives Avalon’s strategic foundation.
                           </p>
                         </div>
                         <div className="p-4 bg-slate-50 rounded-lg">
-                          <p className="font-bold text-slate-900">Harris - Technical Lead</p>
+                          <p className="font-bold text-slate-900">Lead Developer</p>
                           <p className="text-slate-600 text-sm mt-1">
-                            Full-stack developer responsible for smart contracts, 
-                            web applications, and trading bot development
+                            A blockchain developer with experience building smart contracts and automated trading bots for multiple protocols, ensures robust technical execution.
                           </p>
                         </div>
                       </div>
@@ -1098,7 +1232,7 @@ const handleTabChange = (tabId) => {
               </p>
             </div>
           </>
-        )}
+        
       </div>
 
       {/* Custom Styles */}
@@ -1164,7 +1298,7 @@ const handleTabChange = (tabId) => {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
         }
 
-        @import url('[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
       `}</style>
     </div>
   );

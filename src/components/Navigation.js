@@ -77,7 +77,7 @@ function Navigation() {
               }`}
             >
               <ShoppingCart className="w-4 h-4" />
-              <span>Presale</span>
+              <span>Token Sale</span>
             </Link>
 
             <Link

@@ -198,7 +198,7 @@ export const useAdminData = () => {
     return {
       bitcoin: {
         allocated: (total * 0.35).toString(),
-        apy: 21.1,
+        apy: 18.7,
         status: 'active'
       },
       baseEcosystem: {

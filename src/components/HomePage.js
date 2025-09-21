@@ -53,7 +53,7 @@ function HomePage() {
 
 const performanceMetrics = [
   { label: 'Bitcoin Strategy APY', value: '18.7%', period: '2021-2025 Backtested' }, // Changed from 21.1%
-  { label: 'Base LP Provisioning APY', value: '30-200%', period: 'Wide Range LP' }, // Updated range
+  { label: 'Base LP Provisioning APY', value: '30-80%', period: 'Wide Range LP' }, // Updated range
   { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' } // Updated range
 ];
 
@@ -73,13 +73,13 @@ const features = [
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 18.7% APY with Bitcoin strategy and 30-200% with Base LP.',
+      description: 'Backtested results showing consistent 18.7% APY with Bitcoin strategy and 30-80% with Base LP.',
       gradient: 'from-purple-500 to-pink-500'
     },
   {
     icon: Zap,
-    title: 'Automated Revenue',
-    description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
+    title: 'Revenue Share',
+    description: '70% to 85% of profits go to buybacks, creating deflationary pressure, and a positive flywheel.',
     gradient: 'from-yellow-500 to-orange-500'
   }
   // REMOVE any referral-related feature if present
@@ -275,11 +275,11 @@ const features = [
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
                         {allocation.name === 'Bitcoin Strategy (B-MERS)' &&
-                          'Bitcoin Maximum Exposure Rebalancing System - achieved ~18.7% APY with 51% outperformance over 0% threshold'}
+                          'Bitcoin Maximum Exposure Rebalancing System - achieved ~18.7% APY with 51% outperformance over 0% threshold since 2021'}
                         {allocation.name === 'Base Ecosystem LP' &&
-                          'Wide-range liquidity provisioning in Base ecosystem tokens with 30-200% APY potential'}
+                          'Wide-range liquidity provisioning in Base ecosystem tokens with 30-80% APY potential'}
                       {allocation.name === 'Token Liquidity' &&
-                        'Market support through ratcheting liquidity system starting at $1.00 with price stability'}
+                        'Market support through ratcheting liquidity system starting at $1.00 ensuring price stability and price growth'}
                     </p>
                   </div>
                 ))}
@@ -292,14 +292,17 @@ const features = [
                     Revenue Distribution
                   </h3>
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                    <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
-                      <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Token Buybacks</span>
-                      <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">85%</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
-                      <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Operations</span>
-                      <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">15%</span>
-                    </div>
+                  <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
+    <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Token Buybacks</span>
+    <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">70-85%</span>
+  </div>
+  <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
+    <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Operations</span>
+    <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">15-30%</span>
+  </div>
+  <div className="mt-2 p-2 bg-purple-50 rounded-lg">
+    <p className="text-purple-700 text-xs">Initial: 70% buybacks, scaling to 85% after 70% token sale milestone</p>
+  </div>
                   </div>
                 </div>
               </div>
@@ -351,7 +354,7 @@ const features = [
                 </div>
                 <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Deflationary Mechanics</h3>
                 <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-green-600 mb-2">8%</p>
-                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Sell tax discourages speculation.</p>
+                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Sell tax discourages arbitrage.</p>
                 <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
                   <li className="flex items-center">
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
@@ -437,7 +440,7 @@ const features = [
               </div>
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">24/7</div>
-                <div className="text-xs sm:text-sm opacity-75">Automated Trading</div>
+                <div className="text-xs sm:text-sm opacity-75">Market Volatility</div>
               </div>
             </div>
           </div>
@@ -459,7 +462,7 @@ const features = [
                   Dashboard
                 </Link>
                 <Link to="/presale" className="text-slate-300 hover:text-white transition-colors text-sm sm:text-base">
-                  Presale
+                  Token Sale
                 </Link>
                 <a
                   href="https://sepolia.basescan.org"

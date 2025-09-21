@@ -23,7 +23,7 @@ const StrategyMonitor = () => {
       currentExposure: 68.5,
       targetExposure: 70,
       rebalanceThreshold: 9,
-      apy: 21.1,
+      apy: 18.7,
       status: 'active',
       health: 'excellent',
       lastRebalance: '2 hours ago',
@@ -79,7 +79,7 @@ const StrategyMonitor = () => {
       bitcoin: {
         ...prev.bitcoin,
         currentExposure: 70 + (Math.random() - 0.5) * 4,
-        apy: 21.1 + (Math.random() - 0.5) * 2,
+        apy: 18.7 + (Math.random() - 0.5) * 2,
         totalTrades: prev.bitcoin.totalTrades + Math.floor(Math.random() * 3),
         isRebalanceNeeded: Math.random() > 0.8
       },

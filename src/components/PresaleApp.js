@@ -17,7 +17,7 @@ const CONTRACTS = {
   SEEDING: '0x6DfD909Be557Ed5a6ec4C5c4375a3b9F3f40D33d'
 };
 
-// Extended ABIs with referral functions
+// Extended ABIs with functions
 const SEEDING_ABI = [
   "function purchaseTokens(uint256 usdcAmount) external",
   "function getQuote(uint256 usdcAmount) external view returns (uint256, uint256, uint256)",
@@ -358,10 +358,10 @@ useEffect(() => {
         {/* Header - Mobile Optimized */}
         <div className="text-center mb-8 sm:mb-12 px-2">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 coinbase-title leading-tight">
-            AVALON TOKEN PRESALE
+            AVALON TOKEN SALE
           </h1>
           <p className="text-lg sm:text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
-          <p className="text-base sm:text-lg text-blue-600 font-medium">Presale on Base Testnet</p>
+          <p className="text-base sm:text-lg text-blue-600 font-medium">Token Sale on Base Testnet</p>
         </div>
 
         {/* Connection Status - Mobile Optimized */}
