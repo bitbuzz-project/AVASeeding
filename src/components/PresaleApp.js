@@ -543,33 +543,37 @@ useEffect(() => {
         />
       </div>
 
-      {/* Volume Bonus Tiers */}
-      {parseFloat(usdcAmount) >= 2000 && (
+     {/* Volume Bonus Tiers - Now shows for any amount */}
+      {parseFloat(usdcAmount) > 0 && (
         <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
           <h4 className="font-bold text-purple-900 mb-3 text-center text-sm sm:text-base">🎯 Volume Bonus Tiers</h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 2000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>2,000 AVA:</span>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) < 2000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>Less than $2,000:</span>
+              <span className="font-bold">0%</span>
+            </div>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 2000 && parseFloat(usdcAmount) < 5000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>$2,000 - $4,999:</span>
               <span className="font-bold">+1.0%</span>
             </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 5000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>5,000 AVA:</span>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 5000 && parseFloat(usdcAmount) < 10000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>$5,000 - $9,999:</span>
               <span className="font-bold">+2.0%</span>
             </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 10000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>10,000 AVA:</span>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 10000 && parseFloat(usdcAmount) < 20000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>$10,000 - $19,999:</span>
               <span className="font-bold">+3.0%</span>
             </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 20000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>20,000 AVA:</span>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 20000 && parseFloat(usdcAmount) < 40000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>$20,000 - $39,999:</span>
               <span className="font-bold">+4.0%</span>
             </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 40000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>40,000 AVA:</span>
+            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 40000 && parseFloat(usdcAmount) < 60000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
+              <span>$40,000 - $59,999:</span>
               <span className="font-bold">+6.0%</span>
             </div>
             <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 60000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>60,000 AVA:</span>
+              <span>$60,000+:</span>
               <span className="font-bold">+8.0%</span>
             </div>
           </div>
@@ -581,7 +585,7 @@ useEffect(() => {
                parseFloat(usdcAmount) >= 10000 ? '3.0% volume bonus qualified!' :
                parseFloat(usdcAmount) >= 5000 ? '2.0% volume bonus qualified!' :
                parseFloat(usdcAmount) >= 2000 ? '1.0% volume bonus qualified!' :
-               'Minimum 2,000 AVA for bonus'}
+               'Minimum $2,000 AVA purchase required for bonus'}
             </p>
             <p className="text-xs text-blue-600 mt-1 text-center">
               Bonus tokens vest after 60 days to support buyback liquidity
