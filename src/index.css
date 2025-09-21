@@ -458,19 +458,17 @@ body {
 /* Fix RainbowKit modal - Perfect centering for all devices */
 
 /* Portal container - full screen flexbox */
+/* Fix RainbowKit modal - FORCE CENTER POSITION - UPDATED */
+
+/* Portal container - use CSS Grid for perfect centering */
 div[data-radix-portal] {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
+  inset: 0 !important;
+  display: grid !important;
+  place-items: center !important;
   z-index: 9999 !important;
   pointer-events: none !important;
+  padding: 1rem !important;
 }
 
 /* Allow clicks on modal children */
@@ -481,13 +479,121 @@ div[data-radix-portal] > * {
 /* Overlay backdrop - full screen */
 div[data-radix-dialog-overlay] {
   position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  bottom: 0 !important;
-  width: 100vw !important;
-  height: 100vh !important;
+  inset: 0 !important;
   background-color: rgba(0, 0, 0, 0.6) !important;
+  z-index: 1 !important;
+}
+
+/* Modal dialog - FORCE centered position, override any inline styles */
+div[role="dialog"][data-radix-dialog-content] {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  max-width: min(90vw, 480px) !important;
+  max-height: 90vh !important;
+  overflow: auto !important;
+  margin: 0 auto !important;
+  /* CRITICAL: Override any transform/position from inline styles */
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform: none !important;
+}
+
+/* Target the specific animated element that's causing the offset */
+div[data-radix-dialog-content] > div,
+div[data-radix-dialog-content] > div > div {
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+  margin: 0 auto !important;
+}
+
+/* RainbowKit specific selectors - override animations */
+[data-rk] div[role="dialog"] {
+
+  transform: translate(0, 0) !important;
+  margin: 0 auto !important;
+}
+
+/* Override RainbowKit's animation classes */
+div[data-state="open"][role="dialog"],
+div[data-state="closed"][role="dialog"] {
+  left: auto !important;
+  right: auto !important;
+  transform: none !important;
+}
+
+/* Prevent body scroll when modal is open */
+body:has(div[data-radix-portal]) {
+  overflow: hidden !important;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  div[data-radix-portal] {
+    padding: 0.5rem !important;
+  }
+  
+  div[role="dialog"][data-radix-dialog-content] {
+    max-width: calc(100vw - 1rem) !important;
+    max-height: calc(100vh - 1rem) !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  div[role="dialog"][data-radix-dialog-content] {
+    max-width: min(85vw, 600px) !important;
+  }
+}
+
+/* Landscape mobile fixes */
+@media (max-width: 768px) and (orientation: landscape) {
+  div[role="dialog"][data-radix-dialog-content] {
+    max-height: 85vh !important;
+  }
+}
+
+/* Fix for extra space/scroll issues */
+div[data-radix-portal],
+div[data-radix-portal] > *,
+div[data-radix-dialog-overlay] {
+  margin: 0 !important;
+  box-sizing: border-box !important;
+}
+
+/* Ensure modal content doesn't cause horizontal scroll */
+div[role="dialog"][data-radix-dialog-content] * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Additional RainbowKit specific fixes */
+[data-rk] {
+  box-sizing: border-box !important;
+}
+
+/* Force override any inline transform animations */
+[data-radix-dialog-content][data-state] {
+  transform: none !important;
+  transition: opacity 200ms ease-in-out !important;
+}
+/* Allow clicks on modal children */
+div[data-radix-portal] > * {
+  pointer-events: auto !important;
+}
+
+/* Overlay backdrop - full screen */
+/* Overlay backdrop - full screen */
+div[data-radix-dialog-overlay] {
+  position: fixed !important;
+  top: 0 !important;
+  left: -200px !important;
+  right: -200px !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.8) !important;
   z-index: 1 !important;
 }
 
