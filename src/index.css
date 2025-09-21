@@ -454,31 +454,78 @@ body {
     line-height: 1.4;
   }
 }
-/* Fix RainbowKit modal positioning */
-[role="dialog"][data-radix-portal] {
+
+/* Fix RainbowKit modal - Perfect centering for all devices */
+
+/* Portal container - full screen flexbox */
+div[data-radix-portal] {
   position: fixed !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999 !important;
+  pointer-events: none !important;
+}
+
+/* Allow clicks on modal children */
+div[data-radix-portal] > * {
+  pointer-events: auto !important;
+}
+
+/* Overlay backdrop - full screen */
+div[data-radix-dialog-overlay] {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.6) !important;
+  z-index: 1 !important;
+}
+
+/* Modal dialog - centered */
+div[role="dialog"][data-radix-dialog-content] {
+  position: relative !important;
+  z-index: 2 !important;
   max-width: 90vw !important;
   max-height: 90vh !important;
   overflow: auto !important;
 }
 
-/* Ensure the overlay is properly positioned */
-[data-radix-dialog-overlay] {
-  position: fixed !important;
-  inset: 0 !important;
-  background-color: rgba(0, 0, 0, 0.5) !important;
+/* Prevent body scroll when modal is open */
+body:has(div[data-radix-portal]) {
+  overflow: hidden !important;
 }
 
-/* Fix for mobile responsiveness */
+/* Mobile optimizations */
 @media (max-width: 640px) {
-  [role="dialog"][data-radix-portal] {
+  div[role="dialog"][data-radix-dialog-content] {
     max-width: 95vw !important;
+    max-height: 90vh !important;
+  }
+  
+  /* Adjust padding for mobile */
+  div[data-radix-portal] {
+    padding: 1rem !important;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  div[role="dialog"][data-radix-dialog-content] {
+    max-width: 85vw !important;
     max-height: 85vh !important;
   }
 }
+
 /* Tablet adjustments */
 @media (min-width: 641px) and (max-width: 1023px) {
   .container {
@@ -566,3 +613,4 @@ html, body, #root {
 .font-inter {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 }
+
