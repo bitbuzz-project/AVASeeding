@@ -20,7 +20,7 @@ function App() {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+       <RainbowKitProvider locale="en"> 
           <WalletProvider>
             <Router>
               <div className="App">

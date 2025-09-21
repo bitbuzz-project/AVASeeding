@@ -11,7 +11,7 @@ import { createConfig, http } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
 
 // Replace with your actual WalletConnect Project ID
-const WALLETCONNECT_PROJECT_ID = 'YOUR_PROJECT_ID_HERE';
+const WALLETCONNECT_PROJECT_ID = '21587c287e2cb3c78ed0490d75c0cd1e';
 
 // Only use wallets that don't require MetaMask SDK
 const connectors = connectorsForWallets(

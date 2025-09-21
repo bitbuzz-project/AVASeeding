@@ -454,7 +454,31 @@ body {
     line-height: 1.4;
   }
 }
+/* Fix RainbowKit modal positioning */
+[role="dialog"][data-radix-portal] {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  max-width: 90vw !important;
+  max-height: 90vh !important;
+  overflow: auto !important;
+}
 
+/* Ensure the overlay is properly positioned */
+[data-radix-dialog-overlay] {
+  position: fixed !important;
+  inset: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fix for mobile responsiveness */
+@media (max-width: 640px) {
+  [role="dialog"][data-radix-portal] {
+    max-width: 95vw !important;
+    max-height: 85vh !important;
+  }
+}
 /* Tablet adjustments */
 @media (min-width: 641px) and (max-width: 1023px) {
   .container {
