@@ -6,6 +6,8 @@ import {
   walletConnectWallet,
   trustWallet,
   rainbowWallet,
+  rabbyWallet, // ADD RABBY WALLET
+
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
@@ -20,6 +22,7 @@ const connectors = connectorsForWallets(
       groupName: 'Recommended',
       wallets: [
         coinbaseWallet,
+        rabbyWallet,
         walletConnectWallet,
         trustWallet,
         rainbowWallet,
@@ -29,6 +32,7 @@ const connectors = connectorsForWallets(
   {
     appName: 'Avalon Token',
     projectId: WALLETCONNECT_PROJECT_ID,
+    
   }
 );
 

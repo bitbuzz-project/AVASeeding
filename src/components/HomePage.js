@@ -14,7 +14,6 @@ import {
   Users,
   ExternalLink,
   ChevronDown,
-  Play,
   CheckCircle
 } from 'lucide-react';
 
@@ -51,55 +50,53 @@ function HomePage() {
     return () => clearInterval(timer);
   }, []);
 
-const performanceMetrics = [
-  { label: 'Bitcoin Strategy APY', value: '18.7%', period: '2021-2025 Backtested' }, // Changed from 21.1%
-  { label: 'Base LP Provisioning APY', value: '30-80%', period: 'Wide Range LP' }, // Updated range
-  { label: 'Combined Target APY', value: '20-40%', period: 'Portfolio Average' } // Updated range
-];
+  const performanceMetrics = [
+    { label: 'Total NAV + Profits APY', value: '47%', period: '2021-2025 Backtested' },
+    { label: 'Extractable Profits APY', value: '27.3%', period: 'On Initial Allocation' },
+    { label: 'Outperformance vs HODL', value: '90%', period: 'Market Downturns' }
+  ];
 
-const features = [
-  {
-    icon: Activity,
-    title: 'Volatility Harvesting',
-    description: 'Systematic profit generation from market motion - the only constant in crypto.',
-    gradient: 'from-blue-500 to-cyan-500'
-  },
-  {
-    icon: Shield,
-    title: 'No Staking Required',
-    description: 'Simply hold AVA tokens. No manual claiming, no complex processes.',
-    gradient: 'from-green-500 to-emerald-500'
-  },
+  const features = [
+    {
+      icon: Activity,
+      title: 'Volatility Harvesting',
+      description: 'Systematic profit generation from market motion - the only constant in crypto.',
+      gradient: 'from-blue-500 to-cyan-500'
+    },
+    {
+      icon: Shield,
+      title: 'No Staking Required',
+      description: 'Simply hold AVA tokens. No manual claiming, no complex processes.',
+      gradient: 'from-green-500 to-emerald-500'
+    },
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested results showing consistent 18.7% APY with Bitcoin strategy and 30-80% with Base LP.',
+      description: 'Backtested 47% APY total returns with 27.3% yearly extractable profits.',
       gradient: 'from-purple-500 to-pink-500'
     },
-  {
-    icon: Zap,
-    title: 'Revenue Share',
-    description: '70% to 85% of profits go to buybacks, creating deflationary pressure, and a positive flywheel.',
-    gradient: 'from-yellow-500 to-orange-500'
-  }
-  // REMOVE any referral-related feature if present
-];
+    {
+      icon: Zap,
+      title: 'Revenue Share',
+      description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
+      gradient: 'from-yellow-500 to-orange-500'
+    }
+  ];
 
- const allocations = [
-  { name: 'Base Ecosystem LP', percentage: 45, color: 'bg-green-500' },
-  { name: 'Bitcoin Strategy (B-MERS)', percentage: 35, color: 'bg-blue-500' },
-  { name: 'Token Liquidity', percentage: 20, color: 'bg-purple-500' }
-];
+  const allocations = [
+    { name: 'Bitcoin Adaptive Rebalancing (BARS)', percentage: 80, color: 'bg-blue-500' },
+    { name: 'Token Liquidity Management', percentage: 20, color: 'bg-purple-500' }
+  ];
 
   return (
     <div className="homepage-bg text-slate-900 font-inter">
       {/* Hero Section - MOBILE OPTIMIZED */}
       <section className="relative overflow-hidden min-h-screen flex items-center py-4 sm:py-8 lg:py-16">
-     {/* Animated background elements */}
-<div className="absolute inset-0 overflow-hidden">
-  <div className="absolute -top-10 sm:-top-20 lg:-top-40 -right-10 sm:-right-20 lg:-right-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
-  <div className="absolute -bottom-10 sm:-bottom-20 lg:-bottom-40 -left-10 sm:-left-20 lg:-left-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
-</div>
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-10 sm:-top-20 lg:-top-40 -right-10 sm:-right-20 lg:-right-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse"></div>
+          <div className="absolute -bottom-10 sm:-bottom-20 lg:-bottom-40 -left-10 sm:-left-20 lg:-left-40 w-80 sm:w-40 lg:w-80 h-80 sm:h-40 lg:h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse" style={{ animationDelay: '2s' }}></div>
+        </div>
 
         <div className="container mx-auto px-6 py-8 sm:py-12 lg:py-20 relative z-10">
           <div className="max-w-6xl mx-auto">
@@ -109,7 +106,7 @@ const features = [
                   <Zap className="w-5 sm:w-4 h-5 sm:h-4 mr-2" />
                   Now Live on Base Testnet
                 </div>
-                    <h1 className="text-6xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-8 sm:mb-4 lg:mb-6 hero-title leading-none">
+                <h1 className="text-6xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-black mb-8 sm:mb-4 lg:mb-6 hero-title leading-none">
                   <span className="block text-slate-800 -mb-6 sm:-mb-2 lg:-mb-1 xl:mb-0">AVALON</span>
                   <span className="block text-blue-600">TOKEN</span>
                 </h1>
@@ -119,9 +116,9 @@ const features = [
                 </p>
                 
                 <p className="text-lg sm:text-base lg:text-lg xl:text-xl text-slate-600 mb-8 sm:mb-6 lg:mb-8 leading-relaxed px-2 sm:px-0 max-w-2xl mx-auto lg:mx-0">
-                  Systematic cryptocurrency trading strategies that generate
-                  <span className="font-bold text-blue-600"> 20-40% APY</span> through
-                  proven volatility harvesting techniques.
+                  Systematic Bitcoin rebalancing strategy generating
+                  <span className="font-bold text-blue-600"> 47% APY total returns</span> with
+                  <span className="font-bold text-green-600"> 27.3% yearly extractable profits</span>.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 sm:gap-4 justify-center lg:justify-start px-2 sm:px-0">
@@ -192,7 +189,7 @@ const features = [
         </div>
       </section>
 
-      {/* Features Section - Same as before */}
+      {/* Features Section */}
       <section id="section-features" className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -231,19 +228,18 @@ const features = [
         </div>
       </section>
 
-      {/* Strategy Section - UPDATED ALLOCATIONS */}
+      {/* Strategy Section - UPDATED TO TWO PILLARS */}
       <section id="section-strategy" className="py-8 sm:py-12 lg:py-16 xl:py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
             <div className="text-center mb-8 sm:mb-12 lg:mb-16">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-bold mb-3 sm:mb-4 lg:mb-6 text-slate-900 px-2">
-                Three-Pillar Strategy
+                Two-Pillar Strategy
               </h2>
-                            <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
-                  Diversified approach combining systematic Bitcoin trading, Base ecosystem LP 
-                  leveraging Coinbase's 100M+ user funnel, and liquidity provisioning for maximum 
-                  risk-adjusted returns.
-                </p>
+              <p className="text-base sm:text-lg lg:text-xl text-slate-600 max-w-3xl mx-auto px-2">
+                Focused approach combining systematic Bitcoin adaptive rebalancing with 
+                token liquidity management for maximum risk-adjusted returns.
+              </p>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-12 items-center">
@@ -274,12 +270,10 @@ const features = [
                       ></div>
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
-                        {allocation.name === 'Bitcoin Strategy (B-MERS)' &&
-                          'Bitcoin Maximum Exposure Rebalancing System - achieved ~18.7% APY with 51% outperformance over 0% threshold since 2021'}
-                        {allocation.name === 'Base Ecosystem LP' &&
-                          'Wide-range liquidity provisioning in Base ecosystem tokens with 30-80% APY potential'}
-                      {allocation.name === 'Token Liquidity' &&
-                        'Market support through ratcheting liquidity system starting at $1.00 ensuring price stability and price growth'}
+                      {allocation.name === 'Bitcoin Adaptive Rebalancing (BARS)' &&
+                        'Systematic rebalancing strategy with adaptive 10%-70% exposure, 8% threshold, achieving 47% APY with 27.3% extractable yearly profits. Monthly scaling to new NAV.'}
+                      {allocation.name === 'Token Liquidity Management' &&
+                        'Market support through ratcheting liquidity system starting at $1.00, ensuring price stability and growth with 8% sell tax mechanism.'}
                     </p>
                   </div>
                 ))}
@@ -292,17 +286,17 @@ const features = [
                     Revenue Distribution
                   </h3>
                   <div className="space-y-2 sm:space-y-3 lg:space-y-4">
-                  <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
-    <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Token Buybacks</span>
-    <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">70-85%</span>
-  </div>
-  <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
-    <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Operations</span>
-    <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">15-30%</span>
-  </div>
-  <div className="mt-2 p-2 bg-purple-50 rounded-lg">
-    <p className="text-purple-700 text-xs">Initial: 70% buybacks, scaling to 85% after 70% token sale milestone</p>
-  </div>
+                    <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
+                      <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Token Buybacks</span>
+                      <span className="text-base sm:text-lg lg:text-xl font-bold text-green-600">70-85%</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 sm:p-3 lg:p-4 bg-white/80 rounded-lg sm:rounded-xl">
+                      <span className="font-medium text-slate-700 text-xs sm:text-sm lg:text-base">Operations & Treasury</span>
+                      <span className="text-base sm:text-lg lg:text-xl font-bold text-blue-600">15-30%</span>
+                    </div>
+                    <div className="mt-2 p-2 bg-purple-50 rounded-lg">
+                      <p className="text-purple-700 text-xs">Initial: 70% buybacks, scaling to 85% after 70% token sale milestone</p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -311,7 +305,7 @@ const features = [
         </div>
       </section>
 
-      {/* Tokenomics Section - UPDATED */}
+      {/* Tokenomics Section */}
       <section id="section-tokenomics" className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-white/50 backdrop-blur-sm">
         <div className="container mx-auto px-4">
           <div className="max-w-6xl mx-auto">
@@ -367,36 +361,36 @@ const features = [
                 </ul>
               </div>
 
-          <div className={`tokenomics-card p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl transition-all duration-500 ${
-  isVisible['section-tokenomics'] ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
-}`} style={{ transitionDelay: '200ms' }}>
-  <div className="w-10 sm:w-12 lg:w-16 h-10 sm:h-12 lg:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 lg:mb-6">
-    <TrendingUp className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
-  </div>
-  <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Volume Bonuses</h3>
-  <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">Up to 8%</p>
-  <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Additional tokens for larger investments.</p>
-  <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
-    <li className="flex items-center">
-      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-      <span>Tiered bonus structure</span>
-    </li>
-    <li className="flex items-center">
-      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-      <span>60-day vesting period</span>
-    </li>
-    <li className="flex items-center">
-      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-      <span>Supports buyback liquidity</span>
-    </li>
-  </ul>
-</div>
+              <div className={`tokenomics-card p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl transition-all duration-500 ${
+                isVisible['section-tokenomics'] ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-8'
+              }`} style={{ transitionDelay: '200ms' }}>
+                <div className="w-10 sm:w-12 lg:w-16 h-10 sm:h-12 lg:h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg sm:rounded-xl lg:rounded-2xl flex items-center justify-center mb-3 sm:mb-4 lg:mb-6">
+                  <TrendingUp className="w-5 sm:w-6 lg:w-8 h-5 sm:h-6 lg:h-8 text-white" />
+                </div>
+                <h3 className="text-base sm:text-lg lg:text-xl font-bold mb-2 sm:mb-3 lg:mb-4 text-slate-900">Volume Bonuses</h3>
+                <p className="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-600 mb-2">Up to 10%</p>
+                <p className="text-slate-600 text-xs sm:text-sm lg:text-base mb-2 sm:mb-3 lg:mb-4">Additional tokens for larger investments.</p>
+                <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
+                  <li className="flex items-center">
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span>Tiered bonus: 2K to 300K</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span>60-day vesting period</span>
+                  </li>
+                  <li className="flex items-center">
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
+                    <span>Supports buyback liquidity</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section - Same as before */}
+      {/* CTA Section */}
       <section className="py-8 sm:py-12 lg:py-16 xl:py-20 bg-gradient-to-br from-blue-600 to-purple-700 text-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -427,20 +421,20 @@ const features = [
 
             <div className="mt-6 sm:mt-8 lg:mt-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-8 px-2">
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">20-40%</div>
-                <div className="text-xs sm:text-sm opacity-75">Target APY</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">47%</div>
+                <div className="text-xs sm:text-sm opacity-75">Total APY</div>
               </div>
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">85%</div>
-                <div className="text-xs sm:text-sm opacity-75">Revenue to Buybacks</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">27.3%</div>
+                <div className="text-xs sm:text-sm opacity-75">Extractable Profits</div>
               </div>
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">0%</div>
                 <div className="text-xs sm:text-sm opacity-75">Manual Work Required</div>
               </div>
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">24/7</div>
-                <div className="text-xs sm:text-sm opacity-75">Market Volatility</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">8%</div>
+                <div className="text-xs sm:text-sm opacity-75">Optimal Threshold</div>
               </div>
             </div>
           </div>

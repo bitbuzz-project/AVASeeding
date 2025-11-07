@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
-
+ import { ConnectButton } from '@rainbow-me/rainbowkit';
 // Dynamically import ethers to avoid SSR issues
 let ethers;
 if (typeof window !== 'undefined') {
@@ -372,24 +372,10 @@ useEffect(() => {
                 <Wallet className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-slate-900">Connect Your Wallet</h3>
-              <p className="text-slate-600 mb-4 sm:mb-6 text-base sm:text-lg px-2">Connect MetaMask to Base Testnet to participate in the presale</p>
-              <button
-                onClick={connectWallet}
-                disabled={displayLoading}
-                className="coinbase-btn text-white px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center w-full sm:w-auto justify-center min-h-[3rem] sm:min-h-[3.5rem]"
-              >
-                {displayLoading ? (
-                  <>
-                    <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  <>
-                    <Wallet className="w-4 sm:w-5 h-4 sm:h-5 mr-3" />
-                    Connect MetaMask
-                  </>
-                )}
-              </button>
+              <p className="text-slate-600 mb-4 sm:mb-6 text-base sm:text-lg px-2">Connect to Base Testnet to participate in the presale</p>
+             <center><div  className="rainbow-connect-wrapper flex justify-center">
+  <ConnectButton />
+</div></center>
             </div>
           ) : (
             <div className="coinbase-card border-green-200 bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center">

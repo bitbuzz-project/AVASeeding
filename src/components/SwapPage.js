@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
-
+ import { ConnectButton } from '@rainbow-me/rainbowkit';
 // Dynamically import ethers
 let ethers;
 if (typeof window !== 'undefined') {
@@ -397,12 +397,9 @@ function SwapPage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Connect Wallet</h3>
               <p className="text-slate-600 mb-6">Connect to Base Sepolia to start trading</p>
-              <button
-                onClick={connectWallet}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
-              >
-                Connect MetaMask
-              </button>
+              <div className="rainbow-connect-wrapper flex justify-center">
+  <ConnectButton />
+</div>
             </div>
           </div>
         ) : (
