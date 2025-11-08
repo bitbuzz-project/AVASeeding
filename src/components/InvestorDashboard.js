@@ -1,4 +1,4 @@
-// src/components/InvestorDashboard.js - FULLY UPDATED WITH RISK MANAGEMENT
+// src/components/InvestorDashboard.js - IMPROVED VERSION
 import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
@@ -15,7 +15,6 @@ import {
   ExternalLink,
   ChevronDown,
   ChevronUp,
-  Info,
   AlertCircle,
   Menu,
   X,
@@ -128,17 +127,16 @@ function InvestorDashboard() {
     portfolioPercent: 0
   });
 
+  const [prices, setPrices] = useState({
+    bitcoin: 0,
+    ava: 0,
+    loading: true
+  });
+
   const [activeTab, setActiveTab] = useState('overview');
   const [expandedSections, setExpandedSections] = useState({
-    tokenomics: true,
     strategy: false,
-    riskManagement: false,
-    protocolSafety: false,
-    marketIndicators: false,
-    reserveManagement: false,
-    defiRisks: false,
-    volatilityMgmt: false,
-    emergencyProtocols: false
+    riskManagement: false
   });
 
   useEffect(() => {
@@ -160,6 +158,31 @@ function InvestorDashboard() {
     };
     initContracts();
   }, [signer, isConnected]);
+
+  // Fetch crypto prices from CoinGecko
+  const fetchPrices = async () => {
+    try {
+      const response = await fetch(
+        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usd'
+      );
+      const data = await response.json();
+      
+      setPrices({
+        bitcoin: data.bitcoin?.usd || 0,
+        ava: data.tether?.usd || 1, // Using USDT price as proxy for AVA
+        loading: false
+      });
+    } catch (error) {
+      console.error('Error fetching prices:', error);
+      setPrices(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchPrices();
+    const interval = setInterval(fetchPrices, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
 
   const loadProjectData = async () => {
     if (!seedingContract || !avaContract || !ethers) return;
@@ -260,22 +283,45 @@ function InvestorDashboard() {
   };
 
   const formatNumber = (num, decimals = 2) => {
-    return new Intl.NumberFormat().format(parseFloat(num).toFixed(decimals));
+    const number = parseFloat(num);
+    if (isNaN(number)) return '0.00';
+    return new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    }).format(number);
+  };
+
+  const formatCurrency = (num) => {
+    const number = parseFloat(num);
+    if (isNaN(number)) return '$0.00';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(number);
   };
 
   const formatPercent = (num) => {
     return `${parseFloat(num).toFixed(2)}%`;
   };
 
-  // Risk status helper
-  const getRiskStatus = (level) => {
-    const statuses = {
-      low: { color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-200', icon: CheckCircle },
-      medium: { color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200', icon: AlertTriangle },
-      high: { color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200', icon: AlertCircle }
-    };
-    return statuses[level] || statuses.low;
+  // Calculate projected values based on 47% APY
+  const calculateProjection = (principal, months) => {
+    const monthlyRate = Math.pow(1.47, 1/12) - 1;
+    return principal * Math.pow(1 + monthlyRate, months);
   };
+
+  const userInvestment = parseFloat(userData.investmentValue);
+  const projection3m = calculateProjection(userInvestment, 3);
+  const projection6m = calculateProjection(userInvestment, 6);
+  const projection1y = calculateProjection(userInvestment, 12);
+  const projection2y = calculateProjection(userInvestment, 24);
+
+  // Calculate portfolio values using live prices
+  const avaBalanceNum = parseFloat(userData.avaBalance);
+  const avaBalanceUSD = avaBalanceNum * prices.ava;
+  const totalPortfolioValue = avaBalanceUSD + parseFloat(userData.usdcBalance);
 
   return (
     <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
@@ -285,6 +331,50 @@ function InvestorDashboard() {
             AVALON INVESTOR DASHBOARD
           </h1>
           <p className="text-xl coinbase-subtitle">Track Your Investment Performance</p>
+        </div>
+
+        {/* Live Market Prices */}
+        <div className="max-w-6xl mx-auto mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="coinbase-card rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="font-bold text-orange-600">₿</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 font-medium">Bitcoin Price</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {prices.loading ? 'Loading...' : formatCurrency(prices.bitcoin)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center text-green-500">
+                  <TrendingUp className="w-5 h-5" />
+                </div>
+              </div>
+            </div>
+
+            <div className="coinbase-card rounded-xl p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                    <span className="font-bold text-blue-600">AVA</span>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 font-medium">AVA Token Price</p>
+                    <p className="text-2xl font-bold text-slate-900">
+                      {prices.loading ? 'Loading...' : formatCurrency(prices.ava)}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500 text-right">
+                  <p>Using USDT</p>
+                  <p>as proxy</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {!isConnected && (
@@ -379,52 +469,107 @@ function InvestorDashboard() {
 
           {activeTab === 'overview' && (
             <div className="max-w-6xl mx-auto space-y-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div className="coinbase-card rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Wallet className="w-5 h-5 text-blue-600" />
+              {/* Enhanced Stats Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="coinbase-card rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Wallet className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-green-500" />
                     </div>
-                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                    <p className="text-2xl font-bold text-slate-900 mb-1">{formatNumber(userData.avaBalance)}</p>
+                    <p className="text-slate-600 font-medium mb-2">AVA Balance</p>
+                    <p className="text-sm text-slate-500">≈ {formatCurrency(avaBalanceUSD)}</p>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">{formatNumber(userData.avaBalance)}</p>
-                  <p className="text-slate-600 font-medium">AVA Balance</p>
                 </div>
 
-                <div className="coinbase-card rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                      <DollarSign className="w-5 h-5 text-green-600" />
+                <div className="coinbase-card rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <DollarSign className="w-5 h-5 text-green-600" />
+                      </div>
+                      <ArrowUpRight className="w-4 h-4 text-green-500" />
                     </div>
-                    <ArrowUpRight className="w-4 h-4 text-green-500" />
+                    <p className="text-2xl font-bold text-slate-900 mb-1">${formatNumber(userData.investmentValue)}</p>
+                    <p className="text-slate-600 font-medium mb-2">Investment Value</p>
+                    <p className="text-sm text-green-600">Total purchased amount</p>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">${formatNumber(userData.investmentValue)}</p>
-                  <p className="text-slate-600 font-medium">Investment Value</p>
                 </div>
 
-                <div className="coinbase-card rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                      <PieChart className="w-5 h-5 text-purple-600" />
+                <div className="coinbase-card rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                        <PieChart className="w-5 h-5 text-purple-600" />
+                      </div>
                     </div>
+                    <p className="text-2xl font-bold text-slate-900 mb-1">{formatPercent(userData.portfolioPercent)}</p>
+                    <p className="text-slate-600 font-medium mb-2">Portfolio Share</p>
+                    <p className="text-sm text-slate-500">Of total tokens sold</p>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">{formatPercent(userData.portfolioPercent)}</p>
-                  <p className="text-slate-600 font-medium">Portfolio Share</p>
                 </div>
 
-                <div className="coinbase-card rounded-2xl p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
-                      <Users className="w-5 h-5 text-cyan-600" />
+                <div className="coinbase-card rounded-2xl p-6 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-100 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                  <div className="relative">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="w-10 h-10 bg-cyan-100 rounded-full flex items-center justify-center">
+                        <Users className="w-5 h-5 text-cyan-600" />
+                      </div>
                     </div>
+                    <p className="text-2xl font-bold text-slate-900 mb-1">{projectData.participantCount}</p>
+                    <p className="text-slate-600 font-medium mb-2">Total Investors</p>
+                    <p className="text-sm text-slate-500">Active participants</p>
                   </div>
-                  <p className="text-2xl font-bold text-slate-900">{projectData.participantCount}</p>
-                  <p className="text-slate-600 font-medium">Total Investors</p>
                 </div>
               </div>
 
+    
+
+              {/* Investment Projections */}
+              {isConnected && parseFloat(userData.investmentValue) > 0 && (
+                <div className="coinbase-card rounded-2xl p-8">
+                  <h3 className="text-2xl font-bold mb-6 text-slate-900">Investment Projection</h3>
+                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
+                    <p className="text-slate-600 mb-4">Based on your ${formatNumber(userData.investmentValue)} USDC investment at 47% APY</p>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center p-4 bg-white rounded-lg">
+                        <p className="text-sm text-slate-600 mb-1">3 Months</p>
+                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection3m)}</p>
+                        <p className="text-xs text-green-600">+{formatPercent((projection3m - userInvestment) / userInvestment * 100)}</p>
+                      </div>
+                      <div className="text-center p-4 bg-white rounded-lg">
+                        <p className="text-sm text-slate-600 mb-1">6 Months</p>
+                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection6m)}</p>
+                        <p className="text-xs text-green-600">+{formatPercent((projection6m - userInvestment) / userInvestment * 100)}</p>
+                      </div>
+                      <div className="text-center p-4 bg-white rounded-lg">
+                        <p className="text-sm text-slate-600 mb-1">1 Year</p>
+                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection1y)}</p>
+                        <p className="text-xs text-green-600">+47%</p>
+                      </div>
+                      <div className="text-center p-4 bg-white rounded-lg">
+                        <p className="text-sm text-slate-600 mb-1">2 Years</p>
+                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection2y)}</p>
+                        <p className="text-xs text-green-600">+{formatPercent((projection2y - userInvestment) / userInvestment * 100)}</p>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-4 text-center">
+                      *Projections based on 47% APY backtested performance. Past performance does not guarantee future results.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Project Progress */}
               <div className="coinbase-card rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-6 text-slate-900">Project Progress</h3>
+                <h3 className="text-2xl font-bold mb-6 text-slate-900">Seeding Progress</h3>
                 <div className="bg-slate-200 rounded-full h-4 mb-6">
                   <div
                     className="progress-bar h-4 rounded-full transition-all duration-500"
@@ -453,21 +598,32 @@ function InvestorDashboard() {
                 </div>
               </div>
 
+              {/* Investment Summary */}
               <div className="coinbase-card rounded-2xl p-8">
                 <h3 className="text-2xl font-bold mb-6 text-slate-900">Your Investment Summary</h3>
                 <div className="grid md:grid-cols-2 gap-8">
                   <div className="space-y-4">
                     <div className="flex justify-between items-center py-3 border-b border-slate-200">
                       <span className="text-slate-600 font-medium">AVA Tokens Purchased</span>
-                      <span className="text-slate-900 font-bold">{formatNumber(userData.purchasedAmount)}</span>
+                      <div className="text-right">
+                        <span className="text-slate-900 font-bold block">{formatNumber(userData.purchasedAmount)}</span>
+                        <span className="text-slate-500 text-sm">{formatCurrency(parseFloat(userData.purchasedAmount) * prices.ava)}</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-slate-200">
                       <span className="text-slate-600 font-medium">Current AVA Balance</span>
-                      <span className="text-slate-900 font-bold">{formatNumber(userData.avaBalance)}</span>
+                      <div className="text-right">
+                        <span className="text-slate-900 font-bold block">{formatNumber(userData.avaBalance)}</span>
+                        <span className="text-slate-500 text-sm">{formatCurrency(avaBalanceUSD)}</span>
+                      </div>
                     </div>
                     <div className="flex justify-between items-center py-3 border-b border-slate-200">
                       <span className="text-slate-600 font-medium">USDC Balance</span>
-                      <span className="text-slate-900 font-bold">{formatNumber(userData.usdcBalance)}</span>
+                      <span className="text-slate-900 font-bold">${formatNumber(userData.usdcBalance)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-3 border-b border-slate-200">
+                      <span className="text-slate-600 font-medium">Total Portfolio Value</span>
+                      <span className="text-blue-600 font-bold text-lg">{formatCurrency(totalPortfolioValue)}</span>
                     </div>
                     <div className="flex justify-between items-center py-3">
                       <span className="text-slate-600 font-medium">Portfolio Ownership</span>
@@ -483,7 +639,7 @@ function InvestorDashboard() {
                       </div>
                       <div className="flex items-center">
                         <Zap className="w-5 h-5 text-yellow-600 mr-3" />
-                        <span className="text-slate-700">Automated profit distribution</span>
+                        <span className="text-slate-700">Automated buybacks</span>
                       </div>
                       <div className="flex items-center">
                         <Activity className="w-5 h-5 text-blue-600 mr-3" />
@@ -492,6 +648,20 @@ function InvestorDashboard() {
                       <div className="flex items-center">
                         <Target className="w-5 h-5 text-purple-600 mr-3" />
                         <span className="text-slate-700">47% APY total returns</span>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-6 pt-6 border-t border-slate-200">
+                      <p className="text-sm font-medium text-slate-700 mb-2">Current Market Prices</p>
+                      <div className="space-y-1 text-sm text-slate-600">
+                        <div className="flex justify-between">
+                          <span>Bitcoin:</span>
+                          <span className="font-bold">{formatCurrency(prices.bitcoin)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>AVA Token:</span>
+                          <span className="font-bold">{formatCurrency(prices.ava)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -510,24 +680,24 @@ function InvestorDashboard() {
                       <TrendingUp className="w-6 h-6 text-green-600" />
                     </div>
                     <p className="text-3xl font-bold text-green-600 mb-2">47%</p>
-                    <p className="text-slate-700 font-medium">Total NAV + Profits APY</p>
+                    <p className="text-slate-700 font-medium">APY from Total NAV + Total accumulated Profits </p>
                     <p className="text-sm text-slate-500 mt-2">2021-2025 backtested compounded growth</p>
                   </div>
                   <div className="bg-blue-50 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center">
                       <Activity className="w-6 h-6 text-blue-600" />
                     </div>
-                    <p className="text-3xl font-bold text-blue-600 mb-2">27.3%</p>
-                    <p className="text-slate-700 font-medium">Extractable Profits APY</p>
+                    <p className="text-3xl font-bold text-blue-600 mb-2">27%</p>
+                    <p className="text-slate-700 font-medium">Average Yearly Extractable Profits</p>
                     <p className="text-sm text-slate-500 mt-2">Yearly average on initial allocation</p>
                   </div>
                   <div className="bg-purple-50 rounded-xl p-6 text-center">
                     <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-full flex items-center justify-center">
                       <Shield className="w-6 h-6 text-purple-600" />
                     </div>
-                    <p className="text-3xl font-bold text-purple-600 mb-2">8%</p>
+                    <p className="text-3xl font-bold text-purple-600 mb-2">{projectData.sellTaxRate}%</p>
                     <p className="text-slate-700 font-medium">Sell Tax Rate</p>
-                    <p className="text-sm text-slate-500 mt-2">Supports buyback program</p>
+                    <p className="text-sm text-slate-500 mt-2">discourages Arbitrage</p>
                   </div>
                 </div>
               </div>
@@ -542,7 +712,7 @@ function InvestorDashboard() {
                     <ul className="text-sm text-blue-700 space-y-1">
                       <li>• 8% rebalancing threshold optimized</li>
                       <li>• 47% APY total NAV growth</li>
-                      <li>• 27.3% extractable profits APY</li>
+                      <li>• 27% Yearly extractable profits</li>
                       <li>• Adaptive 10%-70% exposure</li>
                       <li>• Monthly scaling to new NAV</li>
                       <li>• Final NAV: $12.495M from $2M</li>
@@ -569,13 +739,19 @@ function InvestorDashboard() {
                   <div>
                     <h4 className="text-lg font-bold text-slate-900 mb-4">Revenue Allocation</h4>
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                        <span className="font-medium text-green-800">Initial Phase: Buybacks & Liquidity</span>
-                        <span className="text-2xl font-bold text-green-600">70%</span>
+                      <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
+                        <div>
+                          <p className="font-bold text-green-900">Buybacks & Liquidity</p>
+                          <p className="text-green-700 text-sm">Until 70% sold</p>
+                        </div>
+                        <p className="text-2xl font-bold text-green-600">70%-85%</p>
                       </div>
-                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
-                        <span className="font-medium text-blue-800">Operations & Treasury</span>
-                        <span className="text-2xl font-bold text-blue-600">30%</span>
+                      <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                        <div>
+                          <p className="font-bold text-blue-900">Operations & Treasury</p>
+                          <p className="text-blue-700 text-sm">Ongoing operations</p>
+                        </div>
+                        <p className="text-2xl font-bold text-blue-600">30%-15</p>
                       </div>
                       <div className="mt-4 p-3 bg-purple-50 rounded-lg">
                         <p className="text-purple-800 text-sm">After 70% token sale: 85% to buybacks, 15% operations</p>
@@ -637,9 +813,10 @@ function InvestorDashboard() {
                 <h3 className="text-2xl font-bold mb-6 text-slate-900">The AVALON Approach</h3>
                 <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-6">
                   <p className="text-lg text-slate-700 leading-relaxed">
-                    "Avalon delivers consistent growth by capitalizing on Bitcoin's inherent price volatility. 
-                    <span className="font-bold text-blue-600"> Our proprietary BARS (Bitcoin Adaptive Rebalancing Strategy) </span> 
-                    employs a systematic approach, buying Bitcoin below target exposure and selling above it."
+                    AVALON introduces a disciplined, data-driven approach to Bitcoin exposure through its proprietary 
+                    <span className="font-bold text-blue-600"> Bitcoin Adaptive Rebalancing Strategy (BARS) </span> 
+                    a systematic mechanism designed to convert Bitcoin’s inherent price swings into steady, compounding growth.
+BARS continuously rebalances exposure with each market movement — buying Bitcoin when exposure falls below target and selling when it exceeds the target. This reactive process captures volatility-driven gains without requiring market timing.
                   </p>
                 </div>
 
@@ -670,7 +847,7 @@ function InvestorDashboard() {
                               </li>
                               <li className="flex items-start">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                <span>8% optimal rebalancing threshold</span>
+                                <span>8% optimal rebalancing threshold on sell events</span>
                               </li>
                               <li className="flex items-start">
                                 <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
@@ -690,8 +867,8 @@ function InvestorDashboard() {
                                 <p className="text-green-700 text-sm">Total NAV + accumulated profits</p>
                               </div>
                               <div className="bg-blue-50 rounded-lg p-4">
-                                <p className="font-bold text-blue-600 text-lg">27.3% APY</p>
-                                <p className="text-blue-700 text-sm">Extractable profits yearly</p>
+                                <p className="font-bold text-blue-600 text-lg">27% APY</p>
+                                <p className="text-blue-700 text-sm">Average yearly extractable profits</p>
                               </div>
                               <div className="bg-purple-50 rounded-lg p-4">
                                 <p className="font-bold text-purple-600 text-lg">$12.495M</p>
@@ -711,7 +888,7 @@ function InvestorDashboard() {
                     >
                       <div>
                         <h4 className="text-xl font-bold text-slate-900">Risk Management Framework</h4>
-                        <p className="text-slate-600 mt-1">Capital preservation and market signal monitoring</p>
+                        <p className="text-slate-600 mt-1">Capital preservation and reserve management</p>
                       </div>
                       {expandedSections.riskManagement ? 
                         <ChevronUp className="w-6 h-6 text-slate-400" /> : 
@@ -734,20 +911,20 @@ function InvestorDashboard() {
                               </li>
                               <li className="flex items-start">
                                 <span className="w-2 h-2 bg-green-500 rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                                <span>Dynamic reserves increase near cycle tops</span>
+                                <span>Adaptive exposure optimize reserves</span>
                               </li>
                             </ul>
                           </div>
                           <div>
-                            <h5 className="font-bold text-slate-900 mb-3">Market Signal Tracking</h5>
+                            <h5 className="font-bold text-slate-900 mb-3">Protection Mechanisms</h5>
                             <div className="space-y-3">
                               <div className="bg-blue-50 rounded-lg p-4">
-                                <p className="font-bold text-blue-600 text-sm">Bitcoin Quantile Model</p>
-                                <p className="text-blue-700 text-xs mt-1">Price percentile tracking for timing</p>
+                                <p className="font-bold text-blue-600 text-sm">No Leverage</p>
+                                <p className="text-blue-700 text-xs mt-1">Zero liquidation risk</p>
                               </div>
                               <div className="bg-purple-50 rounded-lg p-4">
-                                <p className="font-bold text-purple-600 text-sm">Funding Rates</p>
-                                <p className="text-purple-700 text-xs mt-1">Leverage and sentiment monitoring</p>
+                                <p className="font-bold text-purple-600 text-sm">Systematic Rules</p>
+                                <p className="text-purple-700 text-xs mt-1">Removes emotional trading</p>
                               </div>
                             </div>
                           </div>
@@ -766,552 +943,148 @@ function InvestorDashboard() {
                 <div className="flex items-center mb-6">
                   <Shield className="w-8 h-8 text-blue-600 mr-3" />
                   <div>
-                    <h3 className="text-2xl font-bold text-slate-900">Comprehensive Risk Management</h3>
+                    <h3 className="text-2xl font-bold text-slate-900">Risk Management</h3>
                     <p className="text-slate-600">Multi-layered protection for your investment</p>
                   </div>
                 </div>
 
-                <div className="bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl p-6 mb-8">
-                  <div className="flex items-start">
-                    <Info className="w-6 h-6 text-blue-600 mr-3 mt-1 flex-shrink-0" />
-                    <div>
-                      <p className="text-lg font-bold text-blue-900 mb-2">Core Risk Principle</p>
-                      <p className="text-slate-700 italic">"Return OF capital is more important than return ON capital"</p>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-                        <div className="flex items-center text-sm text-blue-700">
-                          <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>USDC reserves</span>
+                <div className="space-y-6">
+                  {/* Core Protection */}
+                  <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-6">
+                    <h4 className="text-lg font-bold text-slate-900 mb-4">Core Protection Mechanisms</h4>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="flex items-start p-4 bg-white rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-slate-900 mb-1">No Leverage</p>
+                          <p className="text-sm text-slate-600">Zero liquidation risk - only spot holdings</p>
                         </div>
-                        <div className="flex items-center text-sm text-blue-700">
-                          <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>No leverage</span>
+                      </div>
+                      <div className="flex items-start p-4 bg-white rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-slate-900 mb-1">USDC Reserves</p>
+                          <p className="text-sm text-slate-600">50% total in stablecoins for downside protection</p>
                         </div>
-                        <div className="flex items-center text-sm text-blue-700">
-                          <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>Systematic rules</span>
+                      </div>
+                      <div className="flex items-start p-4 bg-white rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-slate-900 mb-1">Systematic Rules</p>
+                          <p className="text-sm text-slate-600">Removes emotional decision making</p>
                         </div>
-                        <div className="flex items-center text-sm text-blue-700">
-                          <CheckCircle className="w-4 h-4 mr-2 flex-shrink-0" />
-                          <span>Diversification</span>
+                      </div>
+                      <div className="flex items-start p-4 bg-white rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="font-bold text-slate-900 mb-1">Adaptive Exposure</p>
+                          <p className="text-sm text-slate-600">10%-70% BTC range based on conditions</p>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
+                  {/* Reserve Breakdown */}
+                  <div className="coinbase-card rounded-xl p-6">
+                    <h4 className="text-lg font-bold text-slate-900 mb-4">Reserve Allocation</h4>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="p-4 bg-blue-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-bold text-blue-900">BARS Strategy Reserves</p>
+                          <p className="text-2xl font-bold text-blue-600">30%</p>
+                        </div>
+                        <p className="text-sm text-blue-700">Available for buying market dips and crashes</p>
+                      </div>
+                      <div className="p-4 bg-purple-50 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="font-bold text-purple-900">Liquidity Pool Reserves</p>
+                          <p className="text-2xl font-bold text-purple-600">20%</p>
+                        </div>
+                        <p className="text-sm text-purple-700">Supporting token liquidity and stability</p>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Protocol Safety */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('protocolSafety')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <Globe className="w-6 h-6 text-green-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Protocol Safety Framework</h4>
-                          <p className="text-slate-600 mt-1">Audited protocols and multi-sig security</p>
-                        </div>
-                      </div>
-                      {expandedSections.protocolSafety ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.protocolSafety && (
-                      <div className="px-6 pb-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-4">Approved Protocols</h5>
-                            <div className="space-y-3">
-                              <div className="flex items-start p-3 bg-green-50 rounded-lg">
-                                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium text-green-900">Uniswap V3</p>
-                                  <p className="text-sm text-green-700">Audited, $50B+ TVL</p>
-                                </div>
-                              </div>
-                              <div className="flex items-start p-3 bg-green-50 rounded-lg">
-                                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium text-green-900">Base Chain</p>
-                                  <p className="text-sm text-green-700">Coinbase backed L2</p>
-                                </div>
-                              </div>
-                              <div className="flex items-start p-3 bg-green-50 rounded-lg">
-                                <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 mr-3 flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium text-green-900">Circle USDC</p>
-                                  <p className="text-sm text-green-700">Regulated, fully audited</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-4">What We Avoid</h5>
-                            <div className="space-y-2">
-                              <div className="flex items-center p-3 bg-red-50 rounded-lg">
-                                <X className="w-5 h-5 text-red-600 mr-3" />
-                                <span className="text-red-700">New/unaudited protocols</span>
-                              </div>
-                              <div className="flex items-center p-3 bg-red-50 rounded-lg">
-                                <X className="w-5 h-5 text-red-600 mr-3" />
-                                <span className="text-red-700">Complex protocol interactions</span>
-                              </div>
-                              <div className="flex items-center p-3 bg-red-50 rounded-lg">
-                                <X className="w-5 h-5 text-red-600 mr-3" />
-                                <span className="text-red-700">Lending/borrowing (no leverage)</span>
-                              </div>
-                              <div className="flex items-center p-3 bg-red-50 rounded-lg">
-                                <X className="w-5 h-5 text-red-600 mr-3" />
-                                <span className="text-red-700">Unvetted yield farms</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                          <div className="flex items-start">
-                            <Lock className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div className="coinbase-card rounded-xl p-6">
+                    <h4 className="text-lg font-bold text-slate-900 mb-4">Protocol Safety</h4>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div>
+                        <h5 className="font-medium text-slate-900 mb-3">Approved Protocols</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
                             <div>
-                              <p className="font-bold text-blue-900 mb-2">Multi-Sig Treasury Security</p>
-                              <p className="text-sm text-blue-700">3-of-5 multi-signature wallet with geographically distributed key holders including Chief Strategist, Lead Developer, Security Advisor, and future Community Representatives.</p>
+                              <p className="font-medium text-green-900 text-sm">Uniswap V3</p>
+                              <p className="text-xs text-green-700">Battle-tested DEX</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                            <div>
+                              <p className="font-medium text-green-900 text-sm">Base Chain</p>
+                              <p className="text-xs text-green-700">Coinbase L2</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center p-3 bg-green-50 rounded-lg">
+                            <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                            <div>
+                              <p className="font-medium text-green-900 text-sm">Circle USDC</p>
+                              <p className="text-xs text-green-700">Regulated stablecoin</p>
                             </div>
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Market Indicators */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('marketIndicators')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <Activity className="w-6 h-6 text-blue-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Market Signal Monitoring</h4>
-                          <p className="text-slate-600 mt-1">Real-time indicators for risk management</p>
-                        </div>
-                      </div>
-                      {expandedSections.marketIndicators ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.marketIndicators && (
-                      <div className="px-6 pb-6">
-                        <div className="space-y-6">
-                          {/* Funding Rates */}
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-3">1. Funding Rates (Trader Sentiment)</h5>
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-sm">
-                                <thead className="bg-slate-100">
-                                  <tr>
-                                    <th className="px-4 py-3 text-left font-semibold">Rate (8hr)</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Interpretation</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Action</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                  <tr className="bg-red-50">
-                                    <td className="px-4 py-3 font-medium">&gt; +0.05%</td>
-                                    <td className="px-4 py-3">Extreme greed</td>
-                                    <td className="px-4 py-3 text-red-700 font-medium">Reduce exposure</td>
-                                  </tr>
-                                  <tr className="bg-yellow-50">
-                                    <td className="px-4 py-3 font-medium">+0.01% to +0.05%</td>
-                                    <td className="px-4 py-3">Bullish</td>
-                                    <td className="px-4 py-3 text-yellow-700 font-medium">Monitor closely</td>
-                                  </tr>
-                                  <tr className="bg-green-50">
-                                    <td className="px-4 py-3 font-medium">-0.01% to +0.01%</td>
-                                    <td className="px-4 py-3">Neutral</td>
-                                    <td className="px-4 py-3 text-green-700 font-medium">Normal operations</td>
-                                  </tr>
-                                  <tr className="bg-blue-50">
-                                    <td className="px-4 py-3 font-medium">&lt; -0.01%</td>
-                                    <td className="px-4 py-3">Fear</td>
-                                    <td className="px-4 py-3 text-blue-700 font-medium">Consider increasing</td>
-                                  </tr>
-                                  <tr className="bg-cyan-50">
-                                    <td className="px-4 py-3 font-medium">&lt; -0.05%</td>
-                                    <td className="px-4 py-3">Extreme fear</td>
-                                    <td className="px-4 py-3 text-cyan-700 font-medium">Deploy reserves</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
+                      <div>
+                        <h5 className="font-medium text-slate-900 mb-3">What We Avoid</h5>
+                        <div className="space-y-2">
+                          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+                            <X className="w-5 h-5 text-red-600 mr-3" />
+                            <span className="text-red-700 text-sm">Unaudited protocols</span>
                           </div>
-
-                          {/* MVRV Z-Score */}
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-3">2. MVRV Z-Score (Market Valuation)</h5>
-                            <div className="overflow-x-auto">
-                              <table className="w-full text-sm">
-                                <thead className="bg-slate-100">
-                                  <tr>
-                                    <th className="px-4 py-3 text-left font-semibold">Z-Score</th>
-                                    <th className="px-4 py-3 text-left font-semibold">Market State</th>
-                                    <th className="px-4 py-3 text-left font-semibold">BTC Exposure Target</th>
-                                  </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-200">
-                                  <tr className="bg-red-50">
-                                    <td className="px-4 py-3 font-medium">&gt; 7</td>
-                                    <td className="px-4 py-3">Extremely overheated</td>
-                                    <td className="px-4 py-3 text-red-700 font-medium">40-50% BTC</td>
-                                  </tr>
-                                  <tr className="bg-orange-50">
-                                    <td className="px-4 py-3 font-medium">5-7</td>
-                                    <td className="px-4 py-3">Overheated</td>
-                                    <td className="px-4 py-3 text-orange-700 font-medium">50-60% BTC</td>
-                                  </tr>
-                                  <tr className="bg-green-50">
-                                    <td className="px-4 py-3 font-medium">2-5</td>
-                                    <td className="px-4 py-3">Normal range</td>
-                                    <td className="px-4 py-3 text-green-700 font-medium">70% BTC (baseline)</td>
-                                  </tr>
-                                  <tr className="bg-blue-50">
-                                    <td className="px-4 py-3 font-medium">0-2</td>
-                                    <td className="px-4 py-3">Undervalued</td>
-                                    <td className="px-4 py-3 text-blue-700 font-medium">Consider increasing</td>
-                                  </tr>
-                                  <tr className="bg-cyan-50">
-                                    <td className="px-4 py-3 font-medium">&lt; 0</td>
-                                    <td className="px-4 py-3">Extremely undervalued</td>
-                                    <td className="px-4 py-3 text-cyan-700 font-medium">Up to 80% BTC</td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
+                          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+                            <X className="w-5 h-5 text-red-600 mr-3" />
+                            <span className="text-red-700 text-sm">Leverage/borrowing</span>
                           </div>
-
-                          {/* Other Indicators */}
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="p-4 bg-purple-50 rounded-lg">
-                              <h6 className="font-bold text-purple-900 mb-2">3. Liquidation Heatmaps</h6>
-                              <p className="text-sm text-purple-700 mb-2">Track leveraged position concentrations</p>
-                              <ul className="text-xs text-purple-600 space-y-1">
-                                <li>• Deploy near major liquidation clusters</li>
-                                <li>• Avoid buying into cascades</li>
-                                <li>• Wait for stabilization signals</li>
-                              </ul>
-                            </div>
-                            <div className="p-4 bg-indigo-50 rounded-lg">
-                              <h6 className="font-bold text-indigo-900 mb-2">4. Bitcoin Dominance</h6>
-                              <p className="text-sm text-indigo-700 mb-2">Capital rotation patterns</p>
-                              <ul className="text-xs text-indigo-600 space-y-1">
-                                <li>• &gt;65%: BTC season (focus BARS)</li>
-                                <li>• 50-65%: Mixed market (balanced)</li>
-                                <li>• &lt;50%: Alt season (more DeFi)</li>
-                              </ul>
-                            </div>
+                          <div className="flex items-center p-3 bg-red-50 rounded-lg">
+                            <X className="w-5 h-5 text-red-600 mr-3" />
+                            <span className="text-red-700 text-sm">Complex interactions</span>
                           </div>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Reserve Adequacy */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('reserveManagement')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <Database className="w-6 h-6 text-green-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Reserve Adequacy Analysis</h4>
-                          <p className="text-slate-600 mt-1">Capital buffers for market corrections</p>
-                        </div>
-                      </div>
-                      {expandedSections.reserveManagement ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.reserveManagement && (
-                      <div className="px-6 pb-6">
-                        <div className="mb-6">
-                          <h5 className="font-bold text-slate-900 mb-3">USDC Reserve Allocation</h5>
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="p-4 bg-blue-50 rounded-lg">
-                              <p className="text-3xl font-bold text-blue-600 mb-1">30%</p>
-                              <p className="text-blue-800 font-medium">BARS Strategy Reserves</p>
-                              <p className="text-sm text-blue-600 mt-2">For buying crashes and black swan events</p>
-                            </div>
-                            <div className="p-4 bg-purple-50 rounded-lg">
-                              <p className="text-3xl font-bold text-purple-600 mb-1">20%</p>
-                              <p className="text-purple-800 font-medium">Liquidity Pool Reserves</p>
-                              <p className="text-sm text-purple-600 mt-2">For LP rebalancing and opportunities</p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <h5 className="font-bold text-slate-900 mb-3">Scenario Analysis</h5>
-                          <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                              <thead className="bg-slate-100">
-                                <tr>
-                                  <th className="px-4 py-3 text-left font-semibold">Scenario</th>
-                                  <th className="px-4 py-3 text-left font-semibold">Reserve Need</th>
-                                  <th className="px-4 py-3 text-left font-semibold">Our Reserves</th>
-                                  <th className="px-4 py-3 text-left font-semibold">Status</th>
-                                </tr>
-                              </thead>
-                              <tbody className="divide-y divide-slate-200">
-                                <tr className="bg-green-50">
-                                  <td className="px-4 py-3 font-medium">30% BTC correction</td>
-                                  <td className="px-4 py-3">$420K</td>
-                                  <td className="px-4 py-3">$600K+</td>
-                                  <td className="px-4 py-3">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                      <CheckCircle className="w-3 h-3 mr-1" />
-                                      Covered
-                                    </span>
-                                  </td>
-                                </tr>
-                                <tr className="bg-yellow-50">
-                                  <td className="px-4 py-3 font-medium">50% BTC crash</td>
-                                  <td className="px-4 py-3">$700K</td>
-                                  <td className="px-4 py-3">$600K+</td>
-                                  <td className="px-4 py-3">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                      <AlertTriangle className="w-3 h-3 mr-1" />
-                                      Partial
-                                    </span>
-                                  </td>
-                                </tr>
-                                <tr className="bg-red-50">
-                                  <td className="px-4 py-3 font-medium">70% bear market</td>
-                                  <td className="px-4 py-3">$980K</td>
-                                  <td className="px-4 py-3">$600K+</td>
-                                  <td className="px-4 py-3">
-                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                      <AlertCircle className="w-3 h-3 mr-1" />
-                                      Adjust needed
-                                    </span>
-                                  </td>
-                                </tr>
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-
-                        <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                          <p className="font-bold text-blue-900 mb-2">Dynamic Reserve Strategy</p>
-                          <ul className="text-sm text-blue-700 space-y-1">
-                            <li>• Increase reserves to 40-60% near cycle tops</li>
-                            <li>• Deploy reserves gradually during crashes</li>
-                            <li>• Reduce exposure in overheated markets proactively</li>
-                          </ul>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* DeFi Risks */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('defiRisks')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <AlertTriangle className="w-6 h-6 text-orange-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">DeFi-Specific Risk Mitigation</h4>
-                          <p className="text-slate-600 mt-1">Smart contract and liquidity protection</p>
-                        </div>
-                      </div>
-                      {expandedSections.defiRisks ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.defiRisks && (
-                      <div className="px-6 pb-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-3">Impermanent Loss Protection</h5>
-                            <div className="space-y-3">
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Wide Ranges</p>
-                                <p className="text-xs text-slate-600">Minimize IL exposure in Uniswap V3</p>
-                              </div>
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Fee Compensation</p>
-                                <p className="text-xs text-slate-600">Target IL &lt; 5% offset by trading fees</p>
-                              </div>
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Regular Rebalancing</p>
-                                <p className="text-xs text-slate-600">Adjust positions as market moves</p>
-                              </div>
-                            </div>
-                          </div>
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-3">Smart Contract Safety</h5>
-                            <div className="space-y-3">
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Protocol Diversification</p>
-                                <p className="text-xs text-slate-600">Keep &lt;20% in any single protocol</p>
-                              </div>
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Audited Code Only</p>
-                                <p className="text-xs text-slate-600">Use battle-tested contracts</p>
-                              </div>
-                              <div className="p-3 bg-slate-50 rounded-lg">
-                                <p className="font-medium text-slate-900 text-sm mb-1">Anomaly Detection</p>
-                                <p className="text-xs text-slate-600">24/7 monitoring systems</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Volatility Management */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('volatilityMgmt')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <TrendingDown className="w-6 h-6 text-purple-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Volatility Management</h4>
-                          <p className="text-slate-600 mt-1">Adaptive exposure based on market conditions</p>
-                        </div>
-                      </div>
-                      {expandedSections.volatilityMgmt ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.volatilityMgmt && (
-                      <div className="px-6 pb-6">
-                        <div className="overflow-x-auto">
-                          <table className="w-full text-sm">
-                            <thead className="bg-slate-100">
-                              <tr>
-                                <th className="px-4 py-3 text-left font-semibold">Indicator</th>
-                                <th className="px-4 py-3 text-left font-semibold">Low</th>
-                                <th className="px-4 py-3 text-left font-semibold">Medium</th>
-                                <th className="px-4 py-3 text-left font-semibold">High</th>
-                                <th className="px-4 py-3 text-left font-semibold">Extreme</th>
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                              <tr>
-                                <td className="px-4 py-3 font-medium">BTC 30-Day Vol</td>
-                                <td className="px-4 py-3 bg-green-50">&lt;30%</td>
-                                <td className="px-4 py-3 bg-yellow-50">30-50%</td>
-                                <td className="px-4 py-3 bg-orange-50">50-80%</td>
-                                <td className="px-4 py-3 bg-red-50">&gt;80%</td>
-                              </tr>
-                              <tr>
-                                <td className="px-4 py-3 font-medium">Daily Moves</td>
-                                <td className="px-4 py-3 bg-green-50">&lt;3%</td>
-                                <td className="px-4 py-3 bg-yellow-50">3-5%</td>
-                                <td className="px-4 py-3 bg-orange-50">5-8%</td>
-                                <td className="px-4 py-3 bg-red-50">&gt;8%</td>
-                              </tr>
-                              <tr>
-                                <td className="px-4 py-3 font-medium">BTC Exposure</td>
-                                <td className="px-4 py-3 bg-green-50">70%</td>
-                                <td className="px-4 py-3 bg-yellow-50">60-70%</td>
-                                <td className="px-4 py-3 bg-orange-50">50-60%</td>
-                                <td className="px-4 py-3 bg-red-50">40-50%</td>
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <div className="mt-6 p-4 bg-purple-50 rounded-lg">
-                          <p className="font-bold text-purple-900 mb-2">Adaptive Response System</p>
-                          <p className="text-sm text-purple-700">Exposure automatically adjusts based on volatility levels to protect capital during extreme market conditions while maintaining optimal positioning during normal markets.</p>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Emergency Protocols */}
-                  <div className="border border-slate-200 rounded-xl">
-                    <button
-                      onClick={() => toggleSection('emergencyProtocols')}
-                      className="w-full flex items-center justify-between p-6 text-left hover:bg-slate-50 rounded-xl transition-colors"
-                    >
-                      <div className="flex items-center">
-                        <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
-                        <div>
-                          <h4 className="text-xl font-bold text-slate-900">Emergency Protocols</h4>
-                          <p className="text-slate-600 mt-1">Crisis management and liquidity safeguards</p>
-                        </div>
+                  <div className="bg-orange-50 rounded-xl p-6 border border-orange-200">
+                    <div className="flex items-start">
+                      <AlertTriangle className="w-6 h-6 text-orange-600 mt-1 mr-3 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-lg font-bold text-orange-900 mb-2">Emergency Liquidity Protocol</h4>
+                        <p className="text-sm text-orange-800 mb-3">
+                          In case of severe liquidity crisis, the protocol can add incremental liquidity at discounted price levels:
+                        </p>
+                        <ul className="text-sm text-orange-700 space-y-2">
+                          <li className="flex items-start">
+                            <span className="font-bold mr-2">•</span>
+                            <span>5% of total supply added at 50% price discount per level</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="font-bold mr-2">•</span>
+                            <span>Creates strong support levels during market stress</span>
+                          </li>
+                          <li className="flex items-start">
+                            <span className="font-bold mr-2">•</span>
+                            <span>Protects long-term holders and maintains stability</span>
+                          </li>
+                        </ul>
                       </div>
-                      {expandedSections.emergencyProtocols ? 
-                        <ChevronUp className="w-6 h-6 text-slate-400" /> : 
-                        <ChevronDown className="w-6 h-6 text-slate-400" />
-                      }
-                    </button>
-                    {expandedSections.emergencyProtocols && (
-                      <div className="px-6 pb-6">
-                        <div className="space-y-6">
-                          <div>
-                            <h5 className="font-bold text-slate-900 mb-3">Liquidity Crisis Protocol</h5>
-                            <div className="p-4 bg-orange-50 rounded-lg">
-                              <p className="text-sm text-orange-800 mb-3">
-                                In case of severe liquidity crisis where AVA price drops significantly:
-                              </p>
-                              <ul className="text-sm text-orange-700 space-y-2">
-                                <li className="flex items-start">
-                                  <span className="font-bold mr-2">1.</span>
-                                  <span>Add 5% of total supply as liquidity at 50% price discount</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="font-bold mr-2">2.</span>
-                                  <span>Incremental additions every step down</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="font-bold mr-2">3.</span>
-                                  <span>Creates strong support levels and buying opportunities</span>
-                                </li>
-                                <li className="flex items-start">
-                                  <span className="font-bold mr-2">4.</span>
-                                  <span>Protects long-term holders while maintaining market stability</span>
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-
-                          <div className="grid md:grid-cols-2 gap-4">
-                            <div className="p-4 bg-red-50 rounded-lg">
-                              <h6 className="font-bold text-red-900 mb-2">Circuit Breakers</h6>
-                              <ul className="text-sm text-red-700 space-y-1">
-                                <li>• Automatic trading pauses during extreme volatility</li>
-                                <li>• Multi-sig approval for large transactions</li>
-                                <li>• Time-delayed withdrawals from treasury</li>
-                              </ul>
-                            </div>
-                            <div className="p-4 bg-blue-50 rounded-lg">
-                              <h6 className="font-bold text-blue-900 mb-2">Operational Security</h6>
-                              <ul className="text-sm text-blue-700 space-y-1">
-                                <li>• Hot wallet limits enforced</li>
-                                <li>• Cold storage for majority of funds</li>
-                                <li>• Regular security audits and penetration testing</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Risk Summary Dashboard */}
+              {/* Risk Status Summary */}
               <div className="coinbase-card rounded-2xl p-8">
                 <h3 className="text-2xl font-bold mb-6 text-slate-900">Current Risk Status</h3>
                 <div className="grid md:grid-cols-3 gap-6">
@@ -1321,7 +1094,7 @@ function InvestorDashboard() {
                       <span className="font-bold text-green-900">Low Risk</span>
                     </div>
                     <p className="text-sm text-green-700 mb-2">Protocol Safety</p>
-                    <p className="text-xs text-green-600">Audited protocols, multi-sig security</p>
+                    <p className="text-xs text-green-600">Audited protocols only</p>
                   </div>
                   <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
                     <div className="flex items-center mb-3">
@@ -1329,15 +1102,15 @@ function InvestorDashboard() {
                       <span className="font-bold text-green-900">Low Risk</span>
                     </div>
                     <p className="text-sm text-green-700 mb-2">Reserve Coverage</p>
-                    <p className="text-xs text-green-600">Adequate for 30% BTC corrections</p>
+                    <p className="text-xs text-green-600">50% in USDC reserves</p>
                   </div>
-                  <div className="p-6 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                  <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
                     <div className="flex items-center mb-3">
-                      <AlertTriangle className="w-6 h-6 text-yellow-600 mr-2" />
-                      <span className="font-bold text-yellow-900">Monitor</span>
+                      <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
+                      <span className="font-bold text-green-900">Low Risk</span>
                     </div>
-                    <p className="text-sm text-yellow-700 mb-2">Market Volatility</p>
-                    <p className="text-xs text-yellow-600">Active monitoring of market indicators</p>
+                    <p className="text-sm text-green-700 mb-2">No Leverage</p>
+                    <p className="text-xs text-green-600">Zero liquidation risk</p>
                   </div>
                 </div>
               </div>
@@ -1356,16 +1129,22 @@ function InvestorDashboard() {
                       <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                         <div>
                           <p className="font-bold text-blue-900">Seeding Allocation</p>
-                          <p className="text-blue-700 text-sm">4,375,000 AVA (87.5%)</p>
+                          <p className="text-blue-700 text-sm">4,375,000 AVA</p>
                         </div>
                         <p className="text-2xl font-bold text-blue-600">87.5%</p>
                       </div>
                       <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border-l-4 border-green-500">
                         <div>
                           <p className="font-bold text-green-900">Liquidity Pool</p>
-                          <p className="text-green-700 text-sm">625,000 AVA (12.5%)</p>
+                          <p className="text-green-700 text-sm">625,000 AVA</p>
                         </div>
                         <p className="text-2xl font-bold text-green-600">12.5%</p>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-lg">
+                        <div className="flex justify-between items-center">
+                          <p className="font-bold text-slate-900">Total Supply</p>
+                          <p className="text-xl font-bold text-slate-900">{formatNumber(projectData.totalSupply)} AVA</p>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1384,7 +1163,14 @@ function InvestorDashboard() {
                         <ArrowUpRight className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-blue-800">Deflationary Mechanism</p>
-                          <p className="text-blue-700 text-sm">70-85% to buybacks</p>
+                          <p className="text-blue-700 text-sm">70-85% revenue to buybacks</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start p-3 bg-purple-50 rounded-lg">
+                        <Activity className="w-5 h-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="font-medium text-purple-800">{projectData.sellTaxRate}% Sell Tax</p>
+                          <p className="text-purple-700 text-sm">Funds buyback program</p>
                         </div>
                       </div>
                     </div>

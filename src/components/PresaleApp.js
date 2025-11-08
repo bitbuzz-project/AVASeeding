@@ -444,7 +444,7 @@ function PresaleApp() {
           <div className="flex items-center justify-center gap-2 text-base sm:text-lg">
             <span className="text-blue-600 font-medium">87.5% Allocation</span>
             <span className="text-slate-400">•</span>
-            <span className="text-green-600 font-medium">Up to 8% Volume Bonus</span>
+            <span className="text-green-600 font-medium">Up to 10% Volume Bonus</span>
             <span className="text-slate-400">•</span>
             <span className="text-purple-600 font-medium">60-Day Vesting</span>
           </div>
@@ -845,7 +845,7 @@ function PresaleApp() {
                   </div>
                   <h4 className="font-bold text-blue-900">Volume Bonuses</h4>
                 </div>
-                <p className="text-sm text-blue-800">Up to 8% bonus on purchases over $60K</p>
+                <p className="text-sm text-blue-800">Up to 10% bonus on purchases over $300K</p>
               </div>
 
               <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">

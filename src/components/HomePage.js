@@ -10,6 +10,7 @@ import {
   ArrowRight,
   DollarSign,
   BarChart3,
+  FileSpreadsheet,
   Bitcoin,
   Zap,
   PieChart,
@@ -75,7 +76,7 @@ function HomePage() {
 
   const performanceMetrics = [
     { label: 'Total NAV + Profits APY', value: '47%', period: '2021-2025 Backtested' },
-    { label: 'Extractable Profits APY', value: '27.3%', period: 'On Initial Allocation' },
+    { label: 'Extractable Profits APY', value: '27%', period: 'On Initial Allocation' },
     { label: 'Outperformance vs HODL', value: '90%', period: 'Market Downturns' }
   ];
 
@@ -95,13 +96,13 @@ function HomePage() {
     {
       icon: Target,
       title: 'Proven Strategy',
-      description: 'Backtested 47% APY total returns with 27.3% yearly extractable profits.',
+      description: 'Backtested 47% APY total returns since 2021, with 27% yearly extractable profits for buybacks and liquidy growth.',
       gradient: 'from-purple-500 to-pink-500'
     },
     {
       icon: Zap,
       title: 'Revenue Share',
-      description: '70% to 85% of profits go to buybacks, creating deflationary pressure.',
+      description: '70% to 85% of profits go to buybacks and liquidity growth, creating deflationary pressure and Token value growth.',
       gradient: 'from-yellow-500 to-orange-500'
     }
   ];
@@ -201,9 +202,9 @@ function HomePage() {
                   transition={{ delay: 0.5 }}
                   className="text-lg sm:text-base lg:text-lg xl:text-xl text-slate-600 mb-8 sm:mb-6 lg:mb-8 leading-relaxed px-2 sm:px-0 max-w-2xl mx-auto lg:mx-0"
                 >
-                  Systematic Bitcoin rebalancing strategy generating
-                  <span className="font-bold text-blue-600"> 47% APY total returns</span> with
-                  <span className="font-bold text-green-600"> 27.3% yearly extractable profits</span>.
+                  Systematic Bitcoin rebalancing strategy achieving
+                  <span className="font-bold text-blue-600"> 47% APY total returns</span> since 2021, Including
+                  <span className="font-bold text-green-600"> 27% average yearly accumulated extractable profits</span>.
                 </motion.p>
 
                 <motion.div 
@@ -391,7 +392,7 @@ function HomePage() {
                     </div>
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed">
                       {allocation.name === 'Bitcoin Adaptive Rebalancing (BARS)' &&
-                        'Systematic rebalancing strategy with adaptive 10%-70% exposure, 8% threshold, achieving 47% APY with 27.3% extractable yearly profits. Monthly scaling to new NAV.'}
+                        'Systematic rebalancing strategy with adaptive 10%-70% exposure, 8% rebalancing threshold on sell events, achieving 47% APY with 27% extractable profits. Monthly scaling exposure to new NAV.'}
                       {allocation.name === 'Token Liquidity Management' &&
                         'Market support through ratcheting liquidity system starting at $1.00, ensuring price stability and growth with 8% sell tax mechanism.'}
                     </p>
@@ -538,16 +539,13 @@ function HomePage() {
                 <ul className="space-y-1 sm:space-y-2 text-xs sm:text-sm text-slate-600">
                   <li className="flex items-center">
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Tiered bonus: 2K to 300K</span>
+                    <span>Tiered bonus: 10K to 300K</span>
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
                     <span>60-day vesting period</span>
                   </li>
-                  <li className="flex items-center">
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span>Supports buyback liquidity</span>
-                  </li>
+                 
                 </ul>
               </motion.div>
             </div>
@@ -600,6 +598,13 @@ function HomePage() {
                 <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                 Explore Dashboard
               </Link>
+               <Link
+                to="https://docs.google.com/document/d/1257T8VCZD5BvzI2vBnZzzrsnpdTA8jzeX3x5SNgOQGs/edit?tab=t.0"
+                className="cta-btn-secondary w-full sm:w-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 rounded-xl font-bold text-sm sm:text-base lg:text-lg inline-flex items-center justify-center min-h-[44px] sm:min-h-[48px] lg:min-h-[52px]"
+              >
+                <FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                View Whitepaper
+              </Link>
             </motion.div>
 
             <motion.div 
@@ -614,8 +619,8 @@ function HomePage() {
                 <div className="text-xs sm:text-sm opacity-75">Total APY</div>
               </div>
               <div className="text-center">
-                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">27.3%</div>
-                <div className="text-xs sm:text-sm opacity-75">Extractable Profits</div>
+                <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">27%</div>
+                <div className="text-xs sm:text-sm opacity-75">Average Yearly Extractable Profits</div>
               </div>
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">0%</div>
@@ -623,7 +628,7 @@ function HomePage() {
               </div>
               <div className="text-center">
                 <div className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-bold mb-1 sm:mb-2">8%</div>
-                <div className="text-xs sm:text-sm opacity-75">Optimal Threshold</div>
+                <div className="text-xs sm:text-sm opacity-75">Optimal Rebalancing Threshold on Sell Events</div>
               </div>
             </motion.div>
           </div>
@@ -666,6 +671,14 @@ function HomePage() {
                   className="text-slate-300 hover:text-white transition-colors inline-flex items-center justify-center sm:justify-start text-sm sm:text-base"
                 >
                   Explorer <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                </a>
+                   <a
+                  href="https://docs.google.com/document/d/1257T8VCZD5BvzI2vBnZzzrsnpdTA8jzeX3x5SNgOQGs/edit?tab=t.0"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-slate-300 hover:text-white transition-colors inline-flex items-center justify-center sm:justify-start text-sm sm:text-base"
+                >
+                  Whitepaper <ExternalLink className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
                 </a>
               </motion.div>
             </div>
