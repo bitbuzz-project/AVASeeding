@@ -1,9 +1,24 @@
-// src/components/PresaleApp.js - UPDATED WITH REFERRAL SYSTEM
+// src/components/PresaleApp.js - UPDATED TO MATCH WHITEPAPER V2
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, Wallet, ArrowRight, CheckCircle, Loader, ExternalLink, ArrowLeft } from 'lucide-react';
+import { 
+  AlertCircle, 
+  Wallet, 
+  ArrowRight, 
+  CheckCircle, 
+  Loader, 
+  ExternalLink, 
+  ArrowLeft,
+  Info,
+  Clock,
+  TrendingUp,
+  Shield,
+  Gift,
+  Zap
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useWallet } from '../context/WalletContext';
- import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 // Dynamically import ethers to avoid SSR issues
 let ethers;
 if (typeof window !== 'undefined') {
@@ -49,6 +64,17 @@ const AVA_ABI = [
   "function balanceOf(address) external view returns (uint256)"
 ];
 
+// Volume Bonus Tiers from Whitepaper
+const BONUS_TIERS = [
+  { min: 0, max: 2000, bonus: 0, label: "No Bonus" },
+  { min: 2000, max: 5000, bonus: 1, label: "1% Bonus" },
+  { min: 5000, max: 10000, bonus: 2, label: "2% Bonus" },
+  { min: 10000, max: 20000, bonus: 3, label: "3% Bonus" },
+  { min: 20000, max: 40000, bonus: 4, label: "4% Bonus" },
+  { min: 40000, max: 60000, bonus: 6, label: "6% Bonus" },
+  { min: 60000, max: Infinity, bonus: 8, label: "8% Bonus" }
+];
+
 function PresaleApp() {
   // Get wallet state from context
   const {
@@ -68,36 +94,59 @@ function PresaleApp() {
   const [usdcContract, setUsdcContract] = useState(null);
   const [avaContract, setAvaContract] = useState(null);
   const [seedingContract, setSeedingContract] = useState(null);
+  
+  // Amounts
   const [baseAmount, setBaseAmount] = useState('0');
   const [bonusAmount, setBonusAmount] = useState('0');
-  // Presale state
   const [usdcAmount, setUsdcAmount] = useState('');
   const [avaAmount, setAvaAmount] = useState('0');
+  
+  // Balances
   const [usdcBalance, setUsdcBalance] = useState('0');
   const [avaBalance, setAvaBalance] = useState('0');
+  
+  // Project stats
   const [totalSold, setTotalSold] = useState('0');
   const [maxAllocation, setMaxAllocation] = useState('0');
   const [progressPercent, setProgressPercent] = useState(0);
   const [userPurchased, setUserPurchased] = useState('0');
   const [seedingActive, setSeedingActive] = useState(false);
   const [minimumPurchase, setMinimumPurchase] = useState('0');
+  const [participantCount, setParticipantCount] = useState(0);
 
   // Transaction state
   const [isLoading, setIsLoading] = useState(false);
   const [txHash, setTxHash] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  // Helper function to calculate bonus rate
-const getBonusRate = () => {
-  const amount = parseFloat(usdcAmount);
-  if (amount >= 60000) return 0.08; // 8%
-  if (amount >= 40000) return 0.06; // 6%
-  if (amount >= 20000) return 0.04; // 4%
-  if (amount >= 10000) return 0.03; // 3%
-  if (amount >= 5000) return 0.02;  // 2%
-  if (amount >= 2000) return 0.01;  // 1%
-  return 0;
-};
+
+  // Bonus tokens state
+  const [bonusTokenInfo, setBonusTokenInfo] = useState({
+    vestingAmount: '0',
+    releaseTime: 0,
+    canClaim: false
+  });
+
+  // Helper function to calculate bonus rate from amount
+  const getBonusRate = (amount) => {
+    const amountNum = parseFloat(amount) || 0;
+    const tier = BONUS_TIERS.find(t => amountNum >= t.min && amountNum < t.max);
+    return tier ? tier.bonus / 100 : 0;
+  };
+
+  // Helper function to get current tier info
+  const getCurrentTier = (amount) => {
+    const amountNum = parseFloat(amount) || 0;
+    return BONUS_TIERS.find(t => amountNum >= t.min && amountNum < t.max) || BONUS_TIERS[0];
+  };
+
+  // Helper function to get next tier info
+  const getNextTier = (amount) => {
+    const amountNum = parseFloat(amount) || 0;
+    const currentTierIndex = BONUS_TIERS.findIndex(t => amountNum >= t.min && amountNum < t.max);
+    return currentTierIndex < BONUS_TIERS.length - 1 ? BONUS_TIERS[currentTierIndex + 1] : null;
+  };
+
   // Initialize contracts with error handling
   useEffect(() => {
     if (signer && isConnected && ethers) {
@@ -128,7 +177,8 @@ const getBonusRate = () => {
         userPurch,
         active,
         minPurch,
-        progress
+        progress,
+        participants
       ] = await Promise.all([
         usdcContract.balanceOf(account),
         avaContract.balanceOf(account),
@@ -137,7 +187,8 @@ const getBonusRate = () => {
         seedingContract.purchasedAmount(account),
         seedingContract.seedingActive(),
         seedingContract.minimumPurchase(),
-        seedingContract.getSeedingProgress()
+        seedingContract.getSeedingProgress(),
+        seedingContract.getParticipantCount()
       ]);
 
       setUsdcBalance(ethers.formatUnits(usdcBal, 6));
@@ -148,51 +199,67 @@ const getBonusRate = () => {
       setSeedingActive(active);
       setMinimumPurchase(ethers.formatEther(minPurch));
       setProgressPercent(Number(progress[2]));
+      setParticipantCount(Number(participants));
 
     } catch (error) {
       console.error('Error loading data:', error);
     }
   };
 
+  // Load bonus token info
+  const loadBonusTokenInfo = async () => {
+    if (!seedingContract || !account || !ethers) return;
+    
+    try {
+      const [vestingAmount, releaseTime, canClaim] = await seedingContract.getBonusTokenInfo(account);
+      setBonusTokenInfo({
+        vestingAmount: ethers.formatEther(vestingAmount),
+        releaseTime: Number(releaseTime),
+        canClaim
+      });
+    } catch (error) {
+      console.error('Error loading bonus token info:', error);
+    }
+  };
+
   useEffect(() => {
     if (isConnected) {
       loadData();
-      const interval = setInterval(loadData, 15000); // Update every 15s
+      loadBonusTokenInfo();
+      const interval = setInterval(() => {
+        loadData();
+        loadBonusTokenInfo();
+      }, 15000);
       return () => clearInterval(interval);
     }
   }, [isConnected, seedingContract, account]);
 
-useEffect(() => {
-  if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
-    const calculateAva = async () => {
-      try {
-        const usdcWei = ethers.parseUnits(usdcAmount, 6);
-        const [baseTokens, bonusTokens, totalTokens] = await seedingContract.getQuote(usdcWei);
-        
-        // Set the total amount (base + bonus) for the main input
-        setAvaAmount(ethers.formatEther(totalTokens));
-        
-        // Store base and bonus amounts for display
-        setBaseAmount(ethers.formatEther(baseTokens));
-        setBonusAmount(ethers.formatEther(bonusTokens));
-        
-      } catch (error) {
-        console.error('Error calculating AVA amount:', error);
-        setAvaAmount('0');
-        setBaseAmount('0');
-        setBonusAmount('0');
-      }
-    };
-    calculateAva();
-  } else {
-    setAvaAmount('0');
-    setBaseAmount('0');
-    setBonusAmount('0');
-  }
-}, [usdcAmount, seedingContract]);
-
-
-
+  // Calculate AVA amount with bonus
+  useEffect(() => {
+    if (usdcAmount && seedingContract && parseFloat(usdcAmount) > 0 && ethers) {
+      const calculateAva = async () => {
+        try {
+          const usdcWei = ethers.parseUnits(usdcAmount, 6);
+          const [baseTokens, bonusTokens, totalTokens] = await seedingContract.getQuote(usdcWei);
+          
+          setAvaAmount(ethers.formatEther(totalTokens));
+          setBaseAmount(ethers.formatEther(baseTokens));
+          setBonusAmount(ethers.formatEther(bonusTokens));
+          
+        } catch (error) {
+          console.error('Error calculating AVA amount:', error);
+          setAvaAmount('0');
+          setBaseAmount('0');
+          setBonusAmount('0');
+        }
+      };
+      calculateAva();
+    } else {
+      setAvaAmount('0');
+      setBaseAmount('0');
+      setBonusAmount('0');
+    }
+  }, [usdcAmount, seedingContract]);
 
   // Get test USDC
   const getTestUSDC = async () => {
@@ -213,105 +280,85 @@ useEffect(() => {
     }
   };
 
-  // Purchase tokens with or without referral
-const purchaseTokens = async () => {
-  try {
-    setIsLoading(true);
-    setError('');
-    setSuccess('');
+  // Purchase tokens
+  const purchaseTokens = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      setSuccess('');
 
-    if (!usdcAmount || parseFloat(usdcAmount) <= 0) {
-      throw new Error('Please enter a valid USDC amount');
-    }
+      if (!usdcAmount || parseFloat(usdcAmount) <= 0) {
+        throw new Error('Please enter a valid USDC amount');
+      }
 
-    const usdcWei = ethers.parseUnits(usdcAmount, 6);
+      const usdcWei = ethers.parseUnits(usdcAmount, 6);
 
-    // Check allowance
-    const allowance = await usdcContract.allowance(account, CONTRACTS.SEEDING);
-    if (allowance < usdcWei) {
-      setSuccess('Step 1/2: Approving USDC...');
-      const approveTx = await usdcContract.approve(CONTRACTS.SEEDING, usdcWei);
-      setTxHash(approveTx.hash);
-      await approveTx.wait();
-    }
+      // Check allowance
+      const allowance = await usdcContract.allowance(account, CONTRACTS.SEEDING);
+      if (allowance < usdcWei) {
+        setSuccess('Step 1/2: Approving USDC...');
+        const approveTx = await usdcContract.approve(CONTRACTS.SEEDING, usdcWei);
+        setTxHash(approveTx.hash);
+        await approveTx.wait();
+      }
 
-    // Purchase tokens
-    setSuccess('Step 2/2: Purchasing AVA tokens...');
-    const purchaseTx = await seedingContract.purchaseTokens(usdcWei);
-    
-    setTxHash(purchaseTx.hash);
-    await purchaseTx.wait();
+      // Purchase tokens
+      setSuccess('Step 2/2: Purchasing AVA tokens...');
+      const purchaseTx = await seedingContract.purchaseTokens(usdcWei);
+      
+      setTxHash(purchaseTx.hash);
+      await purchaseTx.wait();
 
-    setSuccess(`Successfully purchased ${parseFloat(avaAmount).toFixed(6)} AVA tokens!`);
-    setUsdcAmount('');
-    loadData();
-
-  } catch (error) {
-    setError('Purchase failed: ' + error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-// Add state for bonus tokens
-const [bonusTokenInfo, setBonusTokenInfo] = useState({
-  vestingAmount: '0',
-  releaseTime: 0,
-  canClaim: false
-});
-
-// Load bonus token info
-const loadBonusTokenInfo = async () => {
-  if (!seedingContract || !account || !ethers) return;
-  
-  try {
-    const [vestingAmount, releaseTime, canClaim] = await seedingContract.getBonusTokenInfo(account);
-    setBonusTokenInfo({
-      vestingAmount: ethers.formatEther(vestingAmount),
-      releaseTime: Number(releaseTime),
-      canClaim
-    });
-  } catch (error) {
-    console.error('Error loading bonus token info:', error);
-  }
-};
-
-// Claim bonus tokens function
-const claimBonusTokens = async () => {
-  try {
-    setIsLoading(true);
-    setError('');
-    
-    const tx = await seedingContract.claimBonusTokens();
-    setTxHash(tx.hash);
-    await tx.wait();
-    
-    setSuccess('Bonus tokens claimed successfully!');
-    loadData();
-    loadBonusTokenInfo();
-  } catch (error) {
-    setError('Failed to claim bonus tokens: ' + error.message);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-// Update the loadData calls to include bonus token info
-useEffect(() => {
-  if (isConnected && account) {
-    loadData();
-    loadBonusTokenInfo();
-    const interval = setInterval(() => {
+      const bonusRate = getBonusRate(usdcAmount);
+      const hasBonusText = bonusRate > 0 ? ` (including ${(bonusRate * 100).toFixed(1)}% bonus)` : '';
+      
+      setSuccess(`Successfully purchased ${parseFloat(avaAmount).toFixed(2)} AVA tokens${hasBonusText}!`);
+      setUsdcAmount('');
       loadData();
       loadBonusTokenInfo();
-    }, 30000);
-    return () => clearInterval(interval);
-  }
-}, [isConnected, account, seedingContract]);
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat().format(parseFloat(num).toFixed(2));
+    } catch (error) {
+      setError('Purchase failed: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Claim bonus tokens
+  const claimBonusTokens = async () => {
+    try {
+      setIsLoading(true);
+      setError('');
+      
+      const tx = await seedingContract.claimBonusTokens();
+      setTxHash(tx.hash);
+      await tx.wait();
+      
+      setSuccess(`Successfully claimed ${parseFloat(bonusTokenInfo.vestingAmount).toFixed(2)} bonus AVA tokens!`);
+      loadData();
+      loadBonusTokenInfo();
+    } catch (error) {
+      setError('Failed to claim bonus tokens: ' + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const formatNumber = (num, decimals = 2) => {
+    return new Intl.NumberFormat().format(parseFloat(num).toFixed(decimals));
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp || timestamp === 0) return 'No vesting tokens';
+    return new Date(timestamp * 1000).toLocaleString();
+  };
+
+  const getDaysUntilClaim = (timestamp) => {
+    if (!timestamp || timestamp === 0) return null;
+    const now = Date.now();
+    const releaseDate = timestamp * 1000;
+    const daysLeft = Math.ceil((releaseDate - now) / (1000 * 60 * 60 * 24));
+    return daysLeft > 0 ? daysLeft : 0;
   };
 
   // Auto-clear messages
@@ -340,31 +387,41 @@ useEffect(() => {
   const displaySuccess = success || walletSuccess;
   const displayLoading = isLoading || walletLoading;
 
+  const currentTier = getCurrentTier(usdcAmount);
+  const nextTier = getNextTier(usdcAmount);
+  const daysUntilClaim = getDaysUntilClaim(bonusTokenInfo.releaseTime);
+
   return (
     <div className="coinbase-bg text-slate-900 font-inter min-h-screen">
       <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8 max-w-7xl">
         
-        {/* Back to Dashboard Link - Mobile Optimized */}
+        {/* Back to Dashboard Link */}
         <div className="mb-4 sm:mb-6">
           <Link
             to="/"
             className="inline-flex items-center text-slate-600 hover:text-slate-900 transition-colors text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
+            Back to Home
           </Link>
         </div>
 
-        {/* Header - Mobile Optimized */}
+        {/* Header */}
         <div className="text-center mb-8 sm:mb-12 px-2">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-3 sm:mb-4 coinbase-title leading-tight">
             AVALON TOKEN SALE
           </h1>
           <p className="text-lg sm:text-xl coinbase-subtitle mb-2">Harnessing Volatility for Steady Returns</p>
-          <p className="text-base sm:text-lg text-blue-600 font-medium">Token Sale on Base Testnet</p>
+          <div className="flex items-center justify-center gap-2 text-base sm:text-lg">
+            <span className="text-blue-600 font-medium">87.5% Allocation</span>
+            <span className="text-slate-400">•</span>
+            <span className="text-green-600 font-medium">Up to 8% Volume Bonus</span>
+            <span className="text-slate-400">•</span>
+            <span className="text-purple-600 font-medium">60-Day Vesting</span>
+          </div>
         </div>
 
-        {/* Connection Status - Mobile Optimized */}
+        {/* Connection Status */}
         <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
           {!isConnected ? (
             <div className="coinbase-card rounded-xl sm:rounded-2xl p-6 sm:p-8 text-center">
@@ -372,10 +429,12 @@ useEffect(() => {
                 <Wallet className="w-6 sm:w-8 h-6 sm:h-8 text-blue-600" />
               </div>
               <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-slate-900">Connect Your Wallet</h3>
-              <p className="text-slate-600 mb-4 sm:mb-6 text-base sm:text-lg px-2">Connect to Base Testnet to participate in the presale</p>
-             <center><div  className="rainbow-connect-wrapper flex justify-center">
-  <ConnectButton />
-</div></center>
+              <p className="text-slate-600 mb-4 sm:mb-6 text-base sm:text-lg px-2">Connect to Base Sepolia to participate in the token sale</p>
+              <center>
+                <div className="rainbow-connect-wrapper flex justify-center">
+                  <ConnectButton />
+                </div>
+              </center>
             </div>
           ) : (
             <div className="coinbase-card border-green-200 bg-green-50 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center">
@@ -391,42 +450,50 @@ useEffect(() => {
 
         {isConnected && (
           <>
-            {/* Progress Section - Mobile Optimized */}
+            {/* Progress Section */}
             <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
               <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
-                <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-slate-900">Presale Progress</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900">Token Sale Progress</h3>
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full ${
+                    seedingActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                    <div className={`w-2 h-2 rounded-full ${seedingActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                    <span className="text-sm font-semibold">{seedingActive ? 'Active' : 'Inactive'}</span>
+                  </div>
+                </div>
+                
                 <div className="bg-slate-200 rounded-full h-2 sm:h-3 mb-4 sm:mb-6">
                   <div
                     className="progress-bar h-2 sm:h-3 rounded-full transition-all duration-500"
                     style={{ width: `${progressPercent}%` }}
                   ></div>
                 </div>
+                
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                   <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Sold</p>
+                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Tokens Sold</p>
                     <p className="text-lg sm:text-xl font-bold text-slate-900">{formatNumber(totalSold)}</p>
                     <p className="text-xs sm:text-sm text-slate-500">AVA</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Total</p>
+                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Total Allocation</p>
                     <p className="text-lg sm:text-xl font-bold text-slate-900">{formatNumber(maxAllocation)}</p>
-                    <p className="text-xs sm:text-sm text-slate-500">AVA</p>
+                    <p className="text-xs sm:text-sm text-slate-500">AVA (87.5%)</p>
                   </div>
                   <div className="text-center">
                     <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Progress</p>
                     <p className="text-lg sm:text-xl font-bold text-blue-600">{progressPercent}%</p>
                   </div>
                   <div className="text-center">
-                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Status</p>
-                    <p className={`text-lg sm:text-xl font-bold ${seedingActive ? 'text-green-600' : 'text-red-500'}`}>
-                      {seedingActive ? 'Active' : 'Inactive'}
-                    </p>
+                    <p className="text-slate-500 font-medium mb-1 text-xs sm:text-sm">Participants</p>
+                    <p className="text-lg sm:text-xl font-bold text-purple-600">{participantCount}</p>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Balance Cards - Mobile Optimized */}
+            {/* Balance Cards */}
             <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
                 <div className="balance-card rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center">
@@ -448,7 +515,7 @@ useEffect(() => {
                   <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 bg-blue-100 rounded-full flex items-center justify-center">
                     <span className="text-blue-600 font-bold text-base sm:text-lg">A</span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">Your AVA</h3>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">Your AVA Balance</h3>
                   <p className="text-2xl sm:text-3xl font-bold text-blue-600">{formatNumber(avaBalance)}</p>
                 </div>
                 
@@ -456,175 +523,242 @@ useEffect(() => {
                   <div className="w-10 sm:w-12 h-10 sm:h-12 mx-auto mb-3 sm:mb-4 bg-cyan-100 rounded-full flex items-center justify-center">
                     <span className="text-cyan-600 font-bold text-base sm:text-lg">P</span>
                   </div>
-                  <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">You Purchased</h3>
+                  <h3 className="text-base sm:text-lg font-semibold mb-2 text-slate-700">Total Purchased</h3>
                   <p className="text-2xl sm:text-3xl font-bold text-cyan-600">{formatNumber(userPurchased)}</p>
                 </div>
               </div>
             </div>
-              {/* Bonus Token Section */}
-{parseFloat(bonusTokenInfo.vestingAmount) > 0 && (
-  <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
-    <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-6">
-      <h3 className="text-lg sm:text-xl font-bold mb-4 text-slate-900">Bonus Tokens</h3>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="text-center p-4 bg-purple-50 rounded-xl">
-          <p className="text-sm text-purple-600 font-medium">Vesting Amount</p>
-          <p className="text-xl font-bold text-purple-700">{formatNumber(bonusTokenInfo.vestingAmount)} AVA</p>
-        </div>
-        <div className="text-center p-4 bg-blue-50 rounded-xl">
-          <p className="text-sm text-blue-600 font-medium">Release Time</p>
-          <p className="text-sm font-medium text-blue-700">
-            {bonusTokenInfo.releaseTime > 0 ? 
-              new Date(bonusTokenInfo.releaseTime * 1000).toLocaleString() : 
-              'No vesting tokens'
-            }
-          </p>
-        </div>
-        <div className="text-center p-4 bg-green-50 rounded-xl">
-          <button
-            onClick={claimBonusTokens}
-            disabled={!bonusTokenInfo.canClaim || displayLoading}
-            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 text-sm w-full"
-          >
-            {bonusTokenInfo.canClaim ? 'Claim Bonus' : 'Still Vesting'}
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-)}
 
-            {/* Purchase Interface - Mobile Optimized */}
-        {/* Purchase Interface - Mobile Optimized */}
-<div className="max-w-2xl mx-auto mb-6 sm:mb-8">
-  <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
-    <h3 className="text-xl sm:text-2xl font-bold mb-6 sm:mb-8 text-slate-900">Purchase AVA Tokens</h3>
-    
-    <div className="space-y-4 sm:space-y-6">
-      <div>
-        <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">USDC Amount</label>
-        <input
-          type="number"
-          value={usdcAmount}
-          onChange={(e) => setUsdcAmount(e.target.value)}
-          placeholder="Enter USDC amount"
-          className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem]"
-          disabled={!seedingActive || displayLoading}
-        />
-      </div>
+            {/* Bonus Token Vesting Section */}
+            {parseFloat(bonusTokenInfo.vestingAmount) > 0 && (
+              <div className="max-w-4xl mx-auto mb-6 sm:mb-8">
+                <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-6 border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Gift className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold text-slate-900">Bonus Token Vesting</h3>
+                      <p className="text-sm text-slate-600">60-day vesting period for volume bonuses</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-white/80 rounded-xl">
+                      <p className="text-sm text-purple-600 font-medium mb-1">Vesting Amount</p>
+                      <p className="text-2xl font-bold text-purple-700">{formatNumber(bonusTokenInfo.vestingAmount)} AVA</p>
+                    </div>
+                    
+                    <div className="text-center p-4 bg-white/80 rounded-xl">
+                      <p className="text-sm text-blue-600 font-medium mb-1">
+                        {bonusTokenInfo.canClaim ? 'Ready to Claim!' : 'Release Date'}
+                      </p>
+                      <p className="text-sm font-medium text-blue-700">
+                        {formatDate(bonusTokenInfo.releaseTime)}
+                      </p>
+                      {daysUntilClaim !== null && daysUntilClaim > 0 && (
+                        <div className="flex items-center justify-center gap-1 mt-2 text-blue-600">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-xs font-semibold">{daysUntilClaim} days left</span>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="text-center p-4 bg-white/80 rounded-xl">
+                      <button
+                        onClick={claimBonusTokens}
+                        disabled={!bonusTokenInfo.canClaim || displayLoading}
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:bg-slate-300 text-sm w-full flex items-center justify-center gap-2"
+                      >
+                        {bonusTokenInfo.canClaim ? (
+                          <>
+                            <CheckCircle className="w-4 h-4" />
+                            Claim Bonus
+                          </>
+                        ) : (
+                          <>
+                            <Clock className="w-4 h-4" />
+                            Still Vesting
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
-      <div className="flex items-center justify-center py-2 sm:py-4">
-        <div className="w-8 sm:w-10 h-8 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center">
-          <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 text-slate-600" />
-        </div>
-      </div>
+            {/* Purchase Interface */}
+            <div className="max-w-2xl mx-auto mb-6 sm:mb-8">
+              <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+                    <Zap className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900">Purchase AVA Tokens</h3>
+                    <p className="text-sm text-slate-600">1 USDC = 1 AVA + Volume Bonus</p>
+                  </div>
+                </div>
+                
+                <div className="space-y-4 sm:space-y-6">
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">USDC Amount</label>
+                    <input
+                      type="number"
+                      value={usdcAmount}
+                      onChange={(e) => setUsdcAmount(e.target.value)}
+                      placeholder="Enter USDC amount"
+                      className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 placeholder-slate-400 text-base sm:text-lg min-h-[3rem]"
+                      disabled={!seedingActive || displayLoading}
+                    />
+                    <div className="flex justify-between items-center mt-2 text-xs text-slate-500">
+                      <span>Minimum: {formatNumber(minimumPurchase)} USDC</span>
+                      <button
+                        onClick={() => setUsdcAmount(usdcBalance)}
+                        className="text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        Max: {formatNumber(usdcBalance)}
+                      </button>
+                    </div>
+                  </div>
 
-      <div>
-        <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">AVA Tokens You'll Receive</label>
-        <input
-          type="text"
-          value={formatNumber(avaAmount)}
-          readOnly
-          className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
-        />
-      </div>
+                  <div className="flex items-center justify-center py-2 sm:py-4">
+                    <div className="w-8 sm:w-10 h-8 sm:h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                      <ArrowRight className="w-4 sm:w-5 h-4 sm:h-5 text-slate-600" />
+                    </div>
+                  </div>
 
-     {/* Volume Bonus Tiers - Now shows for any amount */}
-      {parseFloat(usdcAmount) > 0 && (
-        <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
-          <h4 className="font-bold text-purple-900 mb-3 text-center text-sm sm:text-base">🎯 Volume Bonus Tiers</h4>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) < 2000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>Less than $2,000:</span>
-              <span className="font-bold">0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 2000 && parseFloat(usdcAmount) < 5000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$2,000 - $4,999:</span>
-              <span className="font-bold">+1.0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 5000 && parseFloat(usdcAmount) < 10000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$5,000 - $9,999:</span>
-              <span className="font-bold">+2.0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 10000 && parseFloat(usdcAmount) < 20000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$10,000 - $19,999:</span>
-              <span className="font-bold">+3.0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 20000 && parseFloat(usdcAmount) < 40000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$20,000 - $39,999:</span>
-              <span className="font-bold">+4.0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 40000 && parseFloat(usdcAmount) < 60000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$40,000 - $59,999:</span>
-              <span className="font-bold">+6.0%</span>
-            </div>
-            <div className={`flex justify-between p-2 rounded ${parseFloat(usdcAmount) >= 60000 ? 'bg-green-100 text-green-800' : 'bg-white text-slate-600'}`}>
-              <span>$60,000+:</span>
-              <span className="font-bold">+8.0%</span>
-            </div>
-          </div>
-          <div className="mt-3 p-2 bg-blue-100 rounded-lg">
-            <p className="text-xs text-blue-800 text-center font-medium">
-              {parseFloat(usdcAmount) >= 60000 ? 'Maximum 8.0% bonus qualified!' :
-               parseFloat(usdcAmount) >= 40000 ? '6.0% volume bonus qualified!' :
-               parseFloat(usdcAmount) >= 20000 ? '4.0% volume bonus qualified!' :
-               parseFloat(usdcAmount) >= 10000 ? '3.0% volume bonus qualified!' :
-               parseFloat(usdcAmount) >= 5000 ? '2.0% volume bonus qualified!' :
-               parseFloat(usdcAmount) >= 2000 ? '1.0% volume bonus qualified!' :
-               'Minimum $2,000 AVA purchase required for bonus'}
-            </p>
-            <p className="text-xs text-blue-600 mt-1 text-center">
-              Bonus tokens vest after 60 days to support buyback liquidity
-            </p>
-          </div>
-        </div>
-      )}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2 sm:mb-3 text-slate-700">
+                      AVA Tokens You'll Receive
+                    </label>
+                    <input
+                      type="text"
+                      value={formatNumber(avaAmount)}
+                      readOnly
+                      className="coinbase-input w-full rounded-xl px-3 sm:px-4 py-3 sm:py-4 text-slate-900 text-base sm:text-lg bg-slate-50 min-h-[3rem]"
+                    />
+                  </div>
 
-      <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
-        <p className="text-blue-800 font-medium text-sm sm:text-base">Rate: 1 USDC = 1 AVA</p>
-        <p className="text-blue-600 text-xs sm:text-sm mt-1">Minimum: {formatNumber(minimumPurchase)} AVA</p>
-        {parseFloat(usdcAmount) >= 2000 && (
-          <div className="mt-2 pt-2 border-t border-blue-200">
-            <p className="text-blue-700 font-semibold text-sm">
-              Total with bonus: {parseFloat(usdcAmount) >= 2000 && parseFloat(bonusAmount) > 0 && (
-  <div className="mt-2 pt-2 border-t border-blue-200">
-    <div className="space-y-1 text-sm">
-      <p className="text-blue-700">
-        Base tokens: {formatNumber(baseAmount)} AVA
-      </p>
-      <p className="text-blue-700">
-        Bonus tokens: {formatNumber(bonusAmount)} AVA ({(parseFloat(bonusAmount) / parseFloat(baseAmount) * 100).toFixed(1)}%)
-      </p>
-      <p className="text-blue-700 font-semibold text-base">
-        Total: {formatNumber(avaAmount)} AVA
-      </p>
-    </div>
-  </div>
-)} AVA
-            </p>
-          </div>
-        )}
-      </div>
+                  {/* Volume Bonus Tier Display */}
+                  {parseFloat(usdcAmount) > 0 && (
+                    <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
+                      <div className="flex items-center gap-2 mb-3">
+                        <TrendingUp className="w-5 h-5 text-purple-600" />
+                        <h4 className="font-bold text-purple-900 text-sm sm:text-base">Volume Bonus Tier</h4>
+                      </div>
+                      
+                      {/* Current Tier Highlight */}
+                      <div className="bg-white rounded-lg p-3 mb-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-slate-600">Current Tier</p>
+                            <p className="text-lg font-bold text-purple-700">{currentTier.label}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-600">You Get</p>
+                            <p className="text-lg font-bold text-green-600">
+                              {formatNumber(avaAmount)} AVA
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {parseFloat(bonusAmount) > 0 && (
+                          <div className="mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-slate-600">Base:</p>
+                              <p className="font-semibold text-slate-800">{formatNumber(baseAmount)} AVA</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-600">Bonus ({currentTier.bonus}%):</p>
+                              <p className="font-semibold text-purple-700">{formatNumber(bonusAmount)} AVA</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-      <button
-        onClick={purchaseTokens}
-        disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
-        className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
-      >
-        {displayLoading ? (
-          <span className="flex items-center justify-center">
-            <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
-            Processing...
-          </span>
-        ) : (
-          `Purchase AVA Tokens${parseFloat(usdcAmount) >= 2000 ? ' + Bonus' : ''}`
-        )}
-      </button>
-    </div>
-  </div>
-</div>
+                      {/* Next Tier Info */}
+                      {nextTier && (
+                        <div className="bg-blue-100 rounded-lg p-2 text-xs">
+                          <p className="text-blue-800">
+                            <span className="font-semibold">Next Tier:</span> Invest ${formatNumber(nextTier.min)} for {nextTier.bonus}% bonus
+                            (${formatNumber(nextTier.min - parseFloat(usdcAmount))} more needed)
+                          </p>
+                        </div>
+                      )}
 
-            {/* Status Messages - Mobile Optimized */}
+                      {/* All Tiers Reference */}
+                      <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {BONUS_TIERS.filter(t => t.bonus > 0).map((tier, idx) => (
+                          <div
+                            key={idx}
+                            className={`p-2 rounded text-xs text-center ${
+                              parseFloat(usdcAmount) >= tier.min && parseFloat(usdcAmount) < tier.max
+                                ? 'bg-green-600 text-white'
+                                : 'bg-white text-slate-600'
+                            }`}
+                          >
+                            <p className="font-semibold">${formatNumber(tier.min, 0)}+</p>
+                            <p>{tier.bonus}%</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Vesting Notice */}
+                      {parseFloat(bonusAmount) > 0 && (
+                        <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-amber-800">
+                              <span className="font-semibold">Bonus Vesting:</span> {formatNumber(bonusAmount)} AVA will vest over 60 days to support buyback liquidity
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Rate Display */}
+                  <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Shield className="w-5 h-5 text-blue-600" />
+                      <p className="text-blue-800 font-semibold text-sm sm:text-base">Base Rate: 1 USDC = 1 AVA</p>
+                    </div>
+                    {parseFloat(usdcAmount) >= parseFloat(minimumPurchase) && (
+                      <p className="text-blue-600 text-xs">
+                        Minimum purchase met ✓
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Purchase Button */}
+                  <button
+                    onClick={purchaseTokens}
+                    disabled={!seedingActive || displayLoading || !usdcAmount || parseFloat(usdcAmount) <= 0}
+                    className="coinbase-btn w-full text-white py-4 sm:py-5 rounded-xl font-bold text-base sm:text-lg disabled:opacity-50 disabled:cursor-not-allowed min-h-[3rem] sm:min-h-[3.5rem]"
+                  >
+                    {displayLoading ? (
+                      <span className="flex items-center justify-center">
+                        <Loader className="w-4 sm:w-5 h-4 sm:h-5 mr-3 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-2">
+                        Purchase AVA Tokens
+                        {parseFloat(bonusAmount) > 0 && (
+                          <span className="text-xs bg-white/20 px-2 py-1 rounded">
+                            +{currentTier.bonus}% Bonus
+                          </span>
+                        )}
+                      </span>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Messages */}
             {displayError && (
               <div className="max-w-2xl mx-auto mb-4">
                 <div className="error-msg rounded-xl p-3 sm:p-4 flex items-start">
@@ -662,11 +796,45 @@ useEffect(() => {
               </div>
             )}
 
-  
-            {/* Contract Addresses - Mobile Optimized */}
+            {/* Key Features Section */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                      <TrendingUp className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <h4 className="font-bold text-blue-900">Volume Bonuses</h4>
+                  </div>
+                  <p className="text-sm text-blue-800">Up to 8% bonus on purchases over $60K</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                      <Clock className="w-4 h-4 text-purple-600" />
+                    </div>
+                    <h4 className="font-bold text-purple-900">60-Day Vesting</h4>
+                  </div>
+                  <p className="text-sm text-purple-800">Bonus tokens vest to support buyback program</p>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 border border-green-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                      <Shield className="w-4 h-4 text-green-600" />
+                    </div>
+                    <h4 className="font-bold text-green-900">No Inflation</h4>
+                  </div>
+                  <p className="text-sm text-green-800">Fixed 5M supply, 8% sell tax mechanism</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Contract Addresses */}
             <div className="max-w-4xl mx-auto">
               <div className="coinbase-card rounded-xl sm:rounded-2xl p-4 sm:p-8">
-                <h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-slate-900">Contract Addresses (Base Testnet)</h3>
+                <h3 className="text-lg sm:text-xl font-bold mb-4 sm:mb-6 text-slate-900">Contract Addresses (Base Sepolia)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                   <div className="bg-slate-50 rounded-xl p-3 sm:p-4">
                     <p className="text-slate-600 font-medium mb-2 text-sm sm:text-base">AVA Token:</p>
