@@ -1,4 +1,4 @@
-// src/hooks/useAdminData.js - CORRECTED FOR ACTUAL CONTRACT STRUCTURE
+// src/hooks/useAdminData.js - WHITEPAPER ALIGNED
 import { useState, useEffect, useCallback } from 'react';
 
 // Dynamically import ethers
@@ -14,30 +14,40 @@ const CONTRACTS = {
   SEEDING: '0x6DfD909Be557Ed5a6ec4C5c4375a3b9F3f40D33d'
 };
 
-// CORRECTED ABI based on your actual contract
+// Whitepaper-aligned configuration
+const WHITEPAPER_CONFIG = {
+  strategies: {
+    bitcoin: {
+      allocation: 0.80,
+      totalAPY: 0.47, // 47% total NAV + profits
+      extractableAPY: 0.273, // 27.3% extractable yearly
+      name: 'Bitcoin Adaptive Rebalancing (BARS)'
+    },
+    tokenLiquidity: {
+      allocation: 0.20,
+      estimatedAPY: 0.085, // 8.5% from fees
+      name: 'Token Liquidity Management'
+    }
+  },
+  revenue: {
+    initialBuybackRate: 0.70,
+    finalBuybackRate: 0.85,
+    transitionAt: 0.70 // 70% token sale
+  }
+};
+
+// Contract ABIs
 const SEEDING_ABI = [
-  // Basic functions
   "function totalSold() external view returns (uint256)",
   "function maximumAllocation() external view returns (uint256)",
   "function getParticipantCount() external view returns (uint256)",
   "function getParticipant(uint256) external view returns (address)",
   "function seedingActive() external view returns (bool)",
   "function minimumPurchase() external view returns (uint256)",
-  "function seedingPrice() external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
   "function purchasedAmount(address) external view returns (uint256)",
-  
-
-  
-  // Events - UPDATED for multi-use
-  "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avalonAmount)",
-  "event ReferralCodeGenerated(address indexed user, string code)",
-  "event ReferralCodeUsed(address indexed buyer, address indexed codeOwner, string code, uint256 usdcAmount, uint256 bonusTokens)",
-  "event ReferralRewardPaid(address indexed referrer, uint256 usdcAmount, string code)"
+  "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avalonAmount)"
 ];
-
-// Predefined referral codes from your contract constructor
-
 
 const AVA_ABI = [
   "function balanceOf(address) external view returns (uint256)",
@@ -62,12 +72,10 @@ export const useAdminData = () => {
     progressPercent: 0,
     seedingActive: false,
     strategiesPerformance: {
-      bitcoin: { allocated: '0', apy: 0, status: 'inactive' },
-      baseEcosystem: { allocated: '0', apy: 0, status: 'inactive' },
-      tokenLiquidity: { allocated: '0', apy: 0, status: 'inactive' }
+      bitcoin: { allocated: '0', totalAPY: 47, extractableAPY: 27.3, status: 'inactive' },
+      tokenLiquidity: { allocated: '0', apy: 8.5, status: 'inactive' }
     },
     recentInvestors: [],
-    monthlyData: [],
     systemHealth: {
       seedingContract: 'unknown',
       avaToken: 'unknown',
@@ -108,8 +116,8 @@ export const useAdminData = () => {
 
   // Fetch basic contract data
   const fetchBasicData = useCallback(async (contractInstances) => {
-    const { seeding, ava, usdc } = contractInstances || contracts;
-    if (!seeding || !ava || !usdc || !ethers) return null;
+    const { seeding, ava } = contractInstances || contracts;
+    if (!seeding || !ava || !ethers) return null;
 
     try {
       const [
@@ -132,12 +140,6 @@ export const useAdminData = () => {
         ava.sellTaxRate()
       ]);
 
-      console.log('📊 Basic contract data:', {
-        totalSold: ethers.formatEther(totalSold),
-        participantCount: Number(participantCount),
-        seedingActive
-      });
-
       return {
         totalSold: ethers.formatEther(totalSold),
         maxAllocation: ethers.formatEther(maxAllocation),
@@ -154,22 +156,18 @@ export const useAdminData = () => {
     }
   }, [contracts]);
 
-  // Fetch recent transactions/investors
+  // Fetch recent investors
   const fetchRecentInvestors = useCallback(async (contractInstances) => {
     const { seeding, provider } = contractInstances || contracts;
     if (!seeding || !provider) return [];
 
     try {
-      // Get recent TokensPurchased events
       const currentBlock = await provider.getBlockNumber();
       const fromBlock = Math.max(0, currentBlock - 1000);
 
       const filter = seeding.filters.TokensPurchased();
       const events = await seeding.queryFilter(filter, fromBlock, currentBlock);
 
-      console.log(`📊 Found ${events.length} purchase events`);
-
-      // Process events to get recent investors
       const recentInvestors = await Promise.all(
         events.slice(-10).reverse().map(async (event) => {
           const block = await provider.getBlock(event.blockNumber);
@@ -190,26 +188,54 @@ export const useAdminData = () => {
     }
   }, [contracts]);
 
-
-
-  // Calculate strategy performance
-  const calculateStrategyPerformance = useCallback((totalInvestments) => {
+  // Calculate strategy performance - WHITEPAPER ALIGNED
+  const calculateStrategyPerformance = useCallback((totalInvestments, progressPercent) => {
     const total = parseFloat(totalInvestments);
+    
+    // Calculate current revenue distribution based on sale progress
+    const saleProgress = progressPercent / 100;
+    const buybackRate = saleProgress >= WHITEPAPER_CONFIG.revenue.transitionAt ?
+      WHITEPAPER_CONFIG.revenue.finalBuybackRate :
+      WHITEPAPER_CONFIG.revenue.initialBuybackRate;
+
+    // Bitcoin BARS Strategy (80% allocation)
+    const bitcoinAllocated = total * WHITEPAPER_CONFIG.strategies.bitcoin.allocation;
+    const bitcoinExtractableYearly = bitcoinAllocated * WHITEPAPER_CONFIG.strategies.bitcoin.extractableAPY;
+    
+    // Token Liquidity (20% allocation)
+    const liquidityAllocated = total * WHITEPAPER_CONFIG.strategies.tokenLiquidity.allocation;
+    const liquidityYearly = liquidityAllocated * WHITEPAPER_CONFIG.strategies.tokenLiquidity.estimatedAPY;
+
+    // Combined revenue
+    const totalYearlyRevenue = bitcoinExtractableYearly + liquidityYearly;
+    const toBuybacks = totalYearlyRevenue * buybackRate;
+    const toOperations = totalYearlyRevenue * (1 - buybackRate);
+
     return {
       bitcoin: {
-        allocated: (total * 0.35).toString(),
-        apy: 18.7,
-        status: 'active'
-      },
-      baseEcosystem: {
-        allocated: (total * 0.45).toString(),
-        apy: 45.7,
-        status: 'active'
+        allocated: bitcoinAllocated.toFixed(2),
+        totalAPY: WHITEPAPER_CONFIG.strategies.bitcoin.totalAPY * 100, // 47%
+        extractableAPY: WHITEPAPER_CONFIG.strategies.bitcoin.extractableAPY * 100, // 27.3%
+        yearlyExtractable: bitcoinExtractableYearly.toFixed(2),
+        monthlyAvg: (bitcoinExtractableYearly / 12).toFixed(2),
+        status: 'active',
+        name: WHITEPAPER_CONFIG.strategies.bitcoin.name
       },
       tokenLiquidity: {
-        allocated: (total * 0.20).toString(),
-        apy: 12.1,
-        status: 'active'
+        allocated: liquidityAllocated.toFixed(2),
+        apy: WHITEPAPER_CONFIG.strategies.tokenLiquidity.estimatedAPY * 100, // 8.5%
+        yearlyRevenue: liquidityYearly.toFixed(2),
+        monthlyAvg: (liquidityYearly / 12).toFixed(2),
+        status: 'active',
+        name: WHITEPAPER_CONFIG.strategies.tokenLiquidity.name
+      },
+      combined: {
+        totalYearlyRevenue: totalYearlyRevenue.toFixed(2),
+        toBuybacks: toBuybacks.toFixed(2),
+        toOperations: toOperations.toFixed(2),
+        buybackRate: (buybackRate * 100).toFixed(0),
+        operationsRate: ((1 - buybackRate) * 100).toFixed(0),
+        effectiveAPY: ((totalYearlyRevenue / total) * 100).toFixed(2)
       }
     };
   }, []);
@@ -254,64 +280,54 @@ export const useAdminData = () => {
     setError('');
 
     try {
-      console.log('🚀 Starting CORRECTED admin data fetch...');
-      
-      // Initialize contracts if not already done
       const contractInstances = contracts.seeding ? contracts : await initializeContracts();
       if (!contractInstances) {
         throw new Error('Failed to initialize contracts');
       }
 
-      console.log('📊 Fetching all admin data with CORRECTED referral logic...');
-
       // Fetch all data in parallel
-      const [basicData, recentInvestors, systemHealth, referralData] = await Promise.all([
+      const [basicData, recentInvestors, systemHealth] = await Promise.all([
         fetchBasicData(contractInstances),
         fetchRecentInvestors(contractInstances),
-        checkSystemHealth(contractInstances),
+        checkSystemHealth(contractInstances)
       ]);
 
       if (!basicData) {
         throw new Error('Failed to fetch basic contract data');
       }
 
-      console.log('📊 Basic data fetched:', basicData);
-      console.log('📊 CORRECTED Referral data fetched:', referralData);
-      
-      // Calculate derived metrics
+      // Calculate derived metrics with whitepaper alignment
       const totalInvestments = parseFloat(basicData.totalSold);
-      const estimatedRevenue = totalInvestments * (
-        (basicData.allocation?.bitcoin || 0.35) * 0.187 + // Bitcoin 18.7% APY
-        (basicData.allocation?.baseLP || 0.45) * 0.65 +    // Base LP average 65% APY  
-        (basicData.allocation?.tokenLiquidity || 0.20) * 0.08 // Token liquidity 8% APY
-      );
-      const strategiesPerformance = calculateStrategyPerformance(totalInvestments);
+      const strategiesPerformance = calculateStrategyPerformance(totalInvestments, basicData.progressPercent);
 
-      // Update state with corrected referral data
+      // Update state with whitepaper-aligned data
       const newData = {
         totalInvestments: totalInvestments.toString(),
         totalInvestors: basicData.participantCount,
         totalAvaIssued: basicData.totalSold,
         currentAvaPrice: '1.00',
-        totalRevenue: estimatedRevenue.toString(),
+        totalRevenue: strategiesPerformance.combined.totalYearlyRevenue,
         progressPercent: basicData.progressPercent,
         seedingActive: basicData.seedingActive,
         strategiesPerformance,
         recentInvestors,
-        monthlyData: [],
         systemHealth,
+        whitepaperMetrics: {
+          bitcoinTotalAPY: '47%',
+          bitcoinExtractableAPY: '27.3%',
+          backtestPeriod: '2021-2025',
+          finalNAV: '$12.495M',
+          initialNAV: '$2M',
+          sellTax: '8%',
+          maxVolumeBonus: '8%'
+        }
       };
-
-      console.log('✅ Final CORRECTED admin data:', {
-        totalInvestments: newData.totalInvestments,
-        totalInvestors: newData.totalInvestors
-      });
 
       setData(newData);
       setLastUpdate(new Date());
       
     } catch (error) {
-      console.error('❌ Error fetching CORRECTED admin data:', error);
+      console.error('Error fetching admin data:', error);
       setError(error.message || 'Failed to fetch data');
     } finally {
       setIsLoading(false);
@@ -355,11 +371,13 @@ export const useAdminData = () => {
       strategies: data.strategiesPerformance,
       recentInvestors: data.recentInvestors,
       systemHealth: data.systemHealth,
-      referralData: {
-        stats: data.referralStats,
-        topReferrers: data.topReferrers,
-        recentReferrals: data.recentReferrals,
-        codes: data.referralCodes
+      whitepaperAlignment: {
+        bitcoinAllocation: '80%',
+        liquidityAllocation: '20%',
+        totalAPY: '47%',
+        extractableAPY: '27.3%',
+        buybacksInitial: '70%',
+        buybacksFinal: '85%'
       }
     };
 
@@ -409,6 +427,7 @@ export const useAdminData = () => {
     refreshData: fetchAllData,
     getInvestorData,
     exportData,
-    contracts
+    contracts,
+    whitepaperConfig: WHITEPAPER_CONFIG // Expose config for reference
   };
 };

@@ -10,6 +10,7 @@ import {
   ArrowRight,
   DollarSign,
   BarChart3,
+  Bitcoin,
   Zap,
   PieChart,
   Users,
@@ -166,7 +167,7 @@ function HomePage() {
                     </>
                   ) : (
                     <>
-                      <DollarSign className="w-5 sm:w-4 h-5 sm:h-4 text-blue-600 mr-2" />
+                      <Bitcoin className="w-5 sm:w-4 h-5 sm:h-4 text-blue-600 mr-2" />
                       <span className="text-slate-600 font-medium text-sm mr-2">BTC</span>
                       <span className="text-blue-700 font-bold text-base sm:text-sm lg:text-base">
                         ${btcPrice.toLocaleString()}

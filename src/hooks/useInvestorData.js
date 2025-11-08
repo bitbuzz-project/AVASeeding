@@ -1,4 +1,4 @@
-// src/hooks/useInvestorData.js
+// src/hooks/useInvestorData.js - WHITEPAPER ALIGNED
 import { useState, useCallback, useEffect } from 'react';
 
 // Dynamically import ethers
@@ -14,17 +14,26 @@ const CONTRACTS = {
   SEEDING: '0x6DfD909Be557Ed5a6ec4C5c4375a3b9F3f40D33d'
 };
 
+// Whitepaper-aligned configuration
+const WHITEPAPER_CONFIG = {
+  currentAvaPrice: 1.25, // Dynamic - should be fetched from pool
+  expectedYearlyReturn: 0.235, // 23.5% extractable (80% × 27.3% + 20% × 8.5%)
+  totalAPY: 0.393, // 39.3% total (80% × 47% + 20% × 8.5%)
+  strategies: {
+    bitcoin: { allocation: 0.80, extractableAPY: 0.273 },
+    tokenLiquidity: { allocation: 0.20, apy: 0.085 }
+  }
+};
+
 // Extended ABIs for investor tracking
 const SEEDING_ABI = [
   "function purchasedAmount(address) external view returns (uint256)",
   "function getSeedingProgress() external view returns (uint256, uint256, uint256)",
-  // Events for tracking individual purchases
-  "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avaAmount, uint256 timestamp)"
+  "event TokensPurchased(address indexed buyer, uint256 usdcAmount, uint256 avalonAmount)"
 ];
 
 const AVA_ABI = [
   "function balanceOf(address) external view returns (uint256)",
-  // Events for tracking transfers
   "event Transfer(address indexed from, address indexed to, uint256 value)"
 ];
 
@@ -69,11 +78,9 @@ export const useInvestorData = () => {
     if (!seeding || !provider) return [];
 
     try {
-      // Get all TokensPurchased events from contract deployment
       const filter = seeding.filters.TokensPurchased();
       const events = await seeding.queryFilter(filter, 0, 'latest');
 
-      // Extract unique investor addresses
       const addressSet = new Set();
       events.forEach(event => {
         addressSet.add(event.args.buyer);
@@ -86,7 +93,7 @@ export const useInvestorData = () => {
     }
   }, [contracts]);
 
-  // Fetch detailed data for a specific investor
+  // Fetch detailed data for a specific investor - WHITEPAPER ALIGNED
   const fetchInvestorDetails = useCallback(async (address, contractInstances) => {
     const { seeding, ava, usdc, provider } = contractInstances || contracts;
     if (!seeding || !ava || !usdc || !provider || !ethers) return null;
@@ -119,7 +126,7 @@ export const useInvestorData = () => {
         transactions.push({
           type: 'purchase',
           amount: ethers.formatUnits(event.args.usdcAmount, 6),
-          tokens: ethers.formatEther(event.args.avaAmount),
+          tokens: ethers.formatEther(event.args.avalonAmount),
           date: new Date(block.timestamp * 1000).toISOString(),
           txHash: event.transactionHash,
           blockNumber: event.blockNumber
@@ -132,7 +139,7 @@ export const useInvestorData = () => {
           const block = await provider.getBlock(event.blockNumber);
           transactions.push({
             type: 'transfer_in',
-            amount: 0, // No USDC value for transfers
+            amount: 0,
             tokens: ethers.formatEther(event.args.value),
             date: new Date(block.timestamp * 1000).toISOString(),
             txHash: event.transactionHash,
@@ -159,11 +166,23 @@ export const useInvestorData = () => {
       // Sort transactions by date (newest first)
       transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-      // Calculate metrics
+      // Calculate metrics - WHITEPAPER ALIGNED
       const totalInvested = parseFloat(ethers.formatEther(purchasedAmount));
       const currentAvaBalance = parseFloat(ethers.formatEther(avaBalance));
-      const currentValue = currentAvaBalance * 1.23; // Current AVA price
+      
+      // Use whitepaper-aligned current price
+      const currentValue = currentAvaBalance * WHITEPAPER_CONFIG.currentAvaPrice;
       const profitLoss = currentValue - totalInvested;
+      
+      // Calculate expected returns based on whitepaper
+      const holdingPeriodDays = Math.floor((Date.now() - new Date(transactions[transactions.length - 1]?.date || Date.now())) / (1000 * 60 * 60 * 24));
+      const holdingPeriodYears = holdingPeriodDays / 365;
+      
+      // Expected profit based on whitepaper APY (23.5% extractable)
+      const expectedYearlyProfit = totalInvested * WHITEPAPER_CONFIG.expectedYearlyReturn;
+      const expectedTotalProfit = expectedYearlyProfit * holdingPeriodYears;
+      const performanceVsExpected = expectedTotalProfit > 0 ? (profitLoss / expectedTotalProfit) * 100 : 0;
+
       const firstTransaction = transactions[transactions.length - 1];
       const joinDate = firstTransaction ? firstTransaction.date : new Date().toISOString();
 
@@ -179,10 +198,18 @@ export const useInvestorData = () => {
         joinDate,
         lastActivity: transactions[0]?.date || joinDate,
         transactions,
-        // Calculate additional metrics
+        
+        // Whitepaper-aligned metrics
+        expectedYearlyProfit,
+        expectedTotalProfit,
+        performanceVsExpected,
+        whitepaperAPY: WHITEPAPER_CONFIG.expectedYearlyReturn * 100,
+        totalAPY: WHITEPAPER_CONFIG.totalAPY * 100,
+        
+        // Additional metrics
         avgTransactionSize: totalInvested / Math.max(1, purchaseEvents.length),
-        holdingPeriod: Math.floor((Date.now() - new Date(joinDate)) / (1000 * 60 * 60 * 24)),
-        isActive: (Date.now() - new Date(transactions[0]?.date || joinDate)) < (30 * 24 * 60 * 60 * 1000) // Active if transaction in last 30 days
+        holdingPeriod: holdingPeriodDays,
+        isActive: (Date.now() - new Date(transactions[0]?.date || joinDate)) < (30 * 24 * 60 * 60 * 1000)
       };
     } catch (error) {
       console.error(`Error fetching details for ${address}:`, error);
@@ -196,13 +223,11 @@ export const useInvestorData = () => {
     setError('');
 
     try {
-      // Initialize contracts if needed
       const contractInstances = contracts.seeding ? contracts : await initializeContracts();
       if (!contractInstances) {
         throw new Error('Failed to initialize contracts');
       }
 
-      // Get all investor addresses
       const addresses = await fetchInvestorAddresses(contractInstances);
       
       if (addresses.length === 0) {
@@ -210,7 +235,7 @@ export const useInvestorData = () => {
         return;
       }
 
-      // Fetch details for each investor (in batches to avoid rate limiting)
+      // Fetch details for each investor (in batches)
       const batchSize = 10;
       const investorDetails = [];
       
@@ -223,7 +248,6 @@ export const useInvestorData = () => {
         const batchResults = await Promise.all(batchPromises);
         investorDetails.push(...batchResults.filter(Boolean));
         
-        // Small delay between batches to avoid overwhelming the RPC
         if (i + batchSize < addresses.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
@@ -241,7 +265,7 @@ export const useInvestorData = () => {
     }
   }, [contracts, initializeContracts, fetchInvestorAddresses, fetchInvestorDetails]);
 
-  // Get detailed analytics for a specific investor
+  // Get detailed analytics for a specific investor - WHITEPAPER ALIGNED
   const getInvestorAnalytics = useCallback(async (address) => {
     const { seeding, ava, provider } = contracts;
     if (!seeding || !ava || !provider || !ethers) return null;
@@ -250,26 +274,35 @@ export const useInvestorData = () => {
       const investorData = await fetchInvestorDetails(address, contracts);
       if (!investorData) return null;
 
-      // Calculate advanced analytics
+      // Calculate advanced analytics with whitepaper alignment
       const analytics = {
         ...investorData,
         
         // Transaction patterns
-        transactionFrequency: investorData.transactionCount / Math.max(1, investorData.holdingPeriod / 30), // Transactions per month
+        transactionFrequency: investorData.transactionCount / Math.max(1, investorData.holdingPeriod / 30),
         
         // Investment distribution over time
         monthlyInvestments: calculateMonthlyInvestments(investorData.transactions),
         
-        // Performance metrics
+        // Performance metrics - WHITEPAPER ALIGNED
         roi: investorData.totalInvested > 0 ? (investorData.profitLoss / investorData.totalInvested) * 100 : 0,
         annualizedReturn: calculateAnnualizedReturn(investorData.profitLoss, investorData.totalInvested, investorData.holdingPeriod),
+        expectedAnnualizedReturn: WHITEPAPER_CONFIG.expectedYearlyReturn * 100, // 23.5%
+        totalExpectedReturn: WHITEPAPER_CONFIG.totalAPY * 100, // 39.3%
         
-        // Risk assessment
+        // Risk assessment - WHITEPAPER ALIGNED
         riskScore: calculateRiskScore(investorData),
         
         // Behavioral analysis
         tradingPattern: analyzeTradingPattern(investorData.transactions),
-        loyaltyScore: calculateLoyaltyScore(investorData)
+        loyaltyScore: calculateLoyaltyScore(investorData),
+        
+        // Strategy alignment
+        alignedWithStrategy: investorData.performanceVsExpected > 80, // Within 20% of expected
+        strategyPerformance: {
+          bitcoinContribution: investorData.expectedYearlyProfit * WHITEPAPER_CONFIG.strategies.bitcoin.allocation,
+          liquidityContribution: investorData.expectedYearlyProfit * WHITEPAPER_CONFIG.strategies.tokenLiquidity.allocation
+        }
       };
 
       return analytics;
@@ -314,14 +347,14 @@ export const useInvestorData = () => {
     return (Math.pow(1 + totalReturn, 1 / years) - 1) * 100;
   };
 
-  // Helper function to calculate risk score
+  // Helper function to calculate risk score - WHITEPAPER ALIGNED
   const calculateRiskScore = (investorData) => {
     let score = 0;
     
     // Large investment size increases risk score
-    if (investorData.totalInvested > 25000) score += 30;
-    else if (investorData.totalInvested > 10000) score += 20;
-    else if (investorData.totalInvested > 5000) score += 10;
+    if (investorData.totalInvested > 50000) score += 30; // Adjusted threshold
+    else if (investorData.totalInvested > 25000) score += 20;
+    else if (investorData.totalInvested > 10000) score += 10;
     
     // High transaction frequency increases risk
     if (investorData.transactionFrequency > 2) score += 25;
@@ -334,6 +367,10 @@ export const useInvestorData = () => {
     
     // New accounts have higher risk
     if (investorData.holdingPeriod < 30) score += 15;
+    
+    // Performance vs expected reduces risk
+    if (investorData.performanceVsExpected < 50) score += 20; // Underperforming
+    else if (investorData.performanceVsExpected > 150) score += 10; // Overperforming (could be unsustainable)
     
     return Math.min(100, score);
   };
@@ -360,22 +397,27 @@ export const useInvestorData = () => {
     return 'rare-buyer';
   };
 
-  // Helper function to calculate loyalty score
+  // Helper function to calculate loyalty score - WHITEPAPER ALIGNED
   const calculateLoyaltyScore = (investorData) => {
     let score = 50; // Base score
     
-    // Holding period bonus
+    // Holding period bonus (aligned with strategy timeframes)
     if (investorData.holdingPeriod > 365) score += 30;
     else if (investorData.holdingPeriod > 180) score += 20;
     else if (investorData.holdingPeriod > 90) score += 10;
     
-    // No outgoing transfers bonus
+    // No outgoing transfers bonus (diamond hands)
     const hasOutgoingTransfers = investorData.transactions.some(tx => tx.type === 'transfer_out');
     if (!hasOutgoingTransfers) score += 20;
     
     // Recent activity bonus
     const daysSinceLastActivity = Math.floor((Date.now() - new Date(investorData.lastActivity)) / (1000 * 60 * 60 * 24));
     if (daysSinceLastActivity < 30) score += 10;
+    
+    // Performance satisfaction (meeting expectations)
+    if (investorData.performanceVsExpected > 80 && investorData.performanceVsExpected < 120) {
+      score += 10; // Meeting expectations = satisfied = loyal
+    }
     
     return Math.min(100, score);
   };
@@ -392,6 +434,9 @@ export const useInvestorData = () => {
         'Current Value (USDC)',
         'Profit/Loss (USDC)',
         'Profit/Loss (%)',
+        'Expected Yearly Profit',
+        'Performance vs Expected (%)',
+        'Whitepaper APY (%)',
         'Transaction Count',
         'Join Date',
         'Last Activity',
@@ -406,6 +451,9 @@ export const useInvestorData = () => {
         investor.currentValue,
         investor.profitLoss,
         investor.profitLossPercent.toFixed(2),
+        investor.expectedYearlyProfit?.toFixed(2) || '0',
+        investor.performanceVsExpected?.toFixed(2) || '0',
+        investor.whitepaperAPY || '23.5',
         investor.transactionCount,
         new Date(investor.joinDate).toLocaleDateString(),
         new Date(investor.lastActivity).toLocaleDateString(),
@@ -423,12 +471,21 @@ export const useInvestorData = () => {
       a.click();
       URL.revokeObjectURL(url);
     } else {
-      // JSON format
+      // JSON format with whitepaper alignment
       const jsonData = {
         timestamp: new Date().toISOString(),
         totalInvestors: dataToExport.length,
         totalInvested: dataToExport.reduce((sum, inv) => sum + inv.totalInvested, 0),
         totalCurrentValue: dataToExport.reduce((sum, inv) => sum + inv.currentValue, 0),
+        whitepaperAlignment: {
+          expectedYearlyAPY: WHITEPAPER_CONFIG.expectedYearlyReturn * 100,
+          totalAPY: WHITEPAPER_CONFIG.totalAPY * 100,
+          currentAvaPrice: WHITEPAPER_CONFIG.currentAvaPrice,
+          strategyAllocation: {
+            bitcoin: '80%',
+            tokenLiquidity: '20%'
+          }
+        },
         investors: dataToExport
       };
       
@@ -454,6 +511,7 @@ export const useInvestorData = () => {
     fetchAllInvestors,
     getInvestorAnalytics,
     exportInvestorData,
-    contracts
+    contracts,
+    whitepaperConfig: WHITEPAPER_CONFIG // Expose for reference
   };
 };
