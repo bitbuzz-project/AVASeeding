@@ -1,4 +1,4 @@
-// src/components/PresaleApp.js - UPDATED TO SHOW CONTENT WITHOUT WALLET CONNECTION
+// src/components/PresaleApp.js - UPDATED TO SHOW VOLUME BONUS TIER ALWAYS
 import React, { useState, useEffect } from 'react';
 import { 
   AlertCircle, 
@@ -678,83 +678,95 @@ function PresaleApp() {
                   />
                 </div>
 
-                {/* Volume Bonus Tier Display */}
-                {parseFloat(usdcAmount) > 0 && (
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
-                    <div className="flex items-center gap-2 mb-3">
-                      <TrendingUp className="w-5 h-5 text-purple-600" />
-                      <h4 className="font-bold text-purple-900 text-sm sm:text-base">Volume Bonus Tier</h4>
-                    </div>
-                    
-                    {/* Current Tier Highlight */}
-                    <div className="bg-white rounded-lg p-3 mb-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-slate-600">Current Tier</p>
-                          <p className="text-lg font-bold text-purple-700">{currentTier.label}</p>
+                {/* Volume Bonus Tier Display - ALWAYS SHOWN */}
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-4 border-2 border-purple-200">
+                  <div className="flex items-center gap-2 mb-3">
+                    <TrendingUp className="w-5 h-5 text-purple-600" />
+                    <h4 className="font-bold text-purple-900 text-sm sm:text-base">Volume Bonus Tier</h4>
+                  </div>
+                  
+                  {parseFloat(usdcAmount) > 0 ? (
+                    <>
+                      {/* Current Tier Highlight */}
+                      <div className="bg-white rounded-lg p-3 mb-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-xs text-slate-600">Current Tier</p>
+                            <p className="text-lg font-bold text-purple-700">{currentTier.label}</p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-slate-600">You Get</p>
+                            <p className="text-lg font-bold text-green-600">
+                              {formatNumber(avaAmount)} AVA
+                            </p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-slate-600">You Get</p>
-                          <p className="text-lg font-bold text-green-600">
-                            {formatNumber(avaAmount)} AVA
+                        
+                        {parseFloat(bonusAmount) > 0 && (
+                          <div className="mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <p className="text-slate-600">Base:</p>
+                              <p className="font-semibold text-slate-800">{formatNumber(baseAmount)} AVA</p>
+                            </div>
+                            <div>
+                              <p className="text-slate-600">Bonus ({currentTier.bonus}%):</p>
+                              <p className="font-semibold text-purple-700">{formatNumber(bonusAmount)} AVA</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Next Tier Info */}
+                      {nextTier && (
+                        <div className="bg-blue-100 rounded-lg p-2 mb-3 text-xs">
+                          <p className="text-blue-800">
+                            <span className="font-semibold">Next Tier:</span> Invest ${formatNumber(nextTier.min)} for {nextTier.bonus}% bonus
+                            (${formatNumber(nextTier.min - parseFloat(usdcAmount))} more needed)
                           </p>
                         </div>
-                      </div>
-                      
+                      )}
+
+                      {/* Vesting Notice */}
                       {parseFloat(bonusAmount) > 0 && (
-                        <div className="mt-2 pt-2 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <p className="text-slate-600">Base:</p>
-                            <p className="font-semibold text-slate-800">{formatNumber(baseAmount)} AVA</p>
-                          </div>
-                          <div>
-                            <p className="text-slate-600">Bonus ({currentTier.bonus}%):</p>
-                            <p className="font-semibold text-purple-700">{formatNumber(bonusAmount)} AVA</p>
+                        <div className="mb-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
+                          <div className="flex items-start gap-2">
+                            <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-amber-800">
+                              <span className="font-semibold">Bonus Vesting:</span> {formatNumber(bonusAmount)} AVA will vest over 60 days to support buyback liquidity
+                            </p>
                           </div>
                         </div>
                       )}
+                    </>
+                  ) : (
+                    /* Show info message when no amount entered */
+                    <div className="bg-white rounded-lg p-3 mb-3 text-center">
+                      <p className="text-sm text-slate-600 mb-2">
+                        Enter an amount to see your bonus tier
+                      </p>
+                      <p className="text-xs text-purple-600">
+                        Get up to <span className="font-bold">10% bonus</span> on purchases over $60K
+                      </p>
                     </div>
+                  )}
 
-                    {/* Next Tier Info */}
-                    {nextTier && (
-                      <div className="bg-blue-100 rounded-lg p-2 text-xs">
-                        <p className="text-blue-800">
-                          <span className="font-semibold">Next Tier:</span> Invest ${formatNumber(nextTier.min)} for {nextTier.bonus}% bonus
-                          (${formatNumber(nextTier.min - parseFloat(usdcAmount))} more needed)
-                        </p>
+                  {/* All Tiers Reference - ALWAYS SHOWN */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {BONUS_TIERS.filter(t => t.bonus > 0).map((tier, idx) => (
+                      <div
+                        key={idx}
+                        className={`p-2 rounded text-xs text-center transition-colors ${
+                          parseFloat(usdcAmount) >= tier.min && parseFloat(usdcAmount) < tier.max
+                            ? 'bg-green-600 text-white'
+                            : 'bg-white text-slate-600'
+                        }`}
+                      >
+                        <p className="font-semibold">${formatNumber(tier.min, 0)}+</p>
+                        <p className="font-bold">{tier.bonus}%</p>
                       </div>
-                    )}
-
-                    {/* All Tiers Reference */}
-                    <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {BONUS_TIERS.filter(t => t.bonus > 0).map((tier, idx) => (
-                        <div
-                          key={idx}
-                          className={`p-2 rounded text-xs text-center ${
-                            parseFloat(usdcAmount) >= tier.min && parseFloat(usdcAmount) < tier.max
-                              ? 'bg-green-600 text-white'
-                              : 'bg-white text-slate-600'
-                          }`}
-                        >
-                          <p className="font-semibold">${formatNumber(tier.min, 0)}+</p>
-                          <p>{tier.bonus}%</p>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Vesting Notice */}
-                    {parseFloat(bonusAmount) > 0 && (
-                      <div className="mt-3 p-2 bg-amber-50 rounded-lg border border-amber-200">
-                        <div className="flex items-start gap-2">
-                          <Info className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-amber-800">
-                            <span className="font-semibold">Bonus Vesting:</span> {formatNumber(bonusAmount)} AVA will vest over 60 days to support buyback liquidity
-                          </p>
-                        </div>
-                      </div>
-                    )}
+                    ))}
                   </div>
-                )}
+                </div>
 
                 {/* Rate Display */}
                 <div className="bg-blue-50 rounded-xl p-3 sm:p-4 text-center">

@@ -5,6 +5,7 @@ import {
   TrendingUp, 
   Wallet, 
   Target, 
+  Info,
   DollarSign, 
   Activity, 
   PieChart, 
@@ -307,16 +308,10 @@ function InvestorDashboard() {
   };
 
   // Calculate projected values based on 47% APY
-  const calculateProjection = (principal, months) => {
-    const monthlyRate = Math.pow(1.47, 1/12) - 1;
-    return principal * Math.pow(1 + monthlyRate, months);
-  };
+
 
   const userInvestment = parseFloat(userData.investmentValue);
-  const projection3m = calculateProjection(userInvestment, 3);
-  const projection6m = calculateProjection(userInvestment, 6);
-  const projection1y = calculateProjection(userInvestment, 12);
-  const projection2y = calculateProjection(userInvestment, 24);
+
 
   // Calculate portfolio values using live prices
   const avaBalanceNum = parseFloat(userData.avaBalance);
@@ -533,40 +528,176 @@ function InvestorDashboard() {
     
 
               {/* Investment Projections */}
-              {isConnected && parseFloat(userData.investmentValue) > 0 && (
+             {isConnected && parseFloat(userData.investmentValue) > 0 && (
                 <div className="coinbase-card rounded-2xl p-8">
-                  <h3 className="text-2xl font-bold mb-6 text-slate-900">Investment Projection</h3>
-                  <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-xl p-6">
-                    <p className="text-slate-600 mb-4">Based on your ${formatNumber(userData.investmentValue)} USDC investment at 47% APY</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="text-center p-4 bg-white rounded-lg">
-                        <p className="text-sm text-slate-600 mb-1">3 Months</p>
-                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection3m)}</p>
-                        <p className="text-xs text-green-600">+{formatPercent((projection3m - userInvestment) / userInvestment * 100)}</p>
+                  <h3 className="text-2xl font-bold mb-6 text-slate-900">Your Investment Journey</h3>
+                  
+                  {/* Investment Overview */}
+                  <div className="bg-gradient-to-br from-blue-50 via-purple-50 to-cyan-50 rounded-xl p-6 mb-6">
+                    <div className="grid md:grid-cols-3 gap-6">
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
+                          <DollarSign className="w-6 h-6 text-blue-600" />
+                        </div>
+                        <p className="text-sm text-slate-600 mb-1">Your Investment</p>
+                        <p className="text-2xl font-bold text-blue-600">${formatNumber(userData.investmentValue)}</p>
+                        <p className="text-xs text-slate-500 mt-1">Initial USDC invested</p>
                       </div>
-                      <div className="text-center p-4 bg-white rounded-lg">
-                        <p className="text-sm text-slate-600 mb-1">6 Months</p>
-                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection6m)}</p>
-                        <p className="text-xs text-green-600">+{formatPercent((projection6m - userInvestment) / userInvestment * 100)}</p>
+                      
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 bg-purple-100 rounded-full flex items-center justify-center">
+                          <PieChart className="w-6 h-6 text-purple-600" />
+                        </div>
+                        <p className="text-sm text-slate-600 mb-1">Portfolio Share</p>
+                        <p className="text-2xl font-bold text-purple-600">{formatPercent(userData.portfolioPercent)}</p>
+                        <p className="text-xs text-slate-500 mt-1">Of total supply</p>
                       </div>
-                      <div className="text-center p-4 bg-white rounded-lg">
-                        <p className="text-sm text-slate-600 mb-1">1 Year</p>
-                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection1y)}</p>
-                        <p className="text-xs text-green-600">+47%</p>
-                      </div>
-                      <div className="text-center p-4 bg-white rounded-lg">
-                        <p className="text-sm text-slate-600 mb-1">2 Years</p>
-                        <p className="text-xl font-bold text-slate-900">${formatNumber(projection2y)}</p>
-                        <p className="text-xs text-green-600">+{formatPercent((projection2y - userInvestment) / userInvestment * 100)}</p>
+                      
+                      <div className="text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 bg-green-100 rounded-full flex items-center justify-center">
+                          <TrendingUp className="w-6 h-6 text-green-600" />
+                        </div>
+                        <p className="text-sm text-slate-600 mb-1">AVA Tokens</p>
+                        <p className="text-2xl font-bold text-green-600">{formatNumber(userData.avaBalance)}</p>
+                        <p className="text-xs text-slate-500 mt-1">Current holdings</p>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-4 text-center">
-                      *Projections based on 47% APY backtested performance. Past performance does not guarantee future results.
-                    </p>
+                  </div>
+
+                  {/* Strategy Allocation Behind Your Investment */}
+                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <div className="bg-white rounded-xl p-6 border-2 border-blue-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <Activity className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900">Bitcoin Strategy (BARS)</h4>
+                          <p className="text-sm text-slate-600">80% allocation</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Your allocation:</span>
+                          <span className="font-bold text-blue-600">${formatNumber(parseFloat(userData.investmentValue) * 0.80)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Strategy:</span>
+                          <span className="font-medium text-slate-700">Volatility Harvesting</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Rebalancing:</span>
+                          <span className="font-medium text-slate-700">Automated 8% threshold</span>
+                        </div>
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                          <p className="text-xs text-blue-800">
+                            <span className="font-semibold">How it works:</span> Your funds systematically buy Bitcoin dips and sell peaks, capturing profits from market volatility without timing requirements.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl p-6 border-2 border-purple-100">
+                      <div className="flex items-center gap-3 mb-4">
+                        <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                          <Shield className="w-5 h-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-slate-900">Token Liquidity</h4>
+                          <p className="text-sm text-slate-600">20% allocation</p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Your allocation:</span>
+                          <span className="font-bold text-purple-600">${formatNumber(parseFloat(userData.investmentValue) * 0.20)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Purpose:</span>
+                          <span className="font-medium text-slate-700">Price Support</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-slate-600">Mechanism:</span>
+                          <span className="font-medium text-slate-700">Ratcheting liquidity</span>
+                        </div>
+                        <div className="mt-3 p-3 bg-purple-50 rounded-lg">
+                          <p className="text-xs text-purple-800">
+                            <span className="font-semibold">How it works:</span> Provides buy-side liquidity for AVA token, ensuring stable price action and reducing slippage for all token holders.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Value Creation Mechanisms */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6">
+                    <h4 className="font-bold text-slate-900 mb-4 flex items-center gap-2">
+                      <Zap className="w-5 h-5 text-green-600" />
+                      How Your Investment Creates Value
+                    </h4>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <span className="text-green-600 font-bold text-sm">1</span>
+                          </div>
+                          <h5 className="font-bold text-slate-900 text-sm">Profit Generation</h5>
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          BARS strategy captures volatility profits from Bitcoin's natural price movements through systematic rebalancing.
+                        </p>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span className="text-blue-600 font-bold text-sm">2</span>
+                          </div>
+                          <h5 className="font-bold text-slate-900 text-sm">Buyback Pressure</h5>
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          70-85% of profits used for AVA token buybacks, creating constant demand and deflationary pressure on supply.
+                        </p>
+                      </div>
+                      
+                      <div className="bg-white rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <span className="text-purple-600 font-bold text-sm">3</span>
+                          </div>
+                          <h5 className="font-bold text-slate-900 text-sm">Token Appreciation</h5>
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          Continuous buybacks reduce circulating supply while your holdings remain constant, increasing your proportional value.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Key Investment Insights */}
+                  <div className="mt-6 grid md:grid-cols-2 gap-4">
+                    <div className="bg-cyan-50 rounded-lg p-4 border border-cyan-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Info className="w-5 h-5 text-cyan-600" />
+                        <h5 className="font-bold text-cyan-900">No Action Required</h5>
+                      </div>
+                      <p className="text-sm text-cyan-800">
+                        Simply hold your AVA tokens. All trading, rebalancing, and profit generation happens automatically behind the scenes.
+                      </p>
+                    </div>
+                    
+                    <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="w-5 h-5 text-amber-600" />
+                        <h5 className="font-bold text-amber-900">Performance Tracking</h5>
+                      </div>
+                      <p className="text-sm text-amber-800">
+                        Watch your AVA token value grow as buybacks reduce supply and strategy profits accumulate over time. Check back regularly!
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
-
               {/* Project Progress */}
               <div className="coinbase-card rounded-2xl p-8">
                 <h3 className="text-2xl font-bold mb-6 text-slate-900">Seeding Progress</h3>
@@ -1084,36 +1215,7 @@ BARS continuously rebalances exposure with each market movement — buying Bitco
                 </div>
               </div>
 
-              {/* Risk Status Summary */}
-              <div className="coinbase-card rounded-2xl p-8">
-                <h3 className="text-2xl font-bold mb-6 text-slate-900">Current Risk Status</h3>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
-                    <div className="flex items-center mb-3">
-                      <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
-                      <span className="font-bold text-green-900">Low Risk</span>
-                    </div>
-                    <p className="text-sm text-green-700 mb-2">Protocol Safety</p>
-                    <p className="text-xs text-green-600">Audited protocols only</p>
-                  </div>
-                  <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
-                    <div className="flex items-center mb-3">
-                      <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
-                      <span className="font-bold text-green-900">Low Risk</span>
-                    </div>
-                    <p className="text-sm text-green-700 mb-2">Reserve Coverage</p>
-                    <p className="text-xs text-green-600">50% in USDC reserves</p>
-                  </div>
-                  <div className="p-6 bg-green-50 rounded-xl border-2 border-green-200">
-                    <div className="flex items-center mb-3">
-                      <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
-                      <span className="font-bold text-green-900">Low Risk</span>
-                    </div>
-                    <p className="text-sm text-green-700 mb-2">No Leverage</p>
-                    <p className="text-xs text-green-600">Zero liquidation risk</p>
-                  </div>
-                </div>
-              </div>
+           
             </div>
           )}
 
