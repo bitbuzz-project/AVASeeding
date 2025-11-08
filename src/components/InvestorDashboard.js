@@ -161,24 +161,45 @@ function InvestorDashboard() {
   }, [signer, isConnected]);
 
   // Fetch crypto prices from CoinGecko
-  const fetchPrices = async () => {
-    try {
-      const response = await fetch(
-        'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,tether&vs_currencies=usd'
-      );
-      const data = await response.json();
-      
-      setPrices({
-        bitcoin: data.bitcoin?.usd || 0,
-        ava: data.tether?.usd || 1, // Using USDT price as proxy for AVA
-        loading: false
-      });
-    } catch (error) {
-      console.error('Error fetching prices:', error);
-      setPrices(prev => ({ ...prev, loading: false }));
-    }
-  };
+// Updated fetchPrices function using Mantle (MNT) token instead of USDT
 
+const fetchPrices = async () => {
+  try {
+    // Fetch Bitcoin and Mantle prices from CoinGecko
+    // CoinGecko ID for Mantle is "mantle"
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,mantle&vs_currencies=usd'
+    );
+    const data = await response.json();
+    
+    // Get actual Mantle (MNT) price
+    const mantlePrice = data.mantle?.usd || 1.00;
+    
+    setPrices({
+      bitcoin: data.bitcoin?.usd || 0,
+      usdt: mantlePrice,  // Using Mantle price in place of USDT
+      ava: mantlePrice,   // AVA is pegged to Mantle, so use actual Mantle price
+      loading: false,
+      lastUpdate: new Date().toISOString()
+    });
+    
+    console.log('Updated prices:', {
+      bitcoin: data.bitcoin?.usd || 0,
+      mantle: mantlePrice,
+      timestamp: new Date().toLocaleString()
+    });
+  } catch (error) {
+    console.error('Error fetching prices:', error);
+    // Fallback to $1.00 if fetch fails
+    setPrices(prev => ({ 
+      ...prev, 
+      bitcoin: prev.bitcoin || 0, 
+      usdt: 1.00,
+      ava: 1.00, 
+      loading: false 
+    }));
+  }
+};
   useEffect(() => {
     fetchPrices();
     const interval = setInterval(fetchPrices, 60000); // Update every minute
@@ -364,7 +385,7 @@ function InvestorDashboard() {
                   </div>
                 </div>
                 <div className="text-xs text-slate-500 text-right">
-                  <p>Using USDT</p>
+                  <p>Using MNT</p>
                   <p>as proxy</p>
                 </div>
               </div>
