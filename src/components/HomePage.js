@@ -76,7 +76,7 @@ function HomePage() {
 
   const performanceMetrics = [
     { label: 'Total NAV + Profits APY', value: '47%', period: '2021-2025 Backtested' },
-    { label: 'Extractable Profits APY', value: '27%', period: 'On Initial Allocation' },
+    { label: 'Average yearly extractable Profits', value: '27%', period: 'On Initial Allocation' },
     { label: 'Outperformance vs HODL', value: '90%', period: 'Market Downturns' }
   ];
 
@@ -203,8 +203,7 @@ function HomePage() {
                   className="text-lg sm:text-base lg:text-lg xl:text-xl text-slate-600 mb-8 sm:mb-6 lg:mb-8 leading-relaxed px-2 sm:px-0 max-w-2xl mx-auto lg:mx-0"
                 >
                   Systematic Bitcoin rebalancing strategy achieving
-                  <span className="font-bold text-blue-600"> 47% APY total returns</span> since 2021, Including
-                  <span className="font-bold text-green-600"> 27% average yearly accumulated extractable profits</span>.
+                  <span className="font-bold text-blue-600"> 47% APY total returns</span> since 2021, including 27% average yearly extractable profits
                 </motion.p>
 
                 <motion.div 

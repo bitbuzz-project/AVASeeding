@@ -608,7 +608,7 @@ const fetchPrices = async () => {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-slate-600">Rebalancing:</span>
-                          <span className="font-medium text-slate-700">Automated 8% threshold</span>
+                          <span className="font-medium text-slate-700"> {'>'}4%, optimal target 8% </span>
                         </div>
                         <div className="mt-3 p-3 bg-blue-50 rounded-lg">
                           <p className="text-xs text-blue-800">
@@ -703,7 +703,7 @@ const fetchPrices = async () => {
                         <h5 className="font-bold text-cyan-900">No Action Required</h5>
                       </div>
                       <p className="text-sm text-cyan-800">
-                        Simply hold your AVA tokens. All trading, rebalancing, and profit generation happens automatically behind the scenes.
+                        Simply hold your AVA tokens. All trading, rebalancing, and profit generation happens behind the scenes.
                       </p>
                     </div>
                     
@@ -1219,7 +1219,7 @@ BARS continuously rebalances exposure with each market movement — buying Bitco
                         <ul className="text-sm text-orange-700 space-y-2">
                           <li className="flex items-start">
                             <span className="font-bold mr-2">•</span>
-                            <span>5% of total supply added at 50% price discount per level</span>
+                            <span>Liquidity increments of 5% on price steps up to 50% discount</span>
                           </li>
                           <li className="flex items-start">
                             <span className="font-bold mr-2">•</span>
@@ -1293,7 +1293,7 @@ BARS continuously rebalances exposure with each market movement — buying Bitco
                         <Activity className="w-5 h-5 text-purple-600 mt-0.5 mr-3 flex-shrink-0" />
                         <div>
                           <p className="font-medium text-purple-800">{projectData.sellTaxRate}% Sell Tax</p>
-                          <p className="text-purple-700 text-sm">Funds buyback program</p>
+                          <p className="text-purple-700 text-sm">discourages Arbitrage</p>
                         </div>
                       </div>
                     </div>
